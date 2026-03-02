@@ -6,7 +6,6 @@ using PopUpUI.Surface;
 using PopUpUI.Surface.Animation;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 namespace PopUpUI.Toolkit
@@ -16,7 +15,7 @@ namespace PopUpUI.Toolkit
     {
         private static bool isInitialized;
         private static ContentManager manager;
-        private static readonly Dictionary<string, ContentNode> LoadedContents = new();
+        private static readonly Dictionary<string, ProjectContent> LoadedContents = new();
 
         /// <summary>
         /// If set to <see langword="true"/>, assistant does not make contents eligable for <see cref="GC"/> collection by creating a strong reference to them.
@@ -35,15 +34,6 @@ namespace PopUpUI.Toolkit
         public static int ActiveContentsCount => LoadedContents.Values.Where(node => node.IsActive).Count();
         /// <summary>Gets the total number of contents that are loaded to assistant.</summary>
         public static int AllContentsCount => LoadedContents.Count;
-
-        private enum ContentType
-        {
-            Texture2D,
-            Song,
-            SoundEffect,
-            AnimationState,
-            ColorBrush
-        }
 
         internal static void Initialize(Game game)
         {
@@ -66,7 +56,7 @@ namespace PopUpUI.Toolkit
         {
             foreach (var (assetName, nameToSave) in contents)
             {
-                LoadedContents.Add(nameToSave, new ContentNode(manager.Load<T>(assetName)));
+                LoadedContents.Add(nameToSave, new ProjectContent(manager.Load<T>(assetName)));
             }
         }
 
@@ -168,7 +158,7 @@ namespace PopUpUI.Toolkit
         {
             foreach (var (info, savedName) in contents)
             {
-                LoadedContents.Add(savedName, new ContentNode(info, isPinned, instantCreate, type));
+                LoadedContents.Add(savedName, new ProjectContent(info, isPinned, instantCreate, type));
             }
         }
 
@@ -256,7 +246,7 @@ namespace PopUpUI.Toolkit
 
         private static bool TryLoad(ContentType type, bool isPinned, bool instantCreate, object info, string savedName)
         {
-            return LoadedContents.TryAdd(savedName, new ContentNode(info, isPinned, instantCreate, type));
+            return LoadedContents.TryAdd(savedName, new ProjectContent(info, isPinned, instantCreate, type));
         }
 
         /// <summary>Retrieves the content saved before with the name used to save it.</summary>
@@ -266,7 +256,7 @@ namespace PopUpUI.Toolkit
         /// <exception cref="ArgumentException"></exception>
         public static T FromLoaded<T>(string savedName)
         {
-            if (LoadedContents.TryGetValue(savedName, out ContentNode node))
+            if (LoadedContents.TryGetValue(savedName, out ProjectContent node))
             {
                 return (T)node.Content;
             }
@@ -281,7 +271,7 @@ namespace PopUpUI.Toolkit
         /// <returns>Returns <see langword="true"/> if the content was retrieved successfully, else <see langword="false"/>.</returns>
         public static bool TryGetFromLoaded<T>(string savedName, out T content)
         {
-            if (LoadedContents.TryGetValue(savedName, out ContentNode node))
+            if (LoadedContents.TryGetValue(savedName, out ProjectContent node))
             {
                 content = (T)node.Content;
                 return true;
@@ -298,7 +288,7 @@ namespace PopUpUI.Toolkit
         /// It also returns <see langword="false"/> if any content was not found with <paramref name="savedName"/>.</returns>
         public static bool Unload(string savedName)
         {
-            if (LoadedContents.TryGetValue(savedName, out ContentNode node))
+            if (LoadedContents.TryGetValue(savedName, out ProjectContent node))
             {
                 node.Dispose();
                 LoadedContents.Remove(savedName);
@@ -318,7 +308,7 @@ namespace PopUpUI.Toolkit
         /// It also returns <see langword="false"/> if any content was not found with <paramref name="savedName"/>.</returns>
         public static bool Unload<T>(string savedName, out T removedContent)
         {
-            if (LoadedContents.TryGetValue(savedName, out ContentNode node))
+            if (LoadedContents.TryGetValue(savedName, out ProjectContent node))
             {
                 node.DisposeReferences();
                 LoadedContents.Remove(savedName);
@@ -329,97 +319,6 @@ namespace PopUpUI.Toolkit
 
             removedContent = default;
             return false;
-        }
-
-        // Contains the content, their creating info and properties
-        private class ContentNode : IDisposable
-        {
-            private bool isCreated;
-            private object referenceForPinned;
-            private readonly WeakReference weakReference = new WeakReference(null);
-
-            public bool IsActive => IsPinned ? referenceForPinned != null : weakReference.Target != null;
-            public bool IsCreated => isCreated;
-            public object CreationInfo { get; }
-            public bool IsPinned { get; }
-            public ContentType Type { get; }
-
-            public object Content
-            {
-                get
-                {
-                    if (IsPinned)
-                    {
-                        if (!isCreated) CreateContent();
-
-                        return referenceForPinned;
-                    }
-                    else
-                    {
-                        if (!weakReference.IsAlive)
-                        {
-                            CreateContent();
-                        }
-
-                        return weakReference.Target;
-                    }
-                }
-            }
-
-            public ContentNode(object creationInfo, bool isPinned, bool instantCreate, ContentType type)
-            {
-                IsPinned = isPinned;
-                CreationInfo = creationInfo;
-                Type = type;
-
-                if (instantCreate) CreateContent();
-            }
-
-            public ContentNode(object content)
-            {
-                isCreated = true;
-                IsPinned = true;
-
-                referenceForPinned = content;
-            }
-
-            public void Dispose()
-            {
-                if (isCreated && Content is IDisposable disposable) disposable.Dispose();
-
-                DisposeReferences();
-            }
-
-            public void DisposeReferences()
-            {
-                referenceForPinned = null;
-                weakReference.Target = null;
-            }
-
-            private void CreateContent()
-            {
-                isCreated = true;
-
-#pragma warning disable 8524
-                object createdObj = Type switch
-                {
-                    ContentType.Texture2D => DrawHelper.FromFile(CreationInfo as string),
-                    ContentType.Song => Song.FromUri(System.IO.Path.GetFileName(CreationInfo as string), new Uri(CreationInfo as string, UriKind.Absolute)),
-                    ContentType.SoundEffect => SoundEffect.FromFile(CreationInfo as string),
-                    ContentType.AnimationState => AnimationState.FromFile(CreationInfo as string),
-                    ContentType.ColorBrush => new ColorBrush((Color)CreationInfo)
-                };
-#pragma warning restore 8524
-
-                if (IsPinned)
-                {
-                    referenceForPinned = createdObj;
-                }
-                else
-                {
-                    weakReference.Target = createdObj;
-                }
-            }
         }
     }
 }

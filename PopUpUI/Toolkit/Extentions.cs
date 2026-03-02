@@ -12,19 +12,6 @@ namespace PopUpUI.Toolkit
 {
     internal static class DrawExtensions
     {
-        public static Texture2D Shorten(this Texture2D texture, float shortenValue)
-        {
-            RenderTarget2D newTexture = DrawHelper.CreateRenderTarget((int)(texture.Width * shortenValue) + 1, (int)(texture.Height * shortenValue) + 1);
-            DrawHelper.SetRenderTarget(newTexture);
-            DrawHelper.BeginBatch(TextureDrawOptions.Default);
-
-            DrawHelper.Batch.Draw(texture, new Vector2(0, 0), texture.Bounds, Color.White, 0f, Vector2.Zero, shortenValue, SpriteEffects.None, 0f);
-
-            DrawHelper.EndBatch();
-
-            return newTexture;
-        }
-
         public static Texture2D CropTexture(this Texture2D source, Rectangle rect)
         {
             Texture2D tex = DrawHelper.CreateTexture(rect.Width, rect.Height);
@@ -41,16 +28,6 @@ namespace PopUpUI.Toolkit
             DrawHelper.BeginBatch(TextureDrawOptions.Default);
 
             DrawHelper.Batch.Draw(source, rect.Location.ToVector2(), rect, Color.White);
-
-            DrawHelper.EndBatch();
-        }
-
-        public static void CropTexture(this Texture2D source, RenderTarget2D writeOn, Vector2 position, Rectangle rect)
-        {
-            DrawHelper.SetRenderTarget(writeOn);
-            DrawHelper.BeginBatch(TextureDrawOptions.Default);
-
-            DrawHelper.Batch.Draw(source, position, rect, Color.White);
 
             DrawHelper.EndBatch();
         }
@@ -76,11 +53,6 @@ namespace PopUpUI.Toolkit
         public static Point TimesFloat(this Point point, float fl)
         {
             return (point.ToVector2() * fl).ToPoint();
-        }
-
-        public static Point Positivize(this Point point)
-        {
-            return new Point(int.Abs(point.X), int.Abs(point.Y));
         }
 
         public static IEnumerable<(int StartValue, int EndValue)> GetPossibleRanges(this IEnumerable<int> source)

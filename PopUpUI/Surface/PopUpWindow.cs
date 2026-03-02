@@ -448,7 +448,7 @@ namespace PopUpUI.Surface
 
         private static void StaticOnMousePointChange(PopUpWindowEventArgs e)
         {
-            WindowSettings.InternalExtenderUpdate(e);
+            WindowOptions.InternalExtenderUpdate(e);
 
             // for IHoverable & IHoldable
             if (WindowLayers.Count == 0) return;

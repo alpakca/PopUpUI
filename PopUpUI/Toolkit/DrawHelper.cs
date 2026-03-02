@@ -8,22 +8,25 @@ namespace PopUpUI.Toolkit
     public static class DrawHelper
     {
         private static bool IsInitialized = false;
-        private static GraphicsDevice GraphicsDevice;
-        private static SpriteBatch DrawBatch;
 
-        /// <summary>The <see cref="Microsoft.Xna.Framework.Graphics.GraphicsDevice"/> of the project.</summary>
-        public static GraphicsDevice Device => GraphicsDevice;
+        private static Texture2D singlePixel;
+        private static SpriteBatch drawBatch;
+        private static GraphicsDevice graphicsDevice;
+
+        /// <summary>The <see cref="GraphicsDevice"/> of the project.</summary>
+        public static GraphicsDevice Device => graphicsDevice;
         /// <summary>Batch to use for only drawing. To start and end a batch use BeginBatch() and EndBatch() methods.</summary>
-        public static SpriteBatch Batch => DrawBatch;
+        public static SpriteBatch Batch => drawBatch;
 
         internal static void Initialize(Game game)
         {
             if (IsInitialized) return;
 
-            GraphicsDevice = game.GraphicsDevice;
+            graphicsDevice = game.GraphicsDevice;
             GraphicsDevice.DiscardColor = Color.Transparent;
 
-            DrawBatch = new SpriteBatch(GraphicsDevice);
+            singlePixel = new Texture2D(graphicsDevice, 1, 1);
+            drawBatch = new SpriteBatch(graphicsDevice);
             
             IsInitialized = true;
         }
@@ -32,18 +35,18 @@ namespace PopUpUI.Toolkit
         /// <param name="width">Width of the texture.</param>
         /// <param name="height">Height of the texture.</param>
         /// <returns>The created <see cref="Texture2D"/> instance.</returns>
-        public static RenderTarget2D CreateRenderTarget(int width, int height) => new RenderTarget2D(GraphicsDevice, width, height);
+        public static RenderTarget2D CreateRenderTarget(int width, int height)
+        {
+            return new RenderTarget2D(graphicsDevice, width, height);
+        }
+
         /// <summary>Creates a <see cref="RenderTarget2D"/> instance with given size.</summary>
         /// <param name="width">Width of the target.</param>
         /// <param name="height">Height of the target.</param>
         /// <returns>The created <see cref="RenderTarget2D"/> instance.</returns>
-        public static Texture2D CreateTexture(int width, int height) => new Texture2D(GraphicsDevice, width, height);
-
-        /// <summary>Sets the <paramref name="target"/> to <see cref="Microsoft.Xna.Framework.Graphics.GraphicsDevice"/>.</summary>
-        /// <param name="target"></param>
-        public static void SetRenderTarget(RenderTarget2D target)
+        public static Texture2D CreateTexture(int width, int height)
         {
-            GraphicsDevice.SetRenderTarget(target);
+            return new Texture2D(graphicsDevice, width, height);
         }
 
         /// <summary>Creates a <see cref="Texture2D"/> from file in <paramref name="path"/>.</summary>
@@ -51,21 +54,31 @@ namespace PopUpUI.Toolkit
         /// <returns>The loaded <see cref="Texture2D"/>.</returns>
         public static Texture2D FromFile(string path)
         {
-            return Texture2D.FromFile(GraphicsDevice, path);
+            return Texture2D.FromFile(graphicsDevice, path);
+        }
+        
+        public static void SetBeginBatch(RenderTarget2D target)
+        {
+            graphicsDevice.SetRenderTarget(target);
+            drawBatch.Begin();
         }
 
-        /// <summary>Begins the <see cref="DrawBatch"/> from <paramref name="options"/>.</summary>
-        /// <param name="options">Draw options to use in <see cref="SpriteBatch"/>.</param>
-        public static void BeginBatch(TextureDrawOptions options)
+        public static void SetBeginBatch(RenderTarget2D target, TextureDrawOptions options)
         {
-            DrawBatch.Begin(options.SortMode, options.BlendState, options.SamplerState, 
+            graphicsDevice.SetRenderTarget(target);
+            drawBatch.Begin(options.SortMode, options.BlendState, options.SamplerState,
                             options.DepthStencilState, options.RasterizerState, options.Effect, options.TransformMatrix);
         }
 
-        /// <summary>Ends the <see cref="DrawBatch"/>.</summary>
+        /// <summary>Ends the <see cref="drawBatch"/>.</summary>
         public static void EndBatch()
         {
-            DrawBatch.End();
+            drawBatch.End();
+        }
+
+        public static void DrawBackground(Rectangle destinationArea, Color color)
+        {
+            drawBatch.Draw(singlePixel, destinationArea, color);
         }
     }
 }

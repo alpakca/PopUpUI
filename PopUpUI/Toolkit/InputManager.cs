@@ -21,7 +21,7 @@ namespace PopUpUI.Toolkit
         private static MouseState oldMouseState;
         private static KeyboardState newKeyboardState = Keyboard.GetState();
         private static MouseState newMouseState = Mouse.GetState();
-        private static readonly Stopwatch timer = new();
+        private static float pointChangeCooldown;
 
         /// <summary>Raised when any button of the mouse have been pressed.</summary>
         public static event InputManagerHandler MouseButtonPressChange;
@@ -47,13 +47,13 @@ namespace PopUpUI.Toolkit
 
         /// <summary>Gets or sets the max time <see cref="MousePointChange"/> event 
         /// will be raised in case <see cref="MousePosition"/> didn't change, in milliseconds. Default is 32.</summary>
-        public static int MaxCooldownPointChange { get; set; } = 32;
+        public static float MaxCooldownPointChange { get; set; } = 32;
 
         internal static void Initialize(Game game)
         {         
             game.Window.TextInput += (_, e) =>
             {
-                TextInput(new PopUpWindowEventArgs(GetPressedButtons(newMouseState),
+                TextInput(new PopUpWindowEventArgs(GetPressedButtons(ref newMouseState),
                                                    GetNewlyPressedButtons(),
                                                    MousePosition,
                                                    newMouseState.ScrollWheelValue - oldMouseState.ScrollWheelValue),
@@ -62,7 +62,7 @@ namespace PopUpUI.Toolkit
 
             game.Window.KeyDown += (_, e) =>
             {
-                KeyDown(new PopUpWindowEventArgs(GetPressedButtons(newMouseState),
+                KeyDown(new PopUpWindowEventArgs(GetPressedButtons(ref newMouseState),
                                                  GetNewlyPressedButtons(),
                                                  MousePosition,
                                                  newMouseState.ScrollWheelValue - oldMouseState.ScrollWheelValue), 
@@ -71,7 +71,7 @@ namespace PopUpUI.Toolkit
 
             game.Window.KeyUp += (_, e) =>
             {
-                KeyUp(new PopUpWindowEventArgs(GetPressedButtons(newMouseState),
+                KeyUp(new PopUpWindowEventArgs(GetPressedButtons(ref newMouseState),
                                                GetNewlyPressedButtons(),
                                                MousePosition,
                                                newMouseState.ScrollWheelValue - oldMouseState.ScrollWheelValue),
@@ -80,7 +80,7 @@ namespace PopUpUI.Toolkit
 
             game.Window.FileDrop += (_, e) =>
             {
-                FileDrop(new PopUpWindowEventArgs(GetPressedButtons(newMouseState),
+                FileDrop(new PopUpWindowEventArgs(GetPressedButtons(ref newMouseState),
                                                   GetNewlyPressedButtons(),
                                                   MousePosition,
                                                   newMouseState.ScrollWheelValue - oldMouseState.ScrollWheelValue),
@@ -88,7 +88,7 @@ namespace PopUpUI.Toolkit
             };
         }
         
-        internal static void Update()
+        internal static void FrameUpdate()
         {
             oldKeyboardState = newKeyboardState;
             oldMouseState = newMouseState;
@@ -96,7 +96,7 @@ namespace PopUpUI.Toolkit
             newKeyboardState = Keyboard.GetState();
             newMouseState = Mouse.GetState();
 
-            PopUpWindowEventArgs args = new PopUpWindowEventArgs(GetPressedButtons(newMouseState),
+            PopUpWindowEventArgs args = new PopUpWindowEventArgs(GetPressedButtons(ref newMouseState),
                                                                  GetNewlyPressedButtons(),
                                                                  newMouseState.Position,
                                                                  newMouseState.ScrollWheelValue - oldMouseState.ScrollWheelValue);
@@ -106,9 +106,10 @@ namespace PopUpUI.Toolkit
                 MouseButtonPressChange(args);
             }
 
-            if (oldMouseState.Position != newMouseState.Position || timer.ElapsedMilliseconds > MaxCooldownPointChange)
+            pointChangeCooldown -= Time.DeltaTime;
+            if (pointChangeCooldown < 0 || oldMouseState.Position != newMouseState.Position)
             {
-                timer.Restart();
+                pointChangeCooldown = MaxCooldownPointChange;
                 MousePointChange(args);
             }
 
@@ -173,7 +174,7 @@ namespace PopUpUI.Toolkit
         /// <returns><see langword="true"/> if <paramref name="button"/> is down in newest frame; otherwise <see langword="false"/>.</returns>
         public static bool IsDown(MouseButtons button)
         {
-            return GetNewlyPressedButtons().HasFlag(button);
+            return GetPressedButtons(ref newMouseState).HasFlag(button);
         }
 
         /// <summary>Checks if <paramref name="button"/> is up in newest frame.</summary>
@@ -189,7 +190,7 @@ namespace PopUpUI.Toolkit
         /// <returns><see langword="true"/> if <paramref name="button"/> is being held; otherwise <see langword="false"/>.</returns>
         public static bool IsHeld(MouseButtons button)
         {
-            return GetPressedButtons(newMouseState).HasFlag(button) && GetPressedButtons(oldMouseState).HasFlag(button);
+            return GetPressedButtons(ref newMouseState).HasFlag(button) && GetPressedButtons(ref oldMouseState).HasFlag(button);
         }
 
         /// <summary>Checks if <paramref name="button"/> is just pressed with newest frame.</summary>
@@ -197,7 +198,7 @@ namespace PopUpUI.Toolkit
         /// <returns><see langword="true"/> if <paramref name="button"/> is just pressed with newest frame; otherwise <see langword="false"/>.</returns>
         public static bool IsJustPressed(MouseButtons button)
         {
-            return GetPressedButtons(newMouseState).HasFlag(button) && !GetPressedButtons(oldMouseState).HasFlag(button);
+            return GetPressedButtons(ref newMouseState).HasFlag(button) && !GetPressedButtons(ref oldMouseState).HasFlag(button);
         }
 
         /// <summary>Checks if <paramref name="button"/> is released with newest frame.</summary>
@@ -205,7 +206,7 @@ namespace PopUpUI.Toolkit
         /// <returns><see langword="true"/> if <paramref name="button"/> is released with newest frame; otherwise <see langword="false"/>.</returns>
         public static bool IsReleased(MouseButtons button)
         {
-            return !GetPressedButtons(newMouseState).HasFlag(button) && GetPressedButtons(oldMouseState).HasFlag(button);
+            return !GetPressedButtons(ref newMouseState).HasFlag(button) && GetPressedButtons(ref oldMouseState).HasFlag(button);
         }
 
         private static MouseButtons GetNewlyPressedButtons()
@@ -221,7 +222,7 @@ namespace PopUpUI.Toolkit
             return newlyPressedButtons ^ MouseButtons.None;
         }
 
-        private static MouseButtons GetPressedButtons(MouseState state)
+        private static MouseButtons GetPressedButtons(ref readonly MouseState state)
         {
             MouseButtons pressedButtons = MouseButtons.None;
 

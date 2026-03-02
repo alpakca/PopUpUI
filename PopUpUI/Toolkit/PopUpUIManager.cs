@@ -17,10 +17,10 @@ namespace PopUpUI.Toolkit
 
         private static bool isInitialized;
 
-        /// <summary>Raised in each <see cref="Update(GameTime)"/> call.</summary>
-        public static event Action<GameTime>? FrameUpdate;
-        /// <summary>Raised in each <see cref="Draw(SpriteBatch)"/> call.</summary>
-        public static event Action<SpriteBatch>? DrawUpdate;
+        /// <summary>Raised in each <see cref="FrameUpdate(GameTime)"/> call.</summary>
+        public static event Action<GameTime>? FrameCall;
+        /// <summary>Raised in each <see cref="RenderUpdate(GameTime)"/> call, it is the call of render before buffer draw starts.</summary>
+        public static event Action<GameTime>? RenderCall;
 
         /// <summary>
         /// Initializes the PopUpUI with given parameters. 
@@ -38,13 +38,13 @@ namespace PopUpUI.Toolkit
             InputManager.Initialize(game);
             DrawHelper.Initialize(game);
             Time.Initialize(game);
-            WindowSettings.Initialize(game, deviceManager);
+            WindowOptions.Initialize(game, deviceManager);
             ContentAssistant.Initialize(game);
             PopUpWindow.Initialize();
 
             isInitialized = true;
         }
-
+        /*
         /// <summary>The update method for the PopUpUI and elements of <see cref="PopUpWindow"/>s.</summary>
         /// <param name="gameTime">A <see cref="GameTime"/> object presenting application time.</param>
         public static void Update(GameTime gameTime)
@@ -59,17 +59,36 @@ namespace PopUpUI.Toolkit
             PopUpWindow.UpdateWindows();
 
             FrameUpdate?.Invoke(gameTime);
+        }*/
+
+        public static void FrameUpdate(GameTime gameTime)
+        {
+            // always first call Time - to update delta time
+            Time.FrameUpdate(gameTime);
+            InputManager.FrameUpdate();
+
+            FrameCall?.Invoke(gameTime);
         }
 
+        public static void RenderUpdate(GameTime gameTime)
+        {
+            RenderCall?.Invoke(gameTime);
+        }
+
+        public static void BufferDraw(SpriteBatch batch)
+        {
+            
+        }
+        /*
         /// <summary>The draw method for the PopUpUI and <see cref="PopUpWindow"/>s.</summary>
         /// <param name="batch">The <see cref="SpriteBatch"/> to use while drawing <see cref="PopUpWindow"/>s to screen.</param>
         public static void Draw(SpriteBatch batch)
         {
-            WindowSettings.InternalDraw(batch);
+            WindowOptions.InternalDraw(batch);
             PopUpWindow.DrawWindows(batch);
 
             DrawUpdate?.Invoke(batch);
-        }
+        }*/
 
         internal static void RegisterAnimator(Animator animator)
         {
