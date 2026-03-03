@@ -404,8 +404,8 @@ namespace PopUpUI.Surface
         {
             if (IsInitialized) return;
 
-            InputManager.MouseButtonPressChange += StaticOnMouseButtonChange;
-            InputManager.MousePointChange += StaticOnMousePointChange;
+            InputManager.MouseButtonStateChange += StaticOnMouseButtonChange;
+            InputManager.MousePositionChange += StaticOnMousePointChange;
             InputManager.MouseWheelChange += StaticOnMouseWheelChange;
             InputManager.KeyDown += StaticOnKeyDown;
             InputManager.KeyUp += StaticOnKeyUp;

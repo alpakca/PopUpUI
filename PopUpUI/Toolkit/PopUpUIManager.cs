@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using PopUpUI.Surface;
 using PopUpUI.Surface.Animation;
 using System;
 using System.Collections.Generic;
@@ -35,37 +34,23 @@ namespace PopUpUI.Toolkit
             ArgumentNullException.ThrowIfNull(game);
             ArgumentNullException.ThrowIfNull(deviceManager);
 
+            Time.Initialize(game);
             InputManager.Initialize(game);
             DrawHelper.Initialize(game);
-            Time.Initialize(game);
             WindowOptions.Initialize(game, deviceManager);
             ContentAssistant.Initialize(game);
-            PopUpWindow.Initialize();
+            PopWindowManager.Initialize();
 
             isInitialized = true;
         }
-        /*
-        /// <summary>The update method for the PopUpUI and elements of <see cref="PopUpWindow"/>s.</summary>
-        /// <param name="gameTime">A <see cref="GameTime"/> object presenting application time.</param>
-        public static void Update(GameTime gameTime)
-        {
-            InputManager.Update();
-            Time.Update(gameTime);
-
-            UpdateAnimationStates();
-            UpdateAnimators();
-            ResetAnimationStates();
-
-            PopUpWindow.UpdateWindows();
-
-            FrameUpdate?.Invoke(gameTime);
-        }*/
 
         public static void FrameUpdate(GameTime gameTime)
         {
             // always first call Time - to update delta time
             Time.FrameUpdate(gameTime);
             InputManager.FrameUpdate();
+
+            PopWindowManager.FrameUpdate();
 
             FrameCall?.Invoke(gameTime);
         }
@@ -77,18 +62,8 @@ namespace PopUpUI.Toolkit
 
         public static void BufferDraw(SpriteBatch batch)
         {
-            
+            PopWindowManager.BufferDraw(batch);
         }
-        /*
-        /// <summary>The draw method for the PopUpUI and <see cref="PopUpWindow"/>s.</summary>
-        /// <param name="batch">The <see cref="SpriteBatch"/> to use while drawing <see cref="PopUpWindow"/>s to screen.</param>
-        public static void Draw(SpriteBatch batch)
-        {
-            WindowOptions.InternalDraw(batch);
-            PopUpWindow.DrawWindows(batch);
-
-            DrawUpdate?.Invoke(batch);
-        }*/
 
         internal static void RegisterAnimator(Animator animator)
         {

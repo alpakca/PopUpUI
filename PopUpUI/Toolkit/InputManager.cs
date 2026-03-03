@@ -24,9 +24,9 @@ namespace PopUpUI.Toolkit
         private static float pointChangeCooldown;
 
         /// <summary>Raised when any button of the mouse have been pressed.</summary>
-        public static event InputManagerHandler MouseButtonPressChange;
+        public static event InputManagerHandler MouseButtonStateChange;
         /// <summary>Raised when the position of the mouse has changed.</summary>
-        public static event InputManagerHandler MousePointChange;
+        public static event InputManagerHandler MousePositionChange;
         /// <summary>Raised when the mouse's wheel's value has changed.</summary>
         public static event InputManagerHandler MouseWheelChange;
         /// <summary>Raised when a key is down on keyboard.</summary>
@@ -45,7 +45,7 @@ namespace PopUpUI.Toolkit
         /// <summary>Gets the position of the mouse.</summary>
         public static Point MousePosition => newMouseState.Position;
 
-        /// <summary>Gets or sets the max time <see cref="MousePointChange"/> event 
+        /// <summary>Gets or sets the max time <see cref="MousePositionChange"/> event 
         /// will be raised in case <see cref="MousePosition"/> didn't change, in milliseconds. Default is 32.</summary>
         public static float MaxCooldownPointChange { get; set; } = 32;
 
@@ -103,14 +103,14 @@ namespace PopUpUI.Toolkit
             
             if (args.NewlyPressedButtons != MouseButtons.None)
             {
-                MouseButtonPressChange(args);
+                MouseButtonStateChange(args);
             }
 
             pointChangeCooldown -= Time.DeltaTime;
             if (pointChangeCooldown < 0 || oldMouseState.Position != newMouseState.Position)
             {
                 pointChangeCooldown = MaxCooldownPointChange;
-                MousePointChange(args);
+                MousePositionChange(args);
             }
 
             if (oldMouseState.ScrollWheelValue != newMouseState.ScrollWheelValue)
