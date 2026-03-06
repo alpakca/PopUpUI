@@ -16,7 +16,7 @@ namespace PopUpUI.Elements
         private bool autoScrollDistanceCalculationOn = true;
         private Point lastHeldPointOnScrolling;
 
-        private readonly TextureDrawOptions drawOptions;
+        private readonly BatchDrawOptions drawOptions;
         private readonly ListOperations operations;
         private readonly TextureDisplayInfo areaUIElement;
         private readonly AnimationDisplayInfo backgroundUIElement;
@@ -102,7 +102,7 @@ namespace PopUpUI.Elements
         /// <param name="visibleArea">The visible area list will show.</param>
         /// <param name="options">Options to control drawing behaviour.</param>
         /// <exception cref="ArgumentException"></exception>
-        public ScrollableList(MovementDirection scrollDirection, Point visibleArea, TextureDrawOptions? options)
+        public ScrollableList(MovementDirection scrollDirection, Point visibleArea, BatchDrawOptions? options)
         {
             if (scrollDirection is < (MovementDirection)1 or > (MovementDirection)2)
                 throw new ArgumentException($"ScrollableList only accepts {MovementDirection.Horizontal} and {MovementDirection.Vertical} as valid MovementDirection.");
@@ -115,7 +115,7 @@ namespace PopUpUI.Elements
             ButtonsToHold = MouseButtons.Any;
             ButtonsToSelect = MouseButtons.Any;
 
-            drawOptions = options ?? TextureDrawOptions.Default;
+            drawOptions = options ?? BatchDrawOptions.Default;
             operations = new ListOperations(this);
 
             Nodes = new PopUpElementCollection();

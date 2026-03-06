@@ -29,7 +29,7 @@ namespace PopUpUI.Surface
         private bool isFrozen;
         private Rectangle bounds;
         private RenderTarget2D windowTexture;
-        private readonly TextureDrawOptions drawOptions;
+        private readonly BatchDrawOptions drawOptions;
 
         /// <summary>Indicates if window is currently frozen.</summary>
         public bool IsFrozen => isFrozen;
@@ -107,13 +107,13 @@ namespace PopUpUI.Surface
         /// <param name="width">Width of window.</param>
         /// <param name="height">Height of window.</param>
         /// <param name="options">Options to control drawing behaviour.</param>
-        public PopUpWindow(int width, int height, TextureDrawOptions? options)
+        public PopUpWindow(int width, int height, BatchDrawOptions? options)
         {
             if (width <= 0 || height <= 0) throw new ArgumentOutOfRangeException("Width and height must be greater than zero.");
             bounds = new Rectangle(0, 0, width, height);
 
             windowTexture = DrawHelper.CreateRenderTarget(width, height);
-            drawOptions = options ?? TextureDrawOptions.Default;
+            drawOptions = options ?? BatchDrawOptions.Default;
 
             Elements = new PopUpElementCollection();
             Children = new List<PopUpWindow>();

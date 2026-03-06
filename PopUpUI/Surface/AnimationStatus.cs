@@ -1,6 +1,6 @@
-﻿namespace PopUpUI.Surface.Animation
+﻿namespace PopUpUI.Surface
 {
-    /// <summary>Indicates the current state of a <see cref="AnimationState"/>.</summary>
+    /// <summary>Indicates the current state of a <see cref="Animation2D"/>.</summary>
     public enum AnimationStatus
     {
         /// <summary>The animation is currently playing.</summary>

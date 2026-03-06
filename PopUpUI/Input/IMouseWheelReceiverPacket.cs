@@ -1,5 +1,4 @@
 ﻿using PopUpUI.Elements;
-using System;
 
 namespace PopUpUI.Input
 {
@@ -8,6 +7,6 @@ namespace PopUpUI.Input
         /// <summary>Raised when mouse wheel value has changed.</summary>
         public event PopUpElementHandler MouseWheelChanged;
 
-        public void RaiseMouseWheelChanged(PopUpElement sender, PopUpWindowEventArgs e);
+        public void RaiseMouseWheelChanged(PopElement sender, PopUpWindowEventArgs e);
     }
 }

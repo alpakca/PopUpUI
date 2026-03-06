@@ -25,7 +25,7 @@ namespace PopUpUI.Toolkit
         public static void CropTexture(this Texture2D source, RenderTarget2D writeOn, Rectangle rect)
         {
             DrawHelper.SetRenderTarget(writeOn);
-            DrawHelper.BeginBatch(TextureDrawOptions.Default);
+            DrawHelper.BeginBatch(BatchDrawOptions.Default);
 
             DrawHelper.Batch.Draw(source, rect.Location.ToVector2(), rect, Color.White);
 

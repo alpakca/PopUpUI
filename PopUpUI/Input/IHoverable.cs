@@ -7,6 +7,8 @@ namespace PopUpUI.Input
     /// <summary>Defines a mechanism for <see cref="PopUpElement"/> for achieving hovering operations.</summary>
     public interface IHoverable
     {
+        /// <summary>Gets the current hover status of element.</summary>
+        public bool IsHovered { get; }
         public IHoverablePacket HoverablePacket { get; }
 
         /// <summary>Checks if element can be hovered based on position of mouse.</summary>

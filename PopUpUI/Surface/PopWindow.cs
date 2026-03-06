@@ -18,7 +18,7 @@ namespace PopUpUI.Surface
         private Rectangle _boundaries;
         private RenderTarget2D _windowTexture;
 
-        private readonly TextureDrawOptions _drawOptions;
+        private readonly BatchDrawOptions _drawOptions;
 
         /// <summary>Enables more than one <see cref="IHoldable"/> instances to be updated at the same time. Default value is <see langword="true"/>.</summary>
         public bool EnableMultiHold { get; set; } = true;
@@ -40,13 +40,13 @@ namespace PopUpUI.Surface
                 if (value.Width <= 0 || value.Height <= 0)
                     throw new ArgumentException("Window width and height must be greated than zero");
 
-                if (_boundaries != value)
+                if (_boundaries.Size != value.Size)
                 {
                     _windowTexture?.Dispose();
                     _windowTexture = DrawHelper.CreateRenderTarget(value.Width, value.Height);
-
-                    _boundaries = value;
                 }
+
+                _boundaries = value;
             }
         }
 
@@ -54,15 +54,15 @@ namespace PopUpUI.Surface
         {
         }
 
-        public PopWindow(Point size, TextureDrawOptions? drawOptions)
+        public PopWindow(Point size, BatchDrawOptions? drawOptions)
         {
-            _drawOptions = drawOptions ?? TextureDrawOptions.Default;
+            _drawOptions = drawOptions ?? BatchDrawOptions.Default;
 
             Boundaries = new Rectangle(new Point(), size);
             Elements = new PopElementCollection();
         }
 
-        internal void FrameUpdate()
+        internal void Update()
         {
             foreach (var element in Elements)
             {
@@ -71,7 +71,7 @@ namespace PopUpUI.Surface
                     continue;
                 }
 
-                element.FrameUpdate();
+                element.Update();
             }
         }
 
@@ -93,7 +93,7 @@ namespace PopUpUI.Surface
 
                 foreach (var drawInfo in element.GetDrawInfos())
                 {
-                    DrawHelper.Batch.Draw(drawInfo.Texture, drawInfo.DestinationArea, drawInfo.Opacity * Color.White);
+                    DrawHelper.Batch.Draw(drawInfo.GetTexture(), drawInfo.DestinationArea, drawInfo.Opacity * Color.White);
                 }
             }
 
@@ -113,22 +113,45 @@ namespace PopUpUI.Surface
 
                 if (element.CanBeHovered(e.MousePoint))
                 {
-                    if (!element.HoverablePacket.IsHovered) element.OnHoverStateChange(e, true);
+                    if (!element.IsHovered) element.OnHoverStateChange(e, true);
 
                     if (!EnableMultiHover) endAllHovers = true;
                 }
-                else if (element.HoverablePacket.IsHovered)
+                else if (element.IsHovered)
                 {
                     element.OnHoverStateChange(e, false);
                 }
 
-                if (element.HoverablePacket.IsHovered) element.OnHovering(e);
+                if (element.IsHovered) element.OnHovering(e);
             }
 
-            IEnumerable<IHoldable> holdableElements =
-                Elements.WhereWithType<IHoldable>(element => element.CanBeHeld(e.MousePoint) || element.HoldPacket.IsHeld);
 
-            IEnumerable<IHoldable> alreadyHeldElements = holdableElements.ToList().Where(element => element.HoldPacket.IsHeld);
+            bool endAllHolds = false;
+            foreach (var element in Elements.WhereWithType<IHoldable>(i => true))
+            {
+                if (endAllHolds)
+                {
+                    element.OnHoldStateChange(e, false);
+                }
+
+                if ((element.CanBeHeld(e.MousePoint) || element.IsHeld) && element.HoldPacket.ButtonsToHold.HasAnyFlagFrom(e.PressedButtons))
+                {
+                    if (!element.IsHeld) element.OnHoldStateChange(e, true);
+
+                    if (!EnableMultiHold) endAllHolds = true;
+                }
+                else if (element.IsHeld)
+                {
+                    element.OnHoldStateChange(e, false);
+                }
+
+                if (element.IsHeld) element.OnHolding(e);
+            }
+
+            /*
+            IEnumerable<IHoldable> holdableElements = Elements.WhereWithType<IHoldable>(element => element.CanBeHeld(e.MousePoint) || element.IsHeld);
+
+            IEnumerable<IHoldable> alreadyHeldElements = holdableElements.ToList().Where(element => element.IsHeld);
             foreach (var holdable in alreadyHeldElements)
             {
                 holdable.HoldStatusUpdate(e, holdable.HoldPacket.ButtonsToHold.HasAnyFlagFrom(e.PressedButtons));
@@ -147,7 +170,7 @@ namespace PopUpUI.Surface
                         if (!EnableMultiHold) break;
                     }
                 }
-            }
+            }*/
         }
 
         internal void OnMouseButtonStateChange(PopUpWindowEventArgs e)
@@ -173,28 +196,28 @@ namespace PopUpUI.Surface
 
         internal void OnKeyDown(PopUpWindowEventArgs e, Keys key)
         {
-            IKeyReceiver keyReceiver = Elements.FindWithType<IKeyReceiver>(element => element.KeyReceiverPacket.ReceivesKeyInput);
+            IKeyReceiver keyReceiver = Elements.FindWithType<IKeyReceiver>(element => element.ReceivesKeyInput);
 
             keyReceiver?.OnKeyDown(e, key);
         }
 
         internal void OnKeyUp(PopUpWindowEventArgs e, Keys key)
         {
-            IKeyReceiver keyReceiver = Elements.FindWithType<IKeyReceiver>(element => element.KeyReceiverPacket.ReceivesKeyInput);
+            IKeyReceiver keyReceiver = Elements.FindWithType<IKeyReceiver>(element => element.ReceivesKeyInput);
 
             keyReceiver?.OnKeyUp(e, key);
         }
 
         internal void OnTextInput(PopUpWindowEventArgs e, char ch)
         {
-            ITextReceiver textReceiver = Elements.FindWithType<ITextReceiver>(element => element.TextReceiverPacket.ReceivesTextInput);
+            ITextReceiver textReceiver = Elements.FindWithType<ITextReceiver>(element => element.ReceivesTextInput);
 
             textReceiver?.OnTextInputReceive(e, ch);
         }
 
         internal void OnFileDrop(PopUpWindowEventArgs e, FileDropEventArgs fileArgs)
         {
-            IFileReceiver fileReceiver = Elements.FindWithType<IFileReceiver>(element => element.FilePacket.ReceivesFileDrop);
+            IFileReceiver fileReceiver = Elements.FindWithType<IFileReceiver>(element => element.CanReceiveFileDrop(e.MousePoint));
 
             fileReceiver?.OnFileDrop(e, fileArgs);
         }

@@ -54,15 +54,15 @@ namespace PopUpUI.Text
 
         /// <summary>Initializes a new instance of <see cref="RichTextRenderer"/> class with given <paramref name="font"/> and <paramref name="options"/> to use while drawing.</summary>
         /// <param name="font"><see cref="SpriteFont"/> that will be used while rendering text.</param>
-        /// <param name="options"><see cref="TextureDrawOptions"/> that will be used while rendering text.</param>
+        /// <param name="options"><see cref="BatchDrawOptions"/> that will be used while rendering text.</param>
         /// <exception cref="ArgumentNullException"></exception>
-        public RichTextRenderer(SpriteFont font, TextureDrawOptions? options) : base(font, options)
+        public RichTextRenderer(SpriteFont font, BatchDrawOptions? options) : base(font, options)
         {
             ColorHashes = new HashCollection<ColorHash>(this);
             IconHashes = new HashCollection<IconHash>(this);
         }
 
-        /// <summary>Initializes a new instance of <see cref="RichTextRenderer"/> class with given <paramref name="font"/> and default <see cref="TextureDrawOptions"/>.</summary>
+        /// <summary>Initializes a new instance of <see cref="RichTextRenderer"/> class with given <paramref name="font"/> and default <see cref="BatchDrawOptions"/>.</summary>
         /// <param name="font"><see cref="SpriteFont"/> that will be used while rendering text.</param>
         /// <exception cref="ArgumentNullException"></exception>
         public RichTextRenderer(SpriteFont font) : this(font, null)

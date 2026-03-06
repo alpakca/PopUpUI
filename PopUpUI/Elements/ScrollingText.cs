@@ -23,7 +23,7 @@ namespace PopUpUI.Elements
 
         private readonly int SpaceBetweenTexts;
         private readonly TextBlock _textBlock;
-        private readonly TextureDrawOptions drawOptions;
+        private readonly BatchDrawOptions drawOptions;
 
         private readonly AnimationDisplayInfo backgroundUIElement;
         private readonly TextureDisplayInfo textUIElement;
@@ -72,14 +72,14 @@ namespace PopUpUI.Elements
         /// <param name="spaceBetweenTexts">The space length between texts while scrolling.</param>
         /// <param name="visibleArea">The visible area that text will be shown.</param>
         /// <param name="options">Options to control drawing behaviour.</param>
-        public ScrollingText(TextBlock text, int spaceBetweenTexts, Point visibleArea, TextureDrawOptions? options)
+        public ScrollingText(TextBlock text, int spaceBetweenTexts, Point visibleArea, BatchDrawOptions? options)
         {
             ArgumentNullException.ThrowIfNull(text);
 
             _textBlock = text;
             area = new Rectangle(new Point(), visibleArea);
             SpaceBetweenTexts = spaceBetweenTexts;
-            drawOptions = options ?? TextureDrawOptions.Default;
+            drawOptions = options ?? BatchDrawOptions.Default;
 
             elementTexture = DrawHelper.CreateRenderTarget(visibleArea.X, visibleArea.Y);
 

@@ -1,5 +1,4 @@
 ﻿using PopUpUI.Elements;
-using System;
 
 namespace PopUpUI.Input
 {
@@ -14,7 +13,7 @@ namespace PopUpUI.Input
         /// <summary>Raised when <see cref="CanBeSelected(Point)"/> is false, also outside selecting is enabled.</summary>
         public event PopUpElementHandler OutsideSelected;
 
-        public void RaiseSelected(PopUpElement sender, PopUpWindowEventArgs e);
-        public void RaiseOutsideSelected(PopUpElement sender, PopUpWindowEventArgs e);
+        public void RaiseSelected(PopElement sender, PopUpWindowEventArgs e);
+        public void RaiseOutsideSelected(PopElement sender, PopUpWindowEventArgs e);
     }
 }

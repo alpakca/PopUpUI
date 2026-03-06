@@ -4,7 +4,7 @@ using PopUpUI.Surface;
 
 namespace PopUpUI.Toolkit
 {
-    /// <summary>Contains methods to draw through <see cref="TextureDrawOptions"/> and create textures.</summary>
+    /// <summary>Contains methods to draw through <see cref="BatchDrawOptions"/> and create textures.</summary>
     public static class DrawHelper
     {
         private static bool IsInitialized = false;
@@ -17,6 +17,7 @@ namespace PopUpUI.Toolkit
         public static GraphicsDevice Device => graphicsDevice;
         /// <summary>Batch to use for only drawing. To start and end a batch use BeginBatch() and EndBatch() methods.</summary>
         public static SpriteBatch Batch => drawBatch;
+        public static Texture2D SinglePixel => singlePixel;
 
         internal static void Initialize(Game game)
         {
@@ -63,7 +64,7 @@ namespace PopUpUI.Toolkit
             drawBatch.Begin();
         }
 
-        public static void SetBeginBatch(RenderTarget2D target, TextureDrawOptions options)
+        public static void SetBeginBatch(RenderTarget2D target, BatchDrawOptions options)
         {
             graphicsDevice.SetRenderTarget(target);
             drawBatch.Begin(options.SortMode, options.BlendState, options.SamplerState,

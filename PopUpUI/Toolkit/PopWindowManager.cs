@@ -34,7 +34,7 @@ namespace PopUpUI.Toolkit
 
         internal static void FrameUpdate()
         {
-            foreach (var window in ActiveWindows) window.FrameUpdate();
+            foreach (var window in ActiveWindows) window.Update();
         }
 
         internal static void RenderUpdate()

@@ -13,7 +13,7 @@ namespace PopUpUI.Text
     /// <summary>Presents an object that can render text on <see cref="RenderTarget2D"/> in different ways.</summary>
     public class TextRenderer
     {
-        protected readonly TextureDrawOptions drawOptions;
+        protected readonly BatchDrawOptions drawOptions;
 
         /// <summary>Gets or sets maximum length of each row of text can contain. Default value is <see cref="int.MaxValue"/>.</summary>
         public int HorizontalTextLength { get; set; } = int.MaxValue;
@@ -37,7 +37,7 @@ namespace PopUpUI.Text
         /// <summary>Gets the font that is used by renderer to create text.</summary>
         public SpriteFont Font { get; }
 
-        /// <summary>Initializes a new instance of <see cref="TextRenderer"/> class with given <paramref name="font"/> and default <see cref="TextureDrawOptions"/>.</summary>
+        /// <summary>Initializes a new instance of <see cref="TextRenderer"/> class with given <paramref name="font"/> and default <see cref="BatchDrawOptions"/>.</summary>
         /// <param name="font"><see cref="SpriteFont"/> that will be used while rendering text.</param>
         public TextRenderer(SpriteFont font) : this(font, null)
         {
@@ -46,14 +46,14 @@ namespace PopUpUI.Text
         /// <summary>Initializes a new instance of <see cref="TextRenderer"/> class 
         /// with given <paramref name="font"/> and <paramref name="options"/> to use while drawing.</summary>
         /// <param name="font"><see cref="SpriteFont"/> that will be used while rendering text.</param>
-        /// <param name="options"><see cref="TextureDrawOptions"/> that will be used while rendering text.</param>
+        /// <param name="options"><see cref="BatchDrawOptions"/> that will be used while rendering text.</param>
         /// <exception cref="ArgumentNullException"></exception>
-        public TextRenderer(SpriteFont font, TextureDrawOptions? options)
+        public TextRenderer(SpriteFont font, BatchDrawOptions? options)
         {
             ArgumentNullException.ThrowIfNull(font, nameof(font));
 
             Font = font;
-            drawOptions = options ?? TextureDrawOptions.Default;
+            drawOptions = options ?? BatchDrawOptions.Default;
         }
 
         /// <summary>Initializes a new instance of <see cref="TextRenderer"/> class with properties from given <paramref name="renderer"/>.</summary>

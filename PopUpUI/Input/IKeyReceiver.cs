@@ -6,6 +6,8 @@ namespace PopUpUI.Input
     /// <summary>Defines a mechanism for <see cref="PopUpElement"/> for receiving key input from keyboard.</summary>
     public interface IKeyReceiver
     {
+        /// <summary>Indicates if element can take input.</summary>
+        public bool ReceivesKeyInput { get; }
         public IKeyReceiverPacket KeyReceiverPacket { get; }
 
         /// <summary>Called when element got a key input.</summary>

@@ -5,11 +5,11 @@ using System;
 namespace PopUpUI.Surface
 {
     /// <summary>Presents the options to use while beginning batch <see cref="SpriteBatch"/>.</summary>
-    public class TextureDrawOptions
+    public class BatchDrawOptions
     {
-        private static readonly TextureDrawOptions defaultDrawOptions = new TextureDrawOptions { BlendState = BlendState.NonPremultiplied, _isReadonly = true };
+        private static readonly BatchDrawOptions defaultDrawOptions = new BatchDrawOptions { BlendState = BlendState.NonPremultiplied, _isReadonly = true };
         /// <summary>Gets a readonly default options for drawing texture.</summary>
-        public static TextureDrawOptions Default => defaultDrawOptions;
+        public static BatchDrawOptions Default => defaultDrawOptions;
 
         private bool _isReadonly = false;
 
@@ -99,7 +99,7 @@ namespace PopUpUI.Surface
         }
 
         /// <summary>Initializes options with default properties.</summary>
-        public TextureDrawOptions()
+        public BatchDrawOptions()
         {
             SortMode = SpriteSortMode.Deferred;
             TransformMatrix = null;
@@ -107,7 +107,7 @@ namespace PopUpUI.Surface
 
         /// <summary>Initializes options with copying from <paramref name="options"/>.</summary>
         /// <param name="options">Options to copy from.</param>
-        public TextureDrawOptions(TextureDrawOptions options)
+        public BatchDrawOptions(BatchDrawOptions options)
         {
             _blendState = options.BlendState;
             _samplerState = options.SamplerState;

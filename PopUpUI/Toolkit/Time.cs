@@ -11,7 +11,7 @@ namespace PopUpUI.Toolkit
         private static TimeSpan elapsedGameTime;
         private static Game game;
 
-        /// <summary>Gets the time elapsed between the last frame and the one preceding it.</summary>
+        /// <summary>Gets the time elapsed between the last update and the one preceding it, in milliseconds.</summary>
         public static float DeltaTime => deltaTime;
         /// <summary>Gets or sets a fps limit for the project. To be worked with set fps, <see cref="UseFixedTimeStep"/> should be set to true.</summary>
         public static int TargetFrameRate
@@ -42,7 +42,7 @@ namespace PopUpUI.Toolkit
 
         internal static void FrameUpdate(GameTime gameTime)
         {
-            deltaTime = gameTime.ElapsedGameTime.Milliseconds / 1000f;
+            deltaTime = gameTime.ElapsedGameTime.Milliseconds;
             elapsedGameTime = gameTime.TotalGameTime;
         }
     }

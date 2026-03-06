@@ -21,7 +21,7 @@ namespace PopUpUI.Elements
 
         private readonly PopUpElement elementToRotate;
         private readonly TextureDisplayInfo uiElement;
-        private readonly TextureDrawOptions drawOptions;
+        private readonly BatchDrawOptions drawOptions;
 
         public float RotatedAngle => currentAngle;
         public bool IsHovered => elementToRotate is IHoverable hoverable && hoverable.IsHovered;
@@ -155,14 +155,14 @@ namespace PopUpUI.Elements
         /// <param name="bounds">The bounds of the element. If element's bounds are not specified, they must be specified here, else an exception will be thrown.</param>
         /// <param name="options">Options to control drawing behaviour.</param>
         /// <exception cref="ArgumentException"></exception>
-        public Rotator(PopUpElement element, TextureDrawOptions? options)
+        public Rotator(PopUpElement element, BatchDrawOptions? options)
         {
             ArgumentNullException.ThrowIfNull(element);
             if (element.Area == Rectangle.Empty) throw new ArgumentException();
 
             elementToRotate = element;
             this.area = element.Area;
-            drawOptions = options ?? TextureDrawOptions.Default;
+            drawOptions = options ?? BatchDrawOptions.Default;
 
             elementTexture = DrawHelper.CreateRenderTarget(this.area.Width, this.area.Height);
             int diameter = (int)Math.Sqrt(Math.Pow(this.area.Width, 2) + Math.Pow(this.area.Height, 2));

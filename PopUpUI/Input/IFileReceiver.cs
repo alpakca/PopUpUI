@@ -6,6 +6,7 @@ namespace PopUpUI.Input
     {
         public IFileReceiverPacket FilePacket { get; }
 
+        public bool CanReceiveFileDrop(Point mousePosition);
         public void OnFileDrop(PopUpWindowEventArgs e, FileDropEventArgs fileArgs);
     }
 }
