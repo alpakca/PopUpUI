@@ -1,8 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using PopUpUI.Surface.Animation;
 using System;
-using System.Collections.Generic;
 
 #nullable enable
 
@@ -11,9 +9,6 @@ namespace PopUpUI.Toolkit
     /// <summary>Presents the manager of the PopUpUI, which controls the initiazation, updates and draws of the project.</summary>
     public static class PopUpUIManager
     {
-        private static readonly List<WeakReference<Animator>> _animators = new List<WeakReference<Animator>>();
-        private static readonly List<WeakReference<AnimationState>> _animationStates = new List<WeakReference<AnimationState>>();
-
         private static bool isInitialized;
 
         /// <summary>Raised in each <see cref="FrameUpdate(GameTime)"/> call.</summary>
@@ -63,61 +58,6 @@ namespace PopUpUI.Toolkit
         public static void BufferDraw(SpriteBatch batch)
         {
             PopWindowManager.BufferDraw(batch);
-        }
-
-        internal static void RegisterAnimator(Animator animator)
-        {
-            _animators.Add(new WeakReference<Animator>(animator));
-        }
-
-        internal static void RegisterAnimationState(AnimationState state)
-        {
-            _animationStates.Add(new WeakReference<AnimationState>(state));
-        }
-
-        internal static void UpdateAnimators()
-        {
-            for (int i = _animators.Count - 1; i >= 0; i--)
-            {
-                if (_animators[i].TryGetTarget(out Animator? animator))
-                {
-                    animator.Update();
-                }
-                else
-                {
-                    _animators.RemoveAt(i);
-                }
-            }
-        }
-
-        internal static void UpdateAnimationStates()
-        {
-            for (int i = _animationStates.Count - 1; i >= 0; i--)
-            {
-                if (_animationStates[i].TryGetTarget(out AnimationState? state))
-                {
-                    state.Update();
-                }
-                else
-                {
-                    _animationStates.RemoveAt(i);
-                }
-            }
-        }
-
-        internal static void ResetAnimationStates()
-        {
-            for (int i = _animationStates.Count - 1; i >= 0; i--)
-            {
-                if (_animationStates[i].TryGetTarget(out AnimationState? state))
-                {
-                    state.ResetUpdate();
-                }
-                else
-                {
-                    _animationStates.RemoveAt(i);
-                }
-            }
         }
     }
 }

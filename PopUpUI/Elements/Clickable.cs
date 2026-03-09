@@ -1,134 +1,62 @@
 ﻿using Microsoft.Xna.Framework;
+using PopUpUI.Elements;
 using PopUpUI.Input;
 using System;
-using System.Collections.Generic;
-using PopUpUI.Surface;
-using PopUpUI.Surface.Animation;
 
-namespace PopUpUI.Elements
+namespace PopUpUI.NewElements
 {
-    /// <summary>Presents a clickable object, that is a button can be held, hovered and selected.</summary>
-    public class Clickable : PopUpElement, IHoldable, IHoverable, ISelectable, IBackgroundSupport
+    internal class Clickable : PopElement, IHoldable, ISelectable
     {
-        private bool isHeld;
-        private bool isHovered;
-        private bool currentlySelected;
-        private float opacity = 1;
-        private Rectangle area;
-        private readonly AnimationDisplayInfo backgroundUIElement;
+        protected bool isHeld;
+        protected bool wasSelected;
 
         public bool IsHeld => isHeld;
-        public bool IsHovered => isHovered;
-        public bool EnabledOutsideSelecting { get; set; }
-        public MouseButtons ButtonsToHold { get; set; }
-        public MouseButtons ButtonsToSelect { get; set; }
+        public IHoldablePacket HoldPacket { get; set; }
+        public ISelectablePacket SelectablePacket { get; set; }
 
-        public override float Opacity
+        public event Action<Clickable> Clicked;
+
+        protected virtual void OnClick()
         {
-            get => opacity;
-            set
+            Clicked?.Invoke(this);
+        }
+
+        public virtual void OnHoldStateChange(PopUpWindowEventArgs e, bool startedHolding)
+        {
+            if (!startedHolding && wasSelected && CanBeSelected(e.MousePoint))
             {
-                backgroundUIElement.Opacity = value;
-                opacity = value;
-            }
-        }
-        public override Rectangle Area
-        {
-            get => area;
-            set
-            {
-                backgroundUIElement.Location = value.Location;
-                backgroundUIElement.Size = value.Size;
-
-                area = value;
-            }
-        }
-
-        public AnimationState BackgroundAnimation
-        {
-            get => backgroundUIElement.Animation;
-            set => backgroundUIElement.Animation = value;
-        }
-
-        public Predicate<PopUpElement> DoNotHoldIf { get; set; }
-        public Predicate<PopUpElement> DoNotHoverIf { get; set; }
-        public Predicate<PopUpElement> DoNotSelectIf { get; set; }
-
-        public event PopUpElementHandler Held;
-        public event PopUpElementHandler<bool> HoldStateChange;
-        public event PopUpElementHandler<bool> HoverStateChange;
-        public event PopUpElementHandler Hovering;
-        public event PopUpElementHandler Selected;
-        public event PopUpElementHandler OutsideSelected;
-
-        /// <summary>Initializes a new instance of <see cref="Clickable"/> class.</summary>
-        public Clickable()
-        {
-            backgroundUIElement = new AnimationDisplayInfo();
-        }
-
-        public override IEnumerable<IUIDisplayInfo> GetDisplayInfos()
-        {
-            if (BackgroundAnimation != null) yield return backgroundUIElement;
-        }
-
-        protected override void ToggleAnimationStates(bool willPlay)
-        {
-            if (willPlay) backgroundUIElement.Animation?.Play();
-            else backgroundUIElement.Animation?.Stop();
-        }
-
-        public bool CanBeHeld(Point point) => base.IsInside(point);
-        public bool CanBeHovered(Point point) => base.IsInside(point);
-        public bool CanBeSelected(Point point) => base.IsInside(point);
-
-        void IHoldable.HoldStatusUpdate(PopUpWindowEventArgs e, bool isHeld)
-        {
-            // check for selecting clickable
-            if (currentlySelected && this.isHeld && !isHeld && CanBeSelected(e.MousePoint))
-            {
-                Selected(this, e);
-                currentlySelected = false;
+                wasSelected = false;
+                OnClick();
             }
 
-            if (!this.isHeld && isHeld)
-            {
-                HoldStateChange(this, e, true);
-            }
-            else if (this.isHeld && !isHeld)
-            {
-                HoldStateChange(this, e, false);
-            }
-
-            // variable update
-            this.isHeld = isHeld;
-
-            // regular update for visual & event
-            if (isHeld)
-            {
-                Held(this, e);
-            }
+            this.isHeld = startedHolding;
+            HoldPacket?.RaiseHoldStateChange(this, e, startedHolding);
         }
 
-        void IHoverable.OnHoverStateChange(PopUpWindowEventArgs e, bool isHovered)
+        public virtual void OnHolding(PopUpWindowEventArgs e)
         {
-            this.isHovered = isHovered;
-            HoverStateChange(this, e, isHovered);
+            HoldPacket?.RaiseHeld(this, e);
         }
 
-        void IHoverable.OnHovering(PopUpWindowEventArgs e)
+        public virtual void OnSelect(PopUpWindowEventArgs e)
         {
-            Hovering(this, e);
+            wasSelected = true;
+            SelectablePacket?.RaiseSelected(this, e);
         }
 
-        void ISelectable.OnSelect(PopUpWindowEventArgs e)
+        public virtual void OnSelectingOutside(PopUpWindowEventArgs e)
         {
-            currentlySelected = true;
+            SelectablePacket?.RaiseOutsideSelected(this, e);
         }
 
-        void ISelectable.OnSelectingOutside(PopUpWindowEventArgs e)
+        public bool CanBeHeld(Point point)
         {
-            OutsideSelected(this, e);
+            return _boundaries.Contains(point);
+        }
+
+        public bool CanBeSelected(Point point)
+        {
+            return _boundaries.Contains(point);
         }
     }
 }

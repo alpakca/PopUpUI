@@ -1,100 +1,40 @@
 ﻿using Microsoft.Xna.Framework;
+using PopUpUI.Elements;
 using PopUpUI.Input;
 using System;
-using System.Collections.Generic;
-using PopUpUI.Surface;
-using PopUpUI.Toolkit;
-using PopUpUI.Surface.Animation;
 
-namespace PopUpUI.Elements
+namespace PopUpUI.NewElements
 {
-    /// <summary>Presents a checkbox, that is a button that can change to checked and unchecked as state.</summary>
-    public class Checkbox : PopUpElement, ISelectable, IBackgroundSupport
+    internal class CheckBox : PopElement, ISelectable
     {
-        private bool isChecked;
-        private float opacity = 1;
-        private Rectangle area;
-        private readonly AnimationDisplayInfo backgroundUIElement;
+        protected bool isChecked;
 
-        /// <summary>Indicates the current state of checkbox.</summary>
         public bool IsChecked => isChecked;
-        public bool EnabledOutsideSelecting { get; set; }
-        public MouseButtons ButtonsToSelect { get; set; }
-        public override float Opacity
+        public ISelectablePacket SelectablePacket { get; }
+
+        public event Action<CheckBox> CheckChange; 
+
+        protected virtual void OnCheckChange()
         {
-            get => opacity;
-            set
-            {
-                backgroundUIElement.Opacity = value;
-                opacity = value;
-            }
-        }
-        public override Rectangle Area
-        {
-            get => area;
-            set
-            {
-                backgroundUIElement.Location = value.Location;
-                backgroundUIElement.Size = value.Size;
-                area = value;
-            }
+            CheckChange?.Invoke(this);
         }
 
-        public AnimationState BackgroundAnimation
+        public void OnSelect(PopUpWindowEventArgs e)
         {
-            get => backgroundUIElement.Animation;
-            set => backgroundUIElement.Animation = value;
+            isChecked = !isChecked;
+            OnCheckChange();
+
+            SelectablePacket?.RaiseSelected(this, e);
         }
 
-        public Predicate<PopUpElement> DoNotSelectIf { get; set; }
-
-        public event PopUpElementHandler Selected;
-        public event PopUpElementHandler OutsideSelected;
-        /// <summary>Raised when status of checkbox has changed.</summary>
-        public event Action<Checkbox, bool> CheckChange;
-
-        /// <summary>Initializes a new instance of <see cref="Checkbox"/> class.</summary>
-        public Checkbox()
+        public void OnSelectingOutside(PopUpWindowEventArgs e)
         {
-            backgroundUIElement = new AnimationDisplayInfo();
-        }
-
-        /// <summary>Sets the check state of the checkbox.</summary>
-        /// <param name="isChecked">New state of the checkbox.</param>
-        public void SetCheckState(bool isChecked)
-        {
-            this.isChecked = isChecked;
-
-            CheckChange?.Invoke(this, isChecked);
-        }
-
-        public override IEnumerable<IUIDisplayInfo> GetDisplayInfos()
-        {
-            if (BackgroundAnimation != null) yield return backgroundUIElement;
-        }
-
-        protected override void ToggleAnimationStates(bool willPlay)
-        {
-            if (willPlay) backgroundUIElement.Animation?.Play();
-            else backgroundUIElement.Animation?.Stop();
+            SelectablePacket?.RaiseOutsideSelected(this, e);
         }
 
         public bool CanBeSelected(Point point)
         {
-            return base.IsInside(point);
-        }
-
-        void ISelectable.OnSelect(PopUpWindowEventArgs e)
-        {
-            bool newValue = !isChecked;
-            SetCheckState(newValue);
-
-            Selected(this, e);
-        }
-
-        void ISelectable.OnSelectingOutside(PopUpWindowEventArgs e)
-        {
-            OutsideSelected(this, e);
+            return _boundaries.Contains(point);
         }
     }
 }

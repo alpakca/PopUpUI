@@ -79,9 +79,7 @@ namespace PopUpUI.Toolkit
             {
                 ContentType.Texture2D => DrawHelper.FromFile(CreationInfo as string),
                 ContentType.Song => Song.FromUri(System.IO.Path.GetFileName(CreationInfo as string), new Uri(CreationInfo as string, UriKind.Absolute)),
-                ContentType.SoundEffect => SoundEffect.FromFile(CreationInfo as string),
-                ContentType.AnimationState => AnimationState.FromFile(CreationInfo as string),
-                ContentType.ColorBrush => new ColorBrush((Color)CreationInfo),
+                ContentType.SoundEffect => SoundEffect.FromFile(CreationInfo as string)
 
                 _ => throw new ArgumentException("Invalid ContentType")
             };
