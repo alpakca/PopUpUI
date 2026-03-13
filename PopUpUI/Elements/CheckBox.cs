@@ -1,9 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
-using PopUpUI.Elements;
 using PopUpUI.Input;
 using System;
 
-namespace PopUpUI.NewElements
+namespace PopUpUI.Elements
 {
     internal class CheckBox : PopElement, ISelectable
     {
@@ -12,7 +11,7 @@ namespace PopUpUI.NewElements
         public bool IsChecked => isChecked;
         public ISelectablePacket SelectablePacket { get; }
 
-        public event Action<CheckBox> CheckChange; 
+        public event Action<CheckBox> CheckChange;
 
         protected virtual void OnCheckChange()
         {

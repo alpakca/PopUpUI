@@ -2,7 +2,7 @@
 using PopUpUI.Surface;
 using System.Collections.Generic;
 
-namespace PopUpUI.NewElements.Visual
+namespace PopUpUI.Elements.Visual
 {
     internal class VisualCheckBox : CheckBox
     {

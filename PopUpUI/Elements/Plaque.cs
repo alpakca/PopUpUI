@@ -1,17 +1,16 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using PopUpUI.Elements;
 using PopUpUI.Surface;
 using System;
 using System.Collections.Generic;
 
-namespace PopUpUI.NewElements
+namespace PopUpUI.Elements
 {
     public class Plaque : PopElement
     {
         private readonly UIDrawInfo drawInfo;
 
-        public override float Opacity 
+        public override float Opacity
         {
             set
             {
@@ -20,7 +19,7 @@ namespace PopUpUI.NewElements
             }
         }
 
-        public override Rectangle Boundaries 
+        public override Rectangle Boundaries
         {
             set
             {

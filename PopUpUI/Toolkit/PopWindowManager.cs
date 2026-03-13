@@ -32,7 +32,7 @@ namespace PopUpUI.Toolkit
             isInitialized = true;
         }
 
-        internal static void FrameUpdate()
+        internal static void Update()
         {
             foreach (var window in ActiveWindows) window.Update();
         }

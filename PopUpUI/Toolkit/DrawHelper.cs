@@ -27,6 +27,8 @@ namespace PopUpUI.Toolkit
             GraphicsDevice.DiscardColor = Color.Transparent;
 
             singlePixel = new Texture2D(graphicsDevice, 1, 1);
+            singlePixel.SetData(new Color[] { Color.White });
+
             drawBatch = new SpriteBatch(graphicsDevice);
             
             IsInitialized = true;
@@ -57,13 +59,17 @@ namespace PopUpUI.Toolkit
         {
             return Texture2D.FromFile(graphicsDevice, path);
         }
-        
+
+        /// <summary>Sets <paramref name="target"/> for drawing and starts batching with <see cref="BatchDrawOptions.Default"/>.</summary>
+        /// <param name="target">Surface to draw on.</param>
         public static void SetBeginBatch(RenderTarget2D target)
         {
-            graphicsDevice.SetRenderTarget(target);
-            drawBatch.Begin();
+            SetBeginBatch(target, BatchDrawOptions.Default);
         }
 
+        /// <summary>Sets <paramref name="target"/> for drawing and starts batching with given <paramref name="options"/>.</summary>
+        /// <param name="target">Surface to draw on.</param>
+        /// <param name="options">Drawing options for batching.</param>
         public static void SetBeginBatch(RenderTarget2D target, BatchDrawOptions options)
         {
             graphicsDevice.SetRenderTarget(target);
@@ -77,9 +83,21 @@ namespace PopUpUI.Toolkit
             drawBatch.End();
         }
 
+        /// <summary>Draws a background at given destination with given color.</summary>
+        /// <param name="destinationArea">The area of the background.</param>
+        /// <param name="color">Color of the background.</param>
         public static void DrawBackground(Rectangle destinationArea, Color color)
         {
             drawBatch.Draw(singlePixel, destinationArea, color);
+        }
+
+        /// <summary>Draws a background at given destination with given color, using <paramref name="batch"/> instead of <see cref="Batch"/>.</summary>
+        /// <param name="destinationArea">The area of the background.</param>
+        /// <param name="color">Color of the background.</param>
+        /// <param name="batch">The batch to use for drawing.</param>
+        public static void DrawBackground(Rectangle destinationArea, Color color, SpriteBatch batch)
+        {
+            batch.Draw(singlePixel, destinationArea, color);
         }
     }
 }

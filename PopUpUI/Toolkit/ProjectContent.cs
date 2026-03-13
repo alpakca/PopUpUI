@@ -1,8 +1,5 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
+﻿using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
-using PopUpUI.Surface;
-using PopUpUI.Surface.Animation;
 using System;
 
 namespace PopUpUI.Toolkit
@@ -79,7 +76,7 @@ namespace PopUpUI.Toolkit
             {
                 ContentType.Texture2D => DrawHelper.FromFile(CreationInfo as string),
                 ContentType.Song => Song.FromUri(System.IO.Path.GetFileName(CreationInfo as string), new Uri(CreationInfo as string, UriKind.Absolute)),
-                ContentType.SoundEffect => SoundEffect.FromFile(CreationInfo as string)
+                ContentType.SoundEffect => SoundEffect.FromFile(CreationInfo as string),
 
                 _ => throw new ArgumentException("Invalid ContentType")
             };

@@ -39,13 +39,13 @@ namespace PopUpUI.Toolkit
             isInitialized = true;
         }
 
-        public static void FrameUpdate(GameTime gameTime)
+        public static void Update(GameTime gameTime)
         {
             // always first call Time - to update delta time
-            Time.FrameUpdate(gameTime);
-            InputManager.FrameUpdate();
+            Time.Update(gameTime);
+            InputManager.Update();
 
-            PopWindowManager.FrameUpdate();
+            PopWindowManager.Update();
 
             FrameCall?.Invoke(gameTime);
         }

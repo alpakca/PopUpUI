@@ -1,6 +1,6 @@
 ﻿namespace PopUpUI.Text
 {
-    /// <summary>Alignment options for <see cref="TextRenderer"/>.</summary>
+    /// <summary>Alignment options for rendering text.</summary>
     public enum TextAlignment
     {
         /// <summary>Text appears at top-left position relative to target text will be rendered on.</summary>

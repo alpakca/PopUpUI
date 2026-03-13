@@ -10,29 +10,6 @@ using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace PopUpUI.Toolkit
 {
-    internal static class DrawExtensions
-    {
-        public static Texture2D CropTexture(this Texture2D source, Rectangle rect)
-        {
-            Texture2D tex = DrawHelper.CreateTexture(rect.Width, rect.Height);
-            int count = rect.Width * rect.Height;
-            Color[] data = new Color[count];
-            source.GetData(0, rect, data, 0, count);
-            tex.SetData(data);
-            return tex;
-        }
-
-        public static void CropTexture(this Texture2D source, RenderTarget2D writeOn, Rectangle rect)
-        {
-            DrawHelper.SetRenderTarget(writeOn);
-            DrawHelper.BeginBatch(BatchDrawOptions.Default);
-
-            DrawHelper.Batch.Draw(source, rect.Location.ToVector2(), rect, Color.White);
-
-            DrawHelper.EndBatch();
-        }
-    }
-
     internal static class StructureExtensions
     {
         public static Rectangle AddToLocation(this Rectangle rect, Point location)

@@ -2,7 +2,7 @@
 using PopUpUI.Input;
 using PopUpUI.Surface;
 
-namespace PopUpUI.NewElements.Visual
+namespace PopUpUI.Elements.Visual
 {
     public class VisualHorizontalSlider : HorizontalSlider
     {

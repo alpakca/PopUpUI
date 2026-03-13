@@ -1,9 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
-using PopUpUI.Elements;
 using PopUpUI.Input;
 using System;
 
-namespace PopUpUI.NewElements
+namespace PopUpUI.Elements
 {
     public class HorizontalSlider : PopElement, IHoldable, ISelectable
     {

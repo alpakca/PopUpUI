@@ -1,19 +1,20 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Linq;
-using System.Text;
 using PopUpUI.Surface;
 using PopUpUI.Toolkit;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 #nullable enable
+#pragma warning disable 8524
 
 namespace PopUpUI.Text
 {
     /// <summary>Presents an object that can render text on <see cref="RenderTarget2D"/> in different ways.</summary>
-    public class TextRenderer
+    public class TextRenderer : ITextRenderer
     {
-        protected readonly BatchDrawOptions drawOptions;
+        private readonly BatchDrawOptions drawOptions;
 
         /// <summary>Gets or sets maximum length of each row of text can contain. Default value is <see cref="int.MaxValue"/>.</summary>
         public int HorizontalTextLength { get; set; } = int.MaxValue;
@@ -32,7 +33,7 @@ namespace PopUpUI.Text
         /// <remarks>This property does not effect text size from <see cref="GetTextSize"/>. It can be used to intentionally creating wiped text.</remarks>
         public Point TextOffset { get; set; } = new Point();
         /// <summary>Gets or sets the color of the text. Default value is <see cref="Color.White"/>.</summary>
-        public virtual Color TextColor { get; set; } = Color.White;
+        public Color TextColor { get; set; } = Color.White;
 
         /// <summary>Gets the font that is used by renderer to create text.</summary>
         public SpriteFont Font { get; }
@@ -76,448 +77,200 @@ namespace PopUpUI.Text
             Font = renderer.Font;
         }
 
-        /// <summary>Creates a new <see cref="RenderTarget2D"/> which has the size of the smallest size the text can fit in
-        /// and renders with current properties on created target.</summary>
-        /// <returns>Returns the created <see cref="RenderTarget2D"/> that contains rendered text.</returns>
-        public RenderTarget2D Render() => Render(GetTextSize());
-
-        /// <summary>Creates a new <see cref="RenderTarget2D"/> which has the size of <paramref name="targetSize"/> 
-        /// and renders with current properties on created target.</summary>
-        /// <param name="targetSize">The size of <see cref="RenderTarget2D"/> to create.</param>
-        /// <returns>The newly created <see cref="RenderTarget2D"/> that contains the render.</returns>
-        public RenderTarget2D Render(Point targetSize)
+        public void Render(RenderTarget2D target, Vector2 offset)
         {
-            RenderTarget2D target = DrawHelper.CreateRenderTarget(targetSize.X, targetSize.Y);
+            DrawHelper.SetBeginBatch(target, drawOptions);
 
-            Render(target);
-            return target;
-        }
+            List<(string Line, float LineWidth)> modifiedText = GetModifiedText();
+            offset += TextOffset.ToVector2() + GetAlignmentOffset(new Point(target.Width, target.Height), TextSizeFromModified(modifiedText));
 
-        /// <summary>Renders with current properties on <paramref name="target"/>.</summary>
-        /// <param name="target"><see cref="RenderTarget2D"/> instance to render text on.</param>
-        public virtual void Render(RenderTarget2D target)
-        {
-            DrawHelper.SetRenderTarget(target);
-            DrawHelper.BeginBatch(drawOptions);
-
-            string modifiedText = GetModifiedText();
-            Point textSize = GetTextSize();
-
-            float yOffset = GetYOffsetFromAlignment(target.Bounds.Size, textSize);
-            switch (Orientation)
+            foreach ((string line, float lineWidth) in modifiedText)
             {
-                case TextOrientation.Left:
-                case TextOrientation.Middle:
-                case TextOrientation.Right:
-
-                    foreach (var line in modifiedText.Split('\n'))
-                    {
-                        float xOffset = GetXOffsetFromOrientation(line) + GetXOffsetFromAlignment(target.Bounds.Size, textSize);
-                        DrawHelper.Batch.DrawString(Font, line, new Vector2(xOffset, yOffset) + TextOffset.ToVector2(), TextColor * Opacity);
-
-                        yOffset += Font.LineSpacing;
-                    }
-
-                    break;
-                case TextOrientation.FixedSize:
-
-                    foreach (var line in modifiedText.Split('\n'))
-                    {
-                        float xOffset = GetXOffsetFromOrientation(line) + GetXOffsetFromAlignment(target.Bounds.Size, textSize);
-                        string[] words = line.Split(' ');
-                        float spaceBetweenWords = (HorizontalTextLength - words.Select(GetLineLength).Sum()) / (words.Length - 1);
-
-                        foreach (var word in words)
-                        {
-                            DrawHelper.Batch.DrawString(Font, word, new Vector2(xOffset, yOffset) + TextOffset.ToVector2(), TextColor * Opacity);
-                            xOffset += GetLineLength(word) + spaceBetweenWords;
-                        }
-
-                        yOffset += Font.LineSpacing;
-                    }
-
-                    break;
+                DrawHelper.Batch.DrawString(Font, line, offset + GetOrientationOffset(lineWidth), TextColor * Opacity);
+                offset.Y += Font.LineSpacing;
             }
 
             DrawHelper.EndBatch();
         }
 
-        #region RenderWith overloads
-        /// <summary>Renders on <paramref name="target"/> by changing <see cref="Text"/> to <paramref name="text"/>.</summary>
-        /// <param name="target"><see cref="RenderTarget2D"/> instance to render on.</param>
-        /// <param name="text">Text that will be used instead of <see cref="Text"/>.</param>
-        public void RenderWith(RenderTarget2D target, string text) 
-            => RenderWith(target, text, TextOffset, Alignment);
-
-        /// <summary>Renders on <paramref name="target"/> by changing <see cref="TextOffset"/> to <paramref name="textOffset"/>.</summary>
-        /// <param name="target"><see cref="RenderTarget2D"/> instance to render on.</param>
-        /// <param name="textOffset">Offset that will used instead of <see cref="TextOffset"/>.</param>
-        public void RenderWith(RenderTarget2D target, Point textOffset)
-            => RenderWith(target, Text, textOffset, Alignment);
-
-        /// <summary>Renders on <paramref name="target"/> by changing <see cref="Alignment"/> to <paramref name="alignment"/>.</summary>
-        /// <param name="target"><see cref="RenderTarget2D"/> instance to render on.</param>
-        /// <param name="alignment">Alignment that will be used instead of <see cref="Alignment"/>.</param>
-        public void RenderWith(RenderTarget2D target, TextAlignment alignment)
-            => RenderWith(target, Text, TextOffset, alignment);
-
-        /// <summary>
-        /// Renders on <paramref name="target"/> by changing <see cref="Text"/> and <see cref="TextOffset"/> 
-        /// to <paramref name="text"/> and <paramref name="textOffset"/> respectively.
-        /// </summary>
-        /// <param name="target"><see cref="RenderTarget2D"/> instance to render on.</param>
-        /// <param name="text">Text that will be used instead of <see cref="Text"/>.</param>
-        /// <param name="textOffset">Offset that will used instead of <see cref="TextOffset"/>.</param>
-        public void RenderWith(RenderTarget2D target, string text, Point textOffset) 
-            => RenderWith(target, text, textOffset, Alignment);
-
-        /// <summary>
-        /// Renders on <paramref name="target"/> by changing <see cref="Text"/> and <see cref="Alignment"/> 
-        /// to <paramref name="text"/> and <paramref name="alignment"/> respectively.
-        /// </summary>
-        /// <param name="target"><see cref="RenderTarget2D"/> instance to render on.</param>
-        /// <param name="text">Text that will be used instead of <see cref="Text"/>.</param>
-        /// <param name="alignment">Alignment that will be used instead of <see cref="Alignment"/>.</param>
-        public void RenderWith(RenderTarget2D target, string text, TextAlignment alignment) 
-            => RenderWith(target, text, TextOffset, alignment);
-
-        /// <summary>
-        /// Renders on <paramref name="target"/> by changing <see cref="TextOffset"/> and <see cref="Alignment"/> 
-        /// to <paramref name="textOffset"/> and <paramref name="alignment"/> respectively.
-        /// </summary>
-        /// <param name="target"><see cref="RenderTarget2D"/> instance to render on.</param>
-        /// <param name="textOffset">Offset that will used instead of <see cref="TextOffset"/>.</param>
-        /// <param name="alignment">Alignment that will be used instead of <see cref="Alignment"/>.</param>
-        public void RenderWith(RenderTarget2D target, Point textOffset, TextAlignment alignment)
-            => RenderWith(target, Text, textOffset, alignment);
-
-        /// <summary>
-        /// Renders on <paramref name="target"/> by changing <see cref="Text"/>, <see cref="TextOffset"/> and <see cref="Alignment"/> 
-        /// to <paramref name="text"/>, <paramref name="textOffset"/> and <paramref name="alignment"/> respectively.
-        /// </summary>
-        /// <param name="target"><see cref="RenderTarget2D"/> instance to render on.</param>
-        /// <param name="text">Text that will be used instead of <see cref="Text"/>.</param>
-        /// <param name="textOffset">Offset that will used instead of <see cref="TextOffset"/>.</param>
-        /// <param name="alignment">Alignment that will be used instead of <see cref="Alignment"/>.</param>
-        public void RenderWith(RenderTarget2D target, string text, Point textOffset, TextAlignment alignment)
-        {
-            string oldText = Text;
-            Point oldTextOffset = TextOffset;
-            TextAlignment oldAlignment = Alignment;
-
-            Text = text;
-            TextOffset = textOffset;
-            Alignment = alignment;
-
-            Render(target);
-
-            Text = oldText;
-            TextOffset = oldTextOffset;
-            Alignment = oldAlignment;
-        }
-
-
-        /// <summary>
-        /// Renders on a newly created target of size <paramref name="targetSize"/> by changing <see cref="Text"/> to <paramref name="text"/>.
-        /// If <paramref name="targetSize"/> is <see langword="null"/>, the smallest size the text can fit is used.
-        /// </summary>
-        /// <param name="targetSize">The size of target that will be created. If <see langword="null"/>, the smallest size the text can fit is used.</param>
-        /// <param name="text">Text that will be used instead of <see cref="Text"/>.</param>
-        /// <returns>The newly created <see cref="RenderTarget2D"/> that contains the render.</returns>
-        public RenderTarget2D RenderWith(string text, Point? targetSize)
-            => RenderWith(text, TextOffset, Alignment, targetSize);
-
-        /// <summary>
-        /// Renders on a newly created target of size <paramref name="targetSize"/> by changing <see cref="TextOffset"/> to <paramref name="textOffset"/>.
-        /// If <paramref name="targetSize"/> is <see langword="null"/>, the smallest size the text can fit is used.
-        /// </summary>
-        /// <param name="targetSize">The size of target that will be created. If <see langword="null"/>, the smallest size the text can fit is used.</param>
-        /// <param name="textOffset">Offset that will used instead of <see cref="TextOffset"/>.</param>
-        /// <returns>The newly created <see cref="RenderTarget2D"/> that contains the render.</returns>
-        public RenderTarget2D RenderWith(Point textOffset, Point? targetSize)
-            => RenderWith(Text, textOffset, Alignment, targetSize);
-
-        /// <summary>
-        /// Renders on a newly created target of size <paramref name="targetSize"/> by changing <see cref="Alignment"/> to <paramref name="alignment"/>.
-        /// If <paramref name="targetSize"/> is <see langword="null"/>, the smallest size the text can fit is used.
-        /// </summary>
-        /// <param name="targetSize">The size of target that will be created. If <see langword="null"/>, the smallest size the text can fit is used.</param>
-        /// <param name="alignment">Alignment that will be used instead of <see cref="Alignment"/>.</param>
-        /// <returns>The newly created <see cref="RenderTarget2D"/> that contains the render.</returns>
-        public RenderTarget2D RenderWith(TextAlignment alignment, Point? targetSize)
-            => RenderWith(Text, TextOffset, alignment, targetSize);
-
-        /// <summary>
-        /// Renders on a newly created target of size <paramref name="targetSize"/> by changing <see cref="Text"/> and <see cref="TextOffset"/>
-        /// to <paramref name="text"/> and <paramref name="textOffset"/> respectively.
-        /// If <paramref name="targetSize"/> is <see langword="null"/>, the smallest size the text can fit is used.
-        /// </summary>
-        /// <param name="targetSize">The size of target that will be created. If <see langword="null"/>, the smallest size the text can fit is used.</param>
-        /// <param name="text">Text that will be used instead of <see cref="Text"/>.</param>
-        /// <param name="textOffset">Offset that will used instead of <see cref="TextOffset"/>.</param>
-        /// <returns>The newly created <see cref="RenderTarget2D"/> that contains the render.</returns>
-        public RenderTarget2D RenderWith(string text, Point textOffset, Point? targetSize)
-            => RenderWith(text, textOffset, Alignment, targetSize);
-
-        /// <summary>
-        /// Renders on a newly created target of size <paramref name="targetSize"/> by changing <see cref="Text"/> and <see cref="Alignment"/> 
-        /// to <paramref name="text"/> and <paramref name="alignment"/> respectively.
-        /// If <paramref name="targetSize"/> is <see langword="null"/>, the smallest size the text can fit is used.
-        /// </summary>
-        /// <param name="targetSize">The size of target that will be created. If <see langword="null"/>, the smallest size the text can fit is used.</param>
-        /// <param name="text">Text that will be used instead of <see cref="Text"/>.</param>
-        /// <param name="alignment">Alignment that will be used instead of <see cref="Alignment"/>.</param>
-        /// <returns>The newly created <see cref="RenderTarget2D"/> that contains the render.</returns>
-        public RenderTarget2D RenderWith(string text, TextAlignment alignment, Point? targetSize)
-            => RenderWith(text, TextOffset, alignment, targetSize);
-
-        /// <summary>
-        /// Renders on a newly created target of size <paramref name="targetSize"/> by changing <see cref="TextOffset"/> and <see cref="Alignment"/> 
-        /// to <paramref name="textOffset"/> and <paramref name="alignment"/> respectively.
-        /// If <paramref name="targetSize"/> is <see langword="null"/>, the smallest size the text can fit is used.
-        /// </summary>
-        /// <param name="targetSize">The size of target that will be created. If <see langword="null"/>, the smallest size the text can fit is used.</param>
-        /// <param name="textOffset">Offset that will used instead of <see cref="TextOffset"/>.</param>
-        /// <param name="alignment">Alignment that will be used instead of <see cref="Alignment"/>.</param>
-        /// <returns>The newly created <see cref="RenderTarget2D"/> that contains the render.</returns>
-        public RenderTarget2D RenderWith(Point textOffset, TextAlignment alignment, Point? targetSize)
-            => RenderWith(Text, textOffset, alignment, targetSize);
-
-        /// <summary>
-        /// Renders on a newly created target of size <paramref name="targetSize"/> by changing <see cref="Text"/>, <see cref="TextOffset"/> and <see cref="Alignment"/> 
-        /// to <paramref name="text"/>, <paramref name="textOffset"/> and <paramref name="alignment"/> respectively.
-        /// If <paramref name="targetSize"/> is <see langword="null"/>, the smallest size the text can fit is used.
-        /// </summary>
-        /// <param name="targetSize">The size of target that will be created. If <see langword="null"/>, the smallest size the text can fit is used.</param>
-        /// <param name="text">Text that will be used instead of <see cref="Text"/>.</param>
-        /// <param name="textOffset">Offset that will used instead of <see cref="TextOffset"/>.</param>
-        /// <param name="alignment">Alignment that will be used instead of <see cref="Alignment"/>.</param>
-        /// <returns>The newly created <see cref="RenderTarget2D"/> that contains the render.</returns>
-        public RenderTarget2D RenderWith(string text, Point textOffset, TextAlignment alignment, Point? targetSize)
-        {
-            string oldText = Text;
-            Point oldTextOffset = TextOffset;
-            TextAlignment oldAlignment = Alignment;
-
-            Text = text;
-            TextOffset = textOffset;
-            Alignment = alignment;
-
-            RenderTarget2D renderedTexture = Render(targetSize ?? GetTextSize());
-
-            Text = oldText;
-            TextOffset = oldTextOffset;
-            Alignment = oldAlignment;
-
-            return renderedTexture;
-        }
-        #endregion
-
-        /// <summary>Calculates the smallest size the text can fit in with current options.</summary>
-        /// <returns>Returns the smallest size the text can fit in with current options.</returns>
-        public virtual Point GetTextSize()
-        {
-            string modifiedText = GetModifiedText();
-
-            if (HorizontalTextLength != int.MaxValue)
-            {
-                return new Point(HorizontalTextLength, (modifiedText.Count(ch => ch == '\n') + 1) * Font.LineSpacing);
-            }
-
-            int maxWidth = 0;
-            foreach (var line in modifiedText.Split('\n'))
-            {
-                maxWidth = int.Max(maxWidth, (int)GetLineLength(line));
-            }
-
-            return new Point(maxWidth == 0 ? 1 : maxWidth, (modifiedText.AllIndexesOf("\n").Count() + 1) * Font.LineSpacing);
-        }
-
-        /// <summary>Calculates where a cursor should be positioned to be at the beginning of index <paramref name="atStartOfIndex"/>.</summary>
-        /// <param name="atStartOfIndex">The index position of the cursor.</param>
-        /// <param name="targetSizeRenderIn">The size of target that text is rendered for compability with <see cref="TextAlignment"/>. 
-        /// Ignores the <see cref="TextAlignment"/> if <see langword="null"/>.</param>
-        /// <returns>The position of cursor in <see cref="Vector2"/> inside size of rendered text.</returns>
-        /// <exception cref="ArgumentOutOfRangeException"></exception>
-        public virtual Vector2 GetCursorPosition(int atStartOfIndex, Point? targetSizeRenderIn)
-        {
-            ArgumentOutOfRangeException.ThrowIfNegative(atStartOfIndex);
-
-            string modifiedText = GetModifiedText();
-
-            var lines = modifiedText.Split('\n');
-            int lineIndexCursorIn = modifiedText.Take(atStartOfIndex).Count(ch => ch == '\n');
-
-            string lineContainingCursor = lines[lineIndexCursorIn];
-
-            float xPosition = GetXOffsetFromOrientation(lineContainingCursor);
-            switch (Orientation)
-            {
-                case TextOrientation.Left:
-                case TextOrientation.Middle:
-                case TextOrientation.Right:
-
-                    try // this is an escape point when cursor hits the start of the text
-                    {
-                        xPosition += GetLineLength(lineContainingCursor[..(atStartOfIndex - lines.Take(lineIndexCursorIn).Sum(str => str.Length) - lineIndexCursorIn)]);
-                    }
-                    catch // if cursor is at the beginning of the text, it is actually downgraded one line; but we increase index to put it in the correct place
-                    {
-                        lineIndexCursorIn += 1;
-                    }
-
-                    break;
-
-                case TextOrientation.FixedSize:
-
-                    string[] words = modifiedText.Split('\n')[lineIndexCursorIn].Split(' ');
-                    float spaceLengthBetweenWords
-                        = (HorizontalTextLength - words.Select(GetLineLength).Sum()) / (words.Length - 1);
-
-                    foreach (var word in words)
-                    {
-                        xPosition += GetLineLength(word) + spaceLengthBetweenWords;
-                    }
-
-                    xPosition -= spaceLengthBetweenWords;
-
-                    break;
-            }
-
-            if (targetSizeRenderIn.HasValue)
-            {
-                Point textSize = GetTextSize();
-
-                return new Vector2(xPosition, lineIndexCursorIn * Font.LineSpacing) + 
-                       TextOffset.ToVector2() +
-                       new Vector2(GetXOffsetFromAlignment(targetSizeRenderIn.Value, textSize), GetYOffsetFromAlignment(targetSizeRenderIn.Value, textSize));
-            }
-            else
-            {
-                return new Vector2(xPosition, lineIndexCursorIn * Font.LineSpacing) + 
-                       TextOffset.ToVector2();
-            }
-        }
-
-        /// <summary>
-        /// Calculates where a cursor should be positioned at the beginning of the index relative to a point inside size of rendered text.</summary>
-        /// <remarks>For returning value; if it returns 2, cursor should be positioned between indexes 1 and 2.</remarks>
-        /// <param name="positionOnText">A point inside size of rendered text.</param>
-        /// <param name="targetSizeRenderIn">The size of target that text is rendered for compability with <see cref="TextAlignment"/>. 
-        /// Ignores the <see cref="TextAlignment"/> if <see langword="null"/>.</param>
-        /// <returns>The start of index that cursor should be positioned inside size of rendered text.</returns>
-        public virtual int GetCursorPosition(Point positionOnText, Point? targetSizeRenderIn)
-        {
-            Point textSize = GetTextSize();
-
-            positionOnText -= TextOffset;
-            if (targetSizeRenderIn.HasValue)
-            {
-                positionOnText -= new Vector2(GetXOffsetFromAlignment(targetSizeRenderIn.Value, textSize),
-                                              GetYOffsetFromAlignment(targetSizeRenderIn.Value, textSize)).ToPoint();
-            }
-
-            if (positionOnText.X >= textSize.X || positionOnText.Y >= textSize.Y) return Text.Length;
-
-            string modifiedText = GetModifiedText();
-
-            var lines = modifiedText.Split('\n');
-            int lineIndex = positionOnText.Y / Font.LineSpacing;
-            string lineCursorIn = lines[lineIndex];
-
-            positionOnText.X -= (int)GetXOffsetFromOrientation(lineCursorIn);
-
-            // just an adjustment to be able to select next position if point already passed half of the character
-            int alignAdjustment = Font.LineSpacing / 5;
-            for (int i = 0; i <= lineCursorIn.Length; i++)
-            {
-                if (Font.MeasureString(lineCursorIn[..i]).X - alignAdjustment > positionOnText.X)
-                {
-                    return i - 1 + lines.Take(lineIndex).Sum(str => str.Length) + lineIndex;
-                }
-            }
-
-            return lineCursorIn.Length + lines.Take(lineIndex).Sum(str => str.Length) + lineIndex;
-        }
-
-        private float GetXOffsetFromOrientation(string line)
+        private Vector2 GetOrientationOffset(float lineWidth)
         {
             return Orientation switch
             {
-                TextOrientation.Left or TextOrientation.FixedSize => 0,
-                TextOrientation.Middle => (HorizontalTextLength - GetLineLength(line)) / 2,
-                TextOrientation.Right => HorizontalTextLength - GetLineLength(line),
-                _ => 0,
+                TextOrientation.Left => new Vector2(),
+                TextOrientation.Middle => new Vector2((HorizontalTextLength - (int)lineWidth) / 2, 0),
+                TextOrientation.Right => new Vector2(HorizontalTextLength - (int)lineWidth, 0),
             };
         }
 
-        protected float GetXOffsetFromAlignment(Point targetSize, Point textSize)
+        private Vector2 GetAlignmentOffset(Point surfaceSize, Point textSize)
         {
-            return Alignment switch
+            int xOffset = Alignment switch
             {
                 TextAlignment.TopLeft or TextAlignment.MiddleLeft or TextAlignment.BottomLeft => 0,
-                TextAlignment.TopMiddle or TextAlignment.Center or TextAlignment.BottomMiddle => (targetSize.X - textSize.X) / 2,
-                TextAlignment.TopRight or TextAlignment.MiddleRight or TextAlignment.BottomRight => targetSize.X - textSize.X,
-                _ => 0
+                TextAlignment.TopMiddle or TextAlignment.Center or TextAlignment.BottomMiddle => (surfaceSize.X - textSize.X) / 2,
+                TextAlignment.TopRight or TextAlignment.MiddleRight or TextAlignment.BottomRight => surfaceSize.X - textSize.X
             };
-        }
 
-        protected float GetYOffsetFromAlignment(Point targetSize, Point textSize)
-        {
-            return Alignment switch
+            int yOffset = Alignment switch
             {
                 TextAlignment.TopLeft or TextAlignment.TopMiddle or TextAlignment.TopRight => 0,
-                TextAlignment.MiddleLeft or TextAlignment.Center or TextAlignment.MiddleRight => (targetSize.Y - textSize.Y) / 2,
-                TextAlignment.BottomLeft or TextAlignment.BottomMiddle or TextAlignment.BottomRight => targetSize.Y - textSize.Y,
-                _ => 0
+                TextAlignment.MiddleLeft or TextAlignment.Center or TextAlignment.MiddleRight => (surfaceSize.Y - textSize.Y) / 2,
+                TextAlignment.BottomLeft or TextAlignment.BottomMiddle or TextAlignment.BottomRight => surfaceSize.Y - textSize.Y
             };
+
+            return new Vector2(xOffset, yOffset);
         }
 
-        private string GetModifiedText()
+        private Point TextSizeFromModified(List<(string Line, float LineWidth)> lines)
         {
-            if (Text.Length == 0)
+            if (HorizontalTextLength != int.MaxValue)
             {
-                return "";
+                return new Point(HorizontalTextLength, Font.LineSpacing * lines.Count);
             }
 
-            StringBuilder newString = new StringBuilder();
-            string[] words = Text.Split(' ');
-
-            StringBuilder line = new StringBuilder();
-            float lineLength = 0;
-            float spaceLength = Font.MeasureString(" ").X;
-            foreach (var word in words)
-            {
-                float wordLength = GetLineLength(word);
-
-                if (lineLength + wordLength + spaceLength <= HorizontalTextLength)
-                {
-                    line.Append(word + " ");
-                    lineLength += wordLength + spaceLength;
-                }
-                else if (lineLength + wordLength <= HorizontalTextLength)
-                {
-                    line.Append(word);
-                    lineLength += wordLength;
-                }
-                else
-                {
-                    if (line.Length == 0) 
-                        throw new ArgumentException("HorizontalTextLength is not enough for the word: " + word + ". It must be bigger than " + wordLength);
-
-                    newString.Append(line.ToString().TrimEnd() + '\n');
-                    line.Clear();
-                    line.Append(word + " ");
-                    lineLength = wordLength + spaceLength;
-                }
-            }
-
-            return newString.Append(line).ToString();
+            return new Point((int)lines.Max(tuple => tuple.LineWidth), Font.LineSpacing * lines.Count);
         }
 
-        private float GetLineLength(string line)
+        public Vector2 GetTextSize()
         {
-            return Font.MeasureString(line).X;
+            float spaceWidth = Font.MeasureString(" ").X;
+
+            int lineCount = 1;
+            float maxWidth = 0;
+
+            foreach (var existingLine in Text.Split('\n'))
+            {
+                float lineWidth = 0;
+                string[] words = existingLine.Split(' ');
+
+                int lastStart = 0;
+                for (int i = 0; i < words.Length; i++)
+                {
+                    float wordWidth = GetWidth(words[i]);
+
+                    if (lineWidth + wordWidth + (i - lastStart) * spaceWidth <= HorizontalTextLength)
+                    {
+                        lineWidth += wordWidth;
+                    }
+                    else
+                    {
+                        maxWidth = Math.Max(maxWidth, lineWidth + (i - lastStart) * spaceWidth);
+
+                        lineCount++;
+                        lastStart = i;
+                        lineWidth = wordWidth;
+                    }
+                }
+
+                maxWidth = Math.Max(maxWidth, lineWidth + (words.Length - 1 - lastStart) * spaceWidth);
+            }
+
+            if (HorizontalTextLength == int.MaxValue)
+            {
+                return new Vector2(HorizontalTextLength, Font.LineSpacing * lineCount);
+            }
+
+            return new Vector2(maxWidth, Font.LineSpacing * lineCount);
+        }
+
+        private List<(string Line, float LineWidth)> GetModifiedText()
+        {
+            float spaceWidth = Font.MeasureString(" ").X;
+            List<(string Line, float LineWidth)> lines = new List<(string Line, float LineWidth)>();
+
+            foreach (var existingLine in Text.Split('\n'))
+            {
+                float lineWidth = 0;
+                Span<string> words = existingLine.Split(' ');
+
+                int lastStart = 0;
+                for (int i = 0; i < words.Length; i++)
+                {
+                    float wordWidth = GetWidth(words[i]);
+
+                    if (lineWidth + wordWidth + (i - lastStart) * spaceWidth <= HorizontalTextLength)
+                    {
+                        lineWidth += wordWidth;
+                    }
+                    else
+                    {
+                        lines.Add((string.Join(' ', words.Slice(lastStart, i - lastStart)!), lineWidth + (i - lastStart - 1) * spaceWidth));
+
+                        lastStart = i;
+                        lineWidth = wordWidth;
+                    }
+                }
+
+                lines.Add((string.Join(' ', words.Slice(lastStart)!), lineWidth + (words.Length - 1 - lastStart - 1) * spaceWidth));
+            }
+
+            return lines;
+        }
+
+        private float GetWidth(string str)
+        {
+            return Font.MeasureString(str).X;
+        }
+
+        public Vector2 ScreenCaretPosition(int caretPosition, Point? targetSize)
+        {
+            List<(string Line, float LineWidth)> lines = GetModifiedText();
+
+            int charConsumed = 0;
+            int lineIndex = 0;
+            for (; lineIndex < lines.Count; lineIndex++)
+            {
+                if (caretPosition <= charConsumed + lines[lineIndex].Line.Length)
+                {
+                    break;
+                }
+
+                charConsumed += lines[lineIndex].Line.Length + 1; // +1 for newline char
+            }
+
+            if (targetSize.HasValue)
+            {
+                return new Vector2(Font.MeasureString(lines[lineIndex].Line.Substring(0, caretPosition - charConsumed)).X, Font.LineSpacing * lineIndex)
+                     + GetOrientationOffset(lines[lineIndex].LineWidth)
+                     + GetAlignmentOffset(targetSize.Value, TextSizeFromModified(lines));
+            }
+
+            return new Vector2(Font.MeasureString(lines[lineIndex].Line.Substring(0, caretPosition - charConsumed)).X, Font.LineSpacing * lineIndex)
+                 + GetOrientationOffset(lines[lineIndex].LineWidth);
+        }
+
+        public int MouseCaretPosition(Vector2 mouseOnTarget, Point? targetSize)
+        {
+            List<(string Line, float LineWidth)> lines = GetModifiedText();
+
+            if (targetSize.HasValue)
+            {
+                mouseOnTarget -= GetAlignmentOffset(targetSize.Value, TextSizeFromModified(lines));
+            }
+
+            int lineIndex = (int)(mouseOnTarget.Y / Font.LineSpacing);
+            int charsUntilLine = lines.Take(lineIndex).Sum(tuple => tuple.Line.Length + 1); // +1 for newline char
+
+            mouseOnTarget -= GetOrientationOffset(lines[lineIndex].LineWidth);
+
+            // shortcut for selecting the last character of line if line width is smaller than mouse position
+            if (lines[lineIndex].LineWidth < mouseOnTarget.X)
+            {
+                return charsUntilLine + lines[lineIndex].Line.Length;
+            }
+
+            for (int i = 0; i < lines[lineIndex].Line.Length; i++)
+            {                                                        
+                                                                   // adjustment for half of the char length
+                if (GetWidth(lines[lineIndex].Line.Substring(0, i)) + GetWidth(lines[lineIndex].Line[i].ToString()) / 2 > mouseOnTarget.X)
+                {
+                    return charsUntilLine + i;
+                }
+            }
+
+            // should not reach this point - already handled in shortcut part
+            return charsUntilLine + lines[lineIndex].Line.Length;
         }
     }
 }

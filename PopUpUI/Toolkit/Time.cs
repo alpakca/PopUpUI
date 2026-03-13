@@ -40,7 +40,7 @@ namespace PopUpUI.Toolkit
             isInitialized = true;
         }
 
-        internal static void FrameUpdate(GameTime gameTime)
+        internal static void Update(GameTime gameTime)
         {
             deltaTime = gameTime.ElapsedGameTime.Milliseconds;
             elapsedGameTime = gameTime.TotalGameTime;

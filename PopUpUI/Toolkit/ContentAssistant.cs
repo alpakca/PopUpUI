@@ -68,14 +68,6 @@ namespace PopUpUI.Toolkit
         public static void LoadTexture2Ds(params (string path, string savedName)[] contents)
             => Load(ContentType.Texture2D, PinContents, InstantCreateContents, contents);
 
-        /// <summary>Loads <see cref="AnimationState"/>s to project for a later use 
-        /// with options <see cref="PinContents"/> and <see cref="InstantCreateContents"/>.</summary>
-        /// <param name="contents">
-        /// First item is path of the <see cref="AnimationState"/>, second item is the name for the saved content for retrieving it from <see cref="FromLoaded{T}(string)"/>.
-        /// </param>
-        public static void LoadAnimationStates(params (string path, string savedName)[] contents)
-            => Load(ContentType.AnimationState, PinContents, InstantCreateContents, contents);
-
         /// <summary>Loads <see cref="Song"/>s to project for a later use 
         /// with options <see cref="PinContents"/> and <see cref="InstantCreateContents"/>.</summary>
         /// <param name="contents">
@@ -92,14 +84,6 @@ namespace PopUpUI.Toolkit
         public static void LoadSoundEffects(params (string path, string savedName)[] contents)
             => Load(ContentType.SoundEffect, PinContents, InstantCreateContents, contents);
 
-        /// <summary>Loads <see cref="ColorBrush"/>s to project for a later use 
-        /// with options <see cref="PinContents"/> and <see cref="InstantCreateContents"/>.</summary>
-        /// <param name="contents">
-        /// First item is path of the <see cref="ColorBrush"/>, second item is the name for the saved content for retrieving it from <see cref="FromLoaded{T}(string)"/>.
-        /// </param>
-        public static void LoadBrushes(params (Color color, string savedName)[] colors)
-            => Load(ContentType.ColorBrush, PinContents, InstantCreateContents, colors);
-
         /// <summary>Loads <see cref="Microsoft.Xna.Framework.Graphics.Texture2D"/>s to project for a later use 
         /// with options <paramref name="isPinned"/> and <paramref name="instantCreate"/>.</summary>
         /// <param name="isPinned">If <see langword="true"/>, contents won't be eligable for <see cref="GC"/> by creating strong references.</param>
@@ -110,16 +94,6 @@ namespace PopUpUI.Toolkit
         /// </param>
         public static void LoadTexture2Ds(bool isPinned, bool instantCreate, params (string path, string savedName)[] contents)
             => Load(ContentType.Texture2D, isPinned, instantCreate, contents);
-
-        /// <summary>Loads <see cref="AnimationState"/>s to project for a later use 
-        /// with options <paramref name="isPinned"/> and <paramref name="instantCreate"/>.</summary>
-        /// <param name="isPinned">If <see langword="true"/>, contents won't be eligable for <see cref="GC"/> by creating strong references.</param>
-        /// <param name="instantCreate">If <see langword="true"/>, contents will be created instantly, without waiting their first call.</param>
-        /// <param name="contents">
-        /// First item is path of the <see cref="AnimationState"/>, second item is the name for the saved content for retrieving it from <see cref="FromLoaded{T}(string)"/>.
-        /// </param>
-        public static void LoadAnimationStates(bool isPinned, bool instantCreate, params (string path, string savedName)[] contents)
-            => Load(ContentType.AnimationState, isPinned, instantCreate, contents);
 
         /// <summary>Loads <see cref="Song"/>s to project for a later use 
         /// with options <paramref name="isPinned"/> and <paramref name="instantCreate"/>.</summary>
@@ -140,16 +114,6 @@ namespace PopUpUI.Toolkit
         /// </param>
         public static void LoadSoundEffects(bool isPinned, bool instantCreate, params (string path, string savedName)[] contents)
             => Load(ContentType.SoundEffect, isPinned, instantCreate, contents);
-
-        /// <summary>Loads <see cref="ColorBrush"/>s to project for a later use 
-        /// with options <paramref name="isPinned"/> and <paramref name="instantCreate"/>.</summary>
-        /// <param name="isPinned">If <see langword="true"/>, contents won't be eligable for <see cref="GC"/> by creating strong references.</param>
-        /// <param name="instantCreate">If <see langword="true"/>, contents will be created instantly, without waiting their first call.</param>
-        /// <param name="colors">
-        /// First item is color of the <see cref="ColorBrush"/>, second item is the name for the saved content for retrieving it from <see cref="FromLoaded{T}(string)"/>.
-        /// </param>
-        public static void LoadBrushes(bool isPinned, bool instantCreate, params (Color color, string savedName)[] colors)
-            => Load(ContentType.ColorBrush, isPinned, instantCreate, colors);
         #endregion
 
         private static void Load<T>(ContentType type, bool isPinned, bool instantCreate, (T info, string savedName)[] contents)
@@ -176,22 +140,6 @@ namespace PopUpUI.Toolkit
         /// <returns><see langword="true"/> if content was loaded successfully; otherwise <see langword="false"/>.</returns>
         public static bool TryLoadTexture2D(bool isPinned, bool instantCreate, string path, string savedName)
             => TryLoad(ContentType.Texture2D, isPinned, instantCreate, path, savedName);
-
-        /// <summary>Tries to load a <see cref="AnimationState"/> to project for a later use 
-        /// with options <see cref="PinContents"/> and <see cref="InstantCreateContents"/>.</summary>
-        /// <param name="path">The path of the <see cref="AnimationState"/> to load.></param>
-        /// <param name="savedName">The name for the saved content for retrieving it from <see cref="FromLoaded{T}(string)"/>.</param>
-        /// <returns><see langword="true"/> if content was loaded successfully; otherwise <see langword="false"/>.</returns>
-        public static bool TryLoadAnimationState(string path, string savedName)
-            => TryLoad(ContentType.AnimationState, PinContents, InstantCreateContents, path, savedName);
-
-        /// <summary>Tries to load a <see cref="AnimationState"/> to project for a later use 
-        /// with options <paramref name="isPinned"/> and <paramref name="instantCreate"/>.</summary>
-        /// <param name="path">The path of the <see cref="AnimationState"/> to load.></param>
-        /// <param name="savedName">The name for the saved content for retrieving it from <see cref="FromLoaded{T}(string)"/>.</param>
-        /// <returns><see langword="true"/> if content was loaded successfully; otherwise <see langword="false"/>.</returns>
-        public static bool TryLoadAnimationState(bool isPinned, bool instantCreate, string path, string savedName)
-            => TryLoad(ContentType.AnimationState, isPinned, instantCreate, path, savedName);
 
         /// <summary>Tries to load a <see cref="Song"/> to project for a later use 
         /// with options <see cref="PinContents"/> and <see cref="Song"/>.</summary>
@@ -224,22 +172,6 @@ namespace PopUpUI.Toolkit
         /// <returns><see langword="true"/> if content was loaded successfully; otherwise <see langword="false"/>.</returns>
         public static bool TryLoadSoundEffect(bool isPinned, bool instantCreate, string path, string savedName)
             => TryLoad(ContentType.SoundEffect, isPinned, instantCreate, path, savedName);
-
-        /// <summary>Tries to load a <see cref="ColorBrush"/> to project for a later use 
-        /// with options <see cref="PinContents"/> and <see cref="InstantCreateContents"/>.</summary>
-        /// <param name="color">The color of the <see cref="ColorBrush"/> to load.></param>
-        /// <param name="savedName">The name for the saved content for retrieving it from <see cref="FromLoaded{T}(string)"/>.</param>
-        /// <returns><see langword="true"/> if content was loaded successfully; otherwise <see langword="false"/>.</returns>
-        public static bool TryLoadBrush(Color color, string savedName)
-            => TryLoad(ContentType.ColorBrush, PinContents, InstantCreateContents, color, savedName);
-
-        /// <summary>Tries to load a <see cref="ColorBrush"/> to project for a later use 
-        /// with options <see cref="PinContents"/> and <see cref="InstantCreateContents"/>.</summary>
-        /// <param name="color">The color of the <see cref="ColorBrush"/> to load.></param>
-        /// <param name="savedName">The name for the saved content for retrieving it from <see cref="FromLoaded{T}(string)"/>.</param>
-        /// <returns><see langword="true"/> if content was loaded successfully; otherwise <see langword="false"/>.</returns>
-        public static bool TryLoadBrush(bool isPinned, bool instantCreate, Color color, string savedName)
-            => TryLoad(ContentType.ColorBrush, isPinned, instantCreate, color, savedName);
         #endregion
 
         private static bool TryLoad(ContentType type, bool isPinned, bool instantCreate, object info, string savedName)

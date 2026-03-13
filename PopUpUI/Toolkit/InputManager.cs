@@ -88,7 +88,7 @@ namespace PopUpUI.Toolkit
             };
         }
         
-        internal static void FrameUpdate()
+        internal static void Update()
         {
             oldKeyboardState = newKeyboardState;
             oldMouseState = newMouseState;
