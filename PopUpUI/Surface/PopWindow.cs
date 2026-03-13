@@ -7,7 +7,6 @@ using PopUpUI.Input;
 using PopUpUI.Toolkit;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 #pragma warning disable 8632
 
@@ -28,6 +27,11 @@ namespace PopUpUI.Surface
         public float Opacity { get; set; } = 1;
         /// <summary>Gets or sets the scale to use when drawing this window to screen. It doesn't effect bounds or texture of <see cref="WindowTexture"/>.</summary>
         public float Scale { get; set; } = 1;
+
+        public bool EnableScrolling { get; set; } = false;
+        public bool ScrollsVertically { get; set; } = true;
+        public float ScrollSpeed { get; set; } = 1;
+        public Point ScrolledOffset { get; set; }
 
         public Texture2D WindowTexture => _windowTexture;
         public PopElementCollection Elements { get; }
@@ -84,6 +88,20 @@ namespace PopUpUI.Surface
 
             DrawHelper.SetBeginBatch(_windowTexture, _drawOptions);
 
+            if (!EnableScrolling || ScrolledOffset == Point.Zero)
+            {
+                RenderWithoutScroll();
+            }
+            else
+            {
+                RenderWithScroll();
+            }
+
+            DrawHelper.EndBatch();
+        }
+
+        private void RenderWithoutScroll()
+        {
             foreach (var element in Elements)
             {
                 if (element.Visibility != Visibility.Visible)
@@ -93,11 +111,41 @@ namespace PopUpUI.Surface
 
                 foreach (var drawInfo in element.GetDrawInfos())
                 {
-                    DrawHelper.Batch.Draw(drawInfo.GetTexture(), drawInfo.DestinationArea, drawInfo.Opacity * Color.White);
+                    // only render the texture if it can be seen
+                    if (DestinationIsVisible(drawInfo.DestinationArea))
+                    {
+                        DrawHelper.Batch.Draw(drawInfo.GetTexture(), drawInfo.DestinationArea, drawInfo.Opacity * Color.White);
+                    }
                 }
             }
+        }
 
-            DrawHelper.EndBatch();
+        private void RenderWithScroll()
+        {
+            foreach (var element in Elements)
+            {
+                if (element.Visibility != Visibility.Visible)
+                {
+                    continue;
+                }
+
+                foreach (var drawInfo in element.GetDrawInfos())
+                {
+                    Rectangle destination = new Rectangle(ScrolledOffset + drawInfo.Location, drawInfo.Size);
+                    
+                    // only render the texture if it can be seen
+                    if (DestinationIsVisible(destination))
+                    {
+                        DrawHelper.Batch.Draw(drawInfo.GetTexture(), destination, drawInfo.Opacity * Color.White);
+
+                    }
+                }
+            }
+        }
+
+        private bool DestinationIsVisible(Rectangle destination)
+        {
+            return destination.Bottom > 0 || destination.Right > 0 || destination.Top < _boundaries.Height || destination.Left < _boundaries.Width;
         }
 
         internal void OnMousePositionChange(PopUpWindowEventArgs e)
@@ -191,7 +239,15 @@ namespace PopUpUI.Surface
         {
             IMouseWheelReceiver mouseWheelReceiver = Elements.FindWithType<IMouseWheelReceiver>(element => element.CanReceiveWheelChangeInput(e.MousePoint));
 
-            mouseWheelReceiver?.OnMouseWheelChangeReceive(e);
+            if (mouseWheelReceiver != null)
+            {
+                mouseWheelReceiver.OnMouseWheelChangeReceive(e);
+            }
+            else if (EnableScrolling)
+            {
+                ScrolledOffset += ScrollsVertically ? new Point(0, (int)(e.MouseWheelChange / 6 * ScrollSpeed))
+                                                    : new Point((int)(e.MouseWheelChange / 6 * ScrollSpeed), 0);
+            }
         }
 
         internal void OnKeyDown(PopUpWindowEventArgs e, Keys key)

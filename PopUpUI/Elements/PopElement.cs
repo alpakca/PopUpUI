@@ -27,7 +27,7 @@ namespace PopUpUI.Elements
 
         /// <summary>An update method for casual checking, CPU-based.</summary>
         public virtual void Update() { }
-        /// <summary>A specialized method for pre-buffer render; rende roperations. Called in draw-thread, GPU-based.</summary>
+        /// <summary>A specialized method for pre-buffer render; render operations. Called in draw-thread, GPU-based.</summary>
         public virtual void RenderUpdate() { }
         public virtual IEnumerable<UIDrawInfo> GetDrawInfos()
         {
