@@ -79,6 +79,12 @@ namespace PopUpUI.Text
 
         public void Render(RenderTarget2D target, Vector2 offset)
         {
+            // right or middle orientations will cause a too large x offset that text won't appear, with maximum horizontal text length
+            if (Orientation != TextOrientation.Left && HorizontalTextLength == int.MaxValue)
+            {
+                throw new ArgumentException("Maximum HorizontalTextLength should only be used with TextOrientation.Left");
+            }
+
             DrawHelper.SetBeginBatch(target, drawOptions);
 
             List<(string Line, float LineWidth)> modifiedText = GetModifiedText();
@@ -139,10 +145,10 @@ namespace PopUpUI.Text
             int lineCount = 1;
             float maxWidth = 0;
 
-            foreach (var existingLine in Text.Split('\n'))
+            foreach (var existingLine in Text.Split('\n', StringSplitOptions.RemoveEmptyEntries))
             {
                 float lineWidth = 0;
-                string[] words = existingLine.Split(' ');
+                string[] words = existingLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
                 int lastStart = 0;
                 for (int i = 0; i < words.Length; i++)
@@ -179,10 +185,10 @@ namespace PopUpUI.Text
             float spaceWidth = Font.MeasureString(" ").X;
             List<(string Line, float LineWidth)> lines = new List<(string Line, float LineWidth)>();
 
-            foreach (var existingLine in Text.Split('\n'))
+            foreach (var existingLine in Text.Split('\n', StringSplitOptions.RemoveEmptyEntries))
             {
                 float lineWidth = 0;
-                Span<string> words = existingLine.Split(' ');
+                Span<string> words = existingLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
                 int lastStart = 0;
                 for (int i = 0; i < words.Length; i++)
@@ -213,6 +219,11 @@ namespace PopUpUI.Text
             return Font.MeasureString(str).X;
         }
 
+        public int GetVisibleCharCount()
+        {
+            return Text.Length;
+        }
+
         public Vector2 ScreenCaretPosition(int caretPosition, Point? targetSize)
         {
             List<(string Line, float LineWidth)> lines = GetModifiedText();
@@ -232,11 +243,13 @@ namespace PopUpUI.Text
             if (targetSize.HasValue)
             {
                 return new Vector2(Font.MeasureString(lines[lineIndex].Line.Substring(0, caretPosition - charConsumed)).X, Font.LineSpacing * lineIndex)
+                     + TextOffset.ToVector2()
                      + GetOrientationOffset(lines[lineIndex].LineWidth)
                      + GetAlignmentOffset(targetSize.Value, TextSizeFromModified(lines));
             }
 
             return new Vector2(Font.MeasureString(lines[lineIndex].Line.Substring(0, caretPosition - charConsumed)).X, Font.LineSpacing * lineIndex)
+                 + TextOffset.ToVector2()
                  + GetOrientationOffset(lines[lineIndex].LineWidth);
         }
 
@@ -249,8 +262,10 @@ namespace PopUpUI.Text
                 mouseOnTarget -= GetAlignmentOffset(targetSize.Value, TextSizeFromModified(lines));
             }
 
+            mouseOnTarget -= TextOffset.ToVector2();
+
             int lineIndex = (int)(mouseOnTarget.Y / Font.LineSpacing);
-            int charsUntilLine = lines.Take(lineIndex).Sum(tuple => tuple.Line.Length + 1); // +1 for newline char
+            int charsUntilLine = lines.Take(lineIndex).Sum(tuple => tuple.Line.Length + 1); // +1 for newline chars
 
             mouseOnTarget -= GetOrientationOffset(lines[lineIndex].LineWidth);
 

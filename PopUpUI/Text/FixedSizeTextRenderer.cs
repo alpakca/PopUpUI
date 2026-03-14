@@ -53,7 +53,7 @@ namespace PopUpUI.Text
             DrawHelper.SetBeginBatch(target, drawOptions);
 
             List<(string[] LineWords, float LineWidth)> alignedWords = GetAlignedWords();
-            offset += GetAlignmentOffset(new Point(target.Width, target.Height), TextSizeFromAligned(alignedWords));
+            offset += TextOffset.ToVector2() + GetAlignmentOffset(new Point(target.Width, target.Height), TextSizeFromAligned(alignedWords));
 
             foreach ((string[] lineWords, float lineWidth) in alignedWords)
             {
@@ -96,10 +96,10 @@ namespace PopUpUI.Text
             float spaceWidth = Font.MeasureString(" ").X;
             int lineCount = 1;
 
-            foreach (string existingLine in Text.Split('\n'))
+            foreach (string existingLine in Text.Split('\n', StringSplitOptions.RemoveEmptyEntries))
             {
                 float lineWidth = 0;
-                Span<string> words = existingLine.Split(' ');
+                Span<string> words = existingLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
                 int lastStart = 0;
                 for (int i = 0; i < words.Length; i++)
@@ -133,10 +133,10 @@ namespace PopUpUI.Text
 
             float spaceWidth = Font.MeasureString(" ").X;
 
-            foreach (string existingLine in Text.Split('\n'))
+            foreach (string existingLine in Text.Split('\n', StringSplitOptions.RemoveEmptyEntries))
             {
                 float lineWidth = 0;
-                Span<string> words = existingLine.Split(' ');
+                Span<string> words = existingLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
                 int lastStart = 0;
                 for (int i = 0; i < words.Length; i++)
@@ -165,6 +165,11 @@ namespace PopUpUI.Text
         private float GetWidth(string str)
         {
             return Font.MeasureString(str).X;
+        }
+
+        public int GetVisibleCharCount()
+        {
+            return Text.Length;
         }
 
         public Vector2 ScreenCaretPosition(int caretPosition, Point? targetSize)
@@ -207,10 +212,12 @@ namespace PopUpUI.Text
             if (targetSize.HasValue)
             {
                 return new Vector2(xOffset, Font.LineSpacing * lineIndex)
+                     + TextOffset.ToVector2()
                      + GetAlignmentOffset(targetSize.Value, TextSizeFromAligned(lines));
             }
 
-            return new Vector2(xOffset, Font.LineSpacing * lineIndex);
+            return new Vector2(xOffset, Font.LineSpacing * lineIndex)
+                 + TextOffset.ToVector2();
         }
 
         public int MouseCaretPosition(Vector2 mouseOnTarget, Point? targetSize)
@@ -222,10 +229,12 @@ namespace PopUpUI.Text
                 mouseOnTarget -= GetAlignmentOffset(targetSize.Value, TextSizeFromAligned(lines));
             }
 
+            mouseOnTarget -= TextOffset.ToVector2();
+
             int lineIndex = (int)(mouseOnTarget.Y / Font.LineSpacing);
             float wordSpacing = GetWordSpacing(lines[lineIndex].LineWidth, lines[lineIndex].LineWords.Length);
 
-            int charsUntilLine = lines.Take(lineIndex).Sum(tuple => AllWordLengths(tuple.LineWords) + 1);
+            int charsUntilLine = lines.Take(lineIndex).Sum(tuple => AllWordLengths(tuple.LineWords) + 1); // +1 for newline chars
             int caretLineWordLength = AllWordLengths(lines[lineIndex].LineWords);
 
             // shortcut for selecting the last character of line if line width is smaller than mouse position
@@ -252,7 +261,7 @@ namespace PopUpUI.Text
 
                 if (currentWidth + wordSpacing / 2 > mouseOnTarget.X)
                 {
-                    return charsUntilLine + word.Length;
+                    return charsUntilLine + consumedChars + word.Length;
                 }
 
                 currentWidth += wordSpacing;
@@ -265,8 +274,8 @@ namespace PopUpUI.Text
 
         private static int AllWordLengths(string[] words)
         {
-            //                                      for space characters
-            return words.Sum(word => word.Length) + words.Length - 1;
+            return words.Sum(word => word.Length) 
+                 + words.Length - 1;  // for space characters
         }
 
         private float GetWordSpacing(float lineWidth, int wordCount)
