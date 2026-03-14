@@ -5,77 +5,33 @@ using PopUpUI.Toolkit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 
-#pragma warning disable 8524
 #pragma warning disable 8632
 
 namespace PopUpUI.Text
 {
-    public class RichFixedSizeTextRenderer : ITextRenderer
+    public class RichFixedSizeTextRenderer : RichRenderer
     {
-        /*
-        This renderer uses mostly the same code as RichTextRenderer, with some differences such as of calculating
-        word spacing, the length of lines and Orientation removal
-        */
-
         private readonly BatchDrawOptions drawOptions;
-        private readonly TextHash defaultTextHash;
-
-        private string _regexPattern = "";
-        private readonly List<IRendererHash> _hashes;
-
-        /// <summary>Gets or sets maximum length of each row of text can contain. Default value is <see cref="int.MaxValue"/>.</summary>
-        public int HorizontalTextLength { get; set; } = int.MaxValue;
-        /// <summary>Gets or sets the opacity of the text. Expected value is between 0.0f and 1.0f. Default value is 1.0f.</summary>
-        public float Opacity { get; set; } = 1;
-        /// <summary>Gets or sets the text that will be rendered.</summary>
-        public string Text { get; set; } = "";
-
-        /// <summary>Gets or sets the alignment of the text, that is text's position relative to target it will be rendered to.
-        /// Default value is <see cref="TextAlignment.TopLeft"/>.</summary>
-        /// <remarks>This property does not have any effect if renderer creates a target that is not have a fixed size.</remarks>
-        public TextAlignment Alignment { get; set; } = TextAlignment.TopLeft;
-        /// <summary>Gets or sets an offset to be applied to the target text will be rendered to, with <see cref="Alignment"/>.</summary>
-        /// <remarks>This property does not effect text size from <see cref="GetTextSize"/>. It can be used to intentionally creating wiped text.</remarks>
-        public Point TextOffset { get; set; } = new Point();
-
-        /// <summary>Gets or sets the color of the text. Default value is <see cref="Color.White"/>.</summary>
-        public Color DefaultTextColor
-        {
-            get => defaultTextHash.Color;
-            set => defaultTextHash.Color = value;
-        }
-        /// <summary>Gets the font that is used by renderer to create text.</summary>
-        public SpriteFont DefaultFont
-        {
-            get => defaultTextHash.Font;
-            set => defaultTextHash.Font = value;
-        }
-
-        private int LineSpacing => defaultTextHash.Font.LineSpacing;
 
         public RichFixedSizeTextRenderer(int horizontalTextLength, SpriteFont defaultFont) : this(horizontalTextLength, defaultFont, null)
         {
         }
 
         public RichFixedSizeTextRenderer(int horizontalTextLength, SpriteFont defaultFont, BatchDrawOptions? options)
+            : base(Color.White, defaultFont)
         {
             ArgumentNullException.ThrowIfNull(defaultFont);
 
+            HorizontalTextLength = horizontalTextLength;
             drawOptions = options ?? BatchDrawOptions.Default;
-            defaultTextHash = new TextHash("", Color.White, defaultFont);
-
-            _hashes = new List<IRendererHash>();
         }
 
-        public RichFixedSizeTextRenderer(RichFixedSizeTextRenderer renderer)
+        public RichFixedSizeTextRenderer(RichFixedSizeTextRenderer renderer) : base(renderer.defaultTextHash.Color, renderer.defaultTextHash.Font)
         {
             ArgumentNullException.ThrowIfNull(renderer);
 
             drawOptions = renderer.drawOptions;
-            defaultTextHash = new TextHash("", renderer.defaultTextHash.Color, renderer.defaultTextHash.Font);
 
             Text = renderer.Text;
             HorizontalTextLength = renderer.HorizontalTextLength;
@@ -83,33 +39,10 @@ namespace PopUpUI.Text
             Alignment = renderer.Alignment;
             TextOffset = renderer.TextOffset;
 
-            _hashes = new List<IRendererHash>(renderer._hashes);
+            _hashes.AddRange(renderer._hashes);
         }
 
-        public void AttachHash(IRendererHash hash)
-        {
-            _hashes.Add(hash);
-
-            StringBuilder regexBuilder = new StringBuilder();
-            for (int i = 0; i < _hashes.Count; i++)
-            {
-                IRendererHash item = _hashes[i];
-                regexBuilder.Append("(?'").Append(i + 1).Append('\'').Append(item.Symbol);
-
-                if (item.WrapsText)
-                {
-                    regexBuilder.Append(".{0,}").Append(item.Symbol);
-                }
-
-                regexBuilder.Append(")|");
-            }
-
-            regexBuilder.Remove(regexBuilder.Length - 1, 1); // remove the last '|' char
-
-            _regexPattern = regexBuilder.ToString();
-        }
-
-        public void Render(RenderTarget2D target, Vector2 offset)
+        public override void Render(RenderTarget2D target, Vector2 offset)
         {
             DrawHelper.SetBeginBatch(target, drawOptions);
 
@@ -133,64 +66,9 @@ namespace PopUpUI.Text
             DrawHelper.EndBatch();
         }
 
-        private float GetWordSpacing(float lineWidth, int wordCount)
+        public override int GetVisibleCharCount()
         {
-            return wordCount == 0 ? 0 : (HorizontalTextLength - lineWidth) / (wordCount - 1);
-        }
-
-        private Vector2 GetAlignmentOffset(Point surfaceSize, Point textSize)
-        {
-            int xOffset = Alignment switch
-            {
-                TextAlignment.TopLeft or TextAlignment.MiddleLeft or TextAlignment.BottomLeft => 0,
-                TextAlignment.TopMiddle or TextAlignment.Center or TextAlignment.BottomMiddle => (surfaceSize.X - textSize.X) / 2,
-                TextAlignment.TopRight or TextAlignment.MiddleRight or TextAlignment.BottomRight => surfaceSize.X - textSize.X
-            };
-
-            int yOffset = Alignment switch
-            {
-                TextAlignment.TopLeft or TextAlignment.TopMiddle or TextAlignment.TopRight => 0,
-                TextAlignment.MiddleLeft or TextAlignment.Center or TextAlignment.MiddleRight => (surfaceSize.Y - textSize.Y) / 2,
-                TextAlignment.BottomLeft or TextAlignment.BottomMiddle or TextAlignment.BottomRight => surfaceSize.Y - textSize.Y
-            };
-
-            return new Vector2(xOffset, yOffset);
-        }
-
-        private Point TextSizeFromHashedLines(List<(HashedTextPiece[] Parts, float LineWidth)> hashedLines)
-        {
-            if (HorizontalTextLength != int.MaxValue)
-            {
-                return new Point(HorizontalTextLength, LineSpacing * hashedLines.Count);
-            }
-
-            return new Point((int)hashedLines.Max(line => line.LineWidth), LineSpacing * hashedLines.Count);
-        }
-
-        private IRendererHash MatchedHash(Match match)
-        {
-            foreach (Group group in match.Groups)
-            {
-                if (group.Success && group.Name != "0")
-                {
-                    return _hashes[int.Parse(group.Name) - 1];
-                }
-            }
-
-            throw new Exception();
-        }
-
-        private int[] AllNewLineIndexes(string text)
-        {
-            int count = 0;
-            Span<int> indexes = stackalloc int[text.Length];
-
-            for (int i = 0; i < text.Length; i++)
-            {
-                if (text[i] == '\n') indexes[count++] = i;
-            }
-
-            return indexes.Slice(0, count).ToArray();
+            return GetHashedLines().Sum(tuple => tuple.Parts.Sum((Func<HashedTextPiece, int>)(piece => piece.VisibleCharLength + 1))) - 1;
         }
 
         private List<(HashedTextPiece[] Parts, float TotalWordsWidth)> GetHashedLines()
@@ -198,50 +76,7 @@ namespace PopUpUI.Text
             return SplitHorizontalLength(SplitToNewLines(SplitToHashes()));
         }
 
-        private LinkedList<HashedTextPiece> SplitToHashes()
-        {
-            LinkedList<HashedTextPiece> hashedNodes = new LinkedList<HashedTextPiece>();
-            if (_regexPattern == "")
-            {
-                hashedNodes.AddLast(new HashedTextPiece(Text, defaultTextHash));
-                return hashedNodes;
-            }
-
-            int lastStart = 0;
-            foreach (Match match in Regex.Matches(Text, _regexPattern, RegexOptions.Singleline))
-            {
-                if (lastStart < match.Index)
-                {
-                    hashedNodes.AddLast(new HashedTextPiece(Text.Substring(lastStart, match.Index - lastStart), defaultTextHash));
-                }
-
-                if (match.Length > 0)
-                {
-                    int index = match.Index;
-                    int length = match.Length;
-
-                    IRendererHash matchedHash = MatchedHash(match);
-                    if (matchedHash.WrapsText)
-                    {
-                        index += matchedHash.Symbol.Length;
-                        length -= matchedHash.Symbol.Length * 2;
-                    }
-
-                    hashedNodes.AddLast(new HashedTextPiece(Text.Substring(index, length), matchedHash));
-                }
-
-                lastStart = match.Index + match.Length;
-            }
-
-            if (lastStart < Text.Length)
-            {
-                hashedNodes.AddLast(new HashedTextPiece(Text.Substring(lastStart), defaultTextHash));
-            }
-
-            return hashedNodes;
-        }
-
-        private List<(string Word, IRendererHash Hash)[]> SplitToNewLines(LinkedList<HashedTextPiece> hashedNodes)
+        protected static List<(string Word, IRendererHash Hash)[]> SplitToNewLines(LinkedList<HashedTextPiece> hashedNodes)
         {
             List<(string Word, IRendererHash Hash)[]> hashedWordLines = new List<(string Word, IRendererHash Hash)[]>();
             List<(string Word, IRendererHash Hash)> currentLine = new List<(string, IRendererHash)>();
@@ -292,7 +127,7 @@ namespace PopUpUI.Text
             List<HashedTextPiece> currentLine = new List<HashedTextPiece>();
             List<(HashedTextPiece[] Parts, float LineWidth)> lines = new List<(HashedTextPiece[] Parts, float LineWidth)>();
 
-            float spaceWidth = DefaultFont.MeasureString(" ").X;
+            float minimumSpaceWidth = WordSpacing;
             foreach (var line in lineParts)
             {
                 float lineWidth = 0;
@@ -303,7 +138,7 @@ namespace PopUpUI.Text
                     (string word, IRendererHash hash) = line[i];
                     float wordWidth = hash.GetWidth(word);
 
-                    if (lineWidth + wordWidth + (i - lastStart) * spaceWidth <= HorizontalTextLength)
+                    if (lineWidth + wordWidth + (i - lastStart) * minimumSpaceWidth <= HorizontalTextLength)
                     {
                         currentLine.Add(new HashedTextPiece(word, hash));
                         lineWidth += wordWidth;
@@ -326,11 +161,11 @@ namespace PopUpUI.Text
             return lines;
         }
 
-        public Vector2 GetTextSize()
+        public override Vector2 GetTextSize()
         {
             List<(string Word, IRendererHash Hash)[]> existingLines = SplitToNewLines(SplitToHashes());
 
-            float spaceWidth = DefaultFont.MeasureString(" ").X;
+            float minimumSpaceWidth = WordSpacing;
             int lineCount = 1;
 
             foreach (var line in existingLines)
@@ -344,7 +179,7 @@ namespace PopUpUI.Text
 
                     float wordWidth = hash.GetWidth(word);
 
-                    if (lineWidth + wordWidth + (i - lastStart) * spaceWidth <= HorizontalTextLength)
+                    if (lineWidth + wordWidth + (i - lastStart) * minimumSpaceWidth <= HorizontalTextLength)
                     {
                         lineWidth += wordWidth;
                     }
@@ -360,12 +195,7 @@ namespace PopUpUI.Text
             return new Vector2(HorizontalTextLength, LineSpacing * lineCount);
         }
 
-        public int GetVisibleCharCount()
-        {
-            return SplitToNewLines(SplitToHashes()).SelectMany(i => i).Sum(tuple => tuple.Hash.VisibleCharLength(tuple.Word) + 1) - 1;
-        }
-
-        public Vector2 ScreenCaretPosition(int caretPosition, Point? targetSize)
+        public override Vector2 ScreenCaretPosition(int caretPosition, Point? targetSize)
         {
             List<(HashedTextPiece[] Parts, float LineWidth)> lines = GetHashedLines();
 
@@ -414,7 +244,7 @@ namespace PopUpUI.Text
                  + TextOffset.ToVector2();
         }
 
-        public int MouseCaretPosition(Vector2 mouseOnTarget, Point? targetSize)
+        public override int MouseCaretPosition(Vector2 mouseOnTarget, Point? targetSize)
         {
             List<(HashedTextPiece[] Parts, float LineWidth)> lines = GetHashedLines();
 
@@ -465,10 +295,15 @@ namespace PopUpUI.Text
             return charsUntilLine + caretLineWordLength;
         }
 
+        private float GetWordSpacing(float lineWidth, int wordCount)
+        {
+            return wordCount == 0 ? 0 : (HorizontalTextLength - lineWidth) / (wordCount - 1);
+        }
+
         private static int AllWordLengths(HashedTextPiece[] words)
         {
             return words.Sum(word => word.VisibleCharLength)
-                 + words.Length - 1; // for space characters
+                 + words.Length - 1; // for space characters between words
         }
     }
 }

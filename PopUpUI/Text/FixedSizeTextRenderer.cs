@@ -6,49 +6,27 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-#nullable enable
-#pragma warning disable 8524
+#pragma warning disable 8632
 
 namespace PopUpUI.Text
 {
-    public class FixedSizeTextRenderer : ITextRenderer
+    public class FixedSizeTextRenderer : DefaultRenderer
     {
         private readonly BatchDrawOptions drawOptions;
-
-        /// <summary>Gets or sets maximum length of each row of text can contain.</summary>
-        public int HorizontalTextLength { get; set; }
-        /// <summary>Gets or sets the opacity of the text. Expected value is between 0.0f and 1.0f. Default value is 1.0f.</summary>
-        public float Opacity { get; set; } = 1;
-        /// <summary>Gets or sets the text that will be rendered.</summary>
-        public string Text { get; set; } = "";
-
-        /// <summary>Gets or sets the alignment of the text, that is text's position relative to target it will be rendered to.
-        /// Default value is <see cref="TextAlignment.TopLeft"/>.</summary>
-        /// <remarks>This property does not have any effect if renderer creates a target that is not have a fixed size.</remarks>
-        public TextAlignment Alignment { get; set; } = TextAlignment.TopLeft;
-        /// <summary>Gets or sets an offset to be applied to the target text will be rendered to, with <see cref="Alignment"/>.</summary>
-        /// <remarks>This property does not effect text size from <see cref="GetTextSize"/>. It can be used to intentionally creating wiped text.</remarks>
-        public Point TextOffset { get; set; } = new Point();
-        /// <summary>Gets or sets the color of the text. Default value is <see cref="Color.White"/>.</summary>
-        public Color TextColor { get; set; } = Color.White;
-
-        /// <summary>Gets the font that is used by renderer to create text.</summary>
-        public SpriteFont Font { get; }
 
         public FixedSizeTextRenderer(int horizontalTextLength, SpriteFont font) : this(horizontalTextLength, font, null)
         {
         }
 
-        public FixedSizeTextRenderer(int horizontalTextLength, SpriteFont font, BatchDrawOptions? options)
+        public FixedSizeTextRenderer(int horizontalTextLength, SpriteFont font, BatchDrawOptions? options) : base(font)
         {
             ArgumentNullException.ThrowIfNull(font, nameof(font));
 
-            Font = font;
             HorizontalTextLength = horizontalTextLength;
             drawOptions = options ?? BatchDrawOptions.Default;
         }
 
-        public void Render(RenderTarget2D target, Vector2 offset)
+        public override void Render(RenderTarget2D target, Vector2 offset)
         {
             DrawHelper.SetBeginBatch(target, drawOptions);
 
@@ -57,8 +35,8 @@ namespace PopUpUI.Text
 
             foreach ((string[] lineWords, float lineWidth) in alignedWords)
             {
-                int xOffset = 0;
-                int wordSpacing = (int)GetWordSpacing(lineWidth, lineWords.Length);
+                float xOffset = 0;
+                float wordSpacing = GetWordSpacing(lineWidth, lineWords.Length);
 
                 foreach (var word in lineWords)
                 {
@@ -66,34 +44,15 @@ namespace PopUpUI.Text
                     xOffset += (int)GetWidth(word) + wordSpacing;
                 }
 
-                offset.Y += Font.LineSpacing;
+                offset.Y += LineSpacing;
             }
 
             DrawHelper.EndBatch();
         }
 
-        private Vector2 GetAlignmentOffset(Point surfaceSize, Point textSize)
+        public override Vector2 GetTextSize()
         {
-            int xOffset = Alignment switch
-            {
-                TextAlignment.TopLeft or TextAlignment.MiddleLeft or TextAlignment.BottomLeft => 0,
-                TextAlignment.TopMiddle or TextAlignment.Center or TextAlignment.BottomMiddle => (surfaceSize.X - textSize.X) / 2,
-                TextAlignment.TopRight or TextAlignment.MiddleRight or TextAlignment.BottomRight => surfaceSize.X - textSize.X
-            };
-
-            int yOffset = Alignment switch
-            {
-                TextAlignment.TopLeft or TextAlignment.TopMiddle or TextAlignment.TopRight => 0,
-                TextAlignment.MiddleLeft or TextAlignment.Center or TextAlignment.MiddleRight => (surfaceSize.Y - textSize.Y) / 2,
-                TextAlignment.BottomLeft or TextAlignment.BottomMiddle or TextAlignment.BottomRight => surfaceSize.Y - textSize.Y
-            };
-
-            return new Vector2(xOffset, yOffset);
-        }
-
-        public Vector2 GetTextSize()
-        {
-            float spaceWidth = Font.MeasureString(" ").X;
+            float minimumSpaceWidth = WordSpacing;
             int lineCount = 1;
 
             foreach (string existingLine in Text.Split('\n', StringSplitOptions.RemoveEmptyEntries))
@@ -106,7 +65,7 @@ namespace PopUpUI.Text
                 {
                     float wordWidth = GetWidth(words[i]);
 
-                    if (lineWidth + wordWidth + (i - lastStart) * spaceWidth <= HorizontalTextLength)
+                    if (lineWidth + wordWidth + (i - lastStart) * minimumSpaceWidth <= HorizontalTextLength)
                     {
                         lineWidth += wordWidth;
                     }
@@ -119,19 +78,24 @@ namespace PopUpUI.Text
                 }
             }
 
-            return new Vector2(HorizontalTextLength, Font.LineSpacing * lineCount);
+            return new Vector2(HorizontalTextLength, LineSpacing * lineCount);
+        }
+
+        public override int GetVisibleCharCount()
+        {
+            return GetAlignedWords().Sum(tuple => tuple.LineWords.Sum((Func<string, int>)(word => word.Length + 1))) - 1;
         }
 
         private Point TextSizeFromAligned(List<(string[] LineWords, float LineWidth)> lines)
         {
-            return new Point(HorizontalTextLength, Font.LineSpacing * lines.Count);
+            return new Point(HorizontalTextLength, LineSpacing * lines.Count);
         }
 
         private List<(string[] LineWords, float LineWidth)> GetAlignedWords()
         {
             List<(string[] LineWords, float LineWidth)> lines = new List<(string[] LineWords, float LineWidth)>();
 
-            float spaceWidth = Font.MeasureString(" ").X;
+            float minimumSpaceWidth = WordSpacing;
 
             foreach (string existingLine in Text.Split('\n', StringSplitOptions.RemoveEmptyEntries))
             {
@@ -143,7 +107,7 @@ namespace PopUpUI.Text
                 {
                     float wordWidth = GetWidth(words[i]);
 
-                    if (lineWidth + wordWidth + (i - lastStart) * spaceWidth <= HorizontalTextLength)
+                    if (lineWidth + wordWidth + (i - lastStart) * minimumSpaceWidth <= HorizontalTextLength)
                     {
                         lineWidth += wordWidth;
                     }
@@ -162,17 +126,7 @@ namespace PopUpUI.Text
             return lines;
         }
 
-        private float GetWidth(string str)
-        {
-            return Font.MeasureString(str).X;
-        }
-
-        public int GetVisibleCharCount()
-        {
-            return Text.Length;
-        }
-
-        public Vector2 ScreenCaretPosition(int caretPosition, Point? targetSize)
+        public override Vector2 ScreenCaretPosition(int caretPosition, Point? targetSize)
         {
             List<(string[] LineWords, float LineWidth)> lines = GetAlignedWords();
 
@@ -211,16 +165,16 @@ namespace PopUpUI.Text
 
             if (targetSize.HasValue)
             {
-                return new Vector2(xOffset, Font.LineSpacing * lineIndex)
+                return new Vector2(xOffset, LineSpacing * lineIndex)
                      + TextOffset.ToVector2()
                      + GetAlignmentOffset(targetSize.Value, TextSizeFromAligned(lines));
             }
 
-            return new Vector2(xOffset, Font.LineSpacing * lineIndex)
+            return new Vector2(xOffset, LineSpacing * lineIndex)
                  + TextOffset.ToVector2();
         }
 
-        public int MouseCaretPosition(Vector2 mouseOnTarget, Point? targetSize)
+        public override int MouseCaretPosition(Vector2 mouseOnTarget, Point? targetSize)
         {
             List<(string[] LineWords, float LineWidth)> lines = GetAlignedWords();
 
@@ -231,7 +185,7 @@ namespace PopUpUI.Text
 
             mouseOnTarget -= TextOffset.ToVector2();
 
-            int lineIndex = (int)(mouseOnTarget.Y / Font.LineSpacing);
+            int lineIndex = (int)(mouseOnTarget.Y / LineSpacing);
             float wordSpacing = GetWordSpacing(lines[lineIndex].LineWidth, lines[lineIndex].LineWords.Length);
 
             int charsUntilLine = lines.Take(lineIndex).Sum(tuple => AllWordLengths(tuple.LineWords) + 1); // +1 for newline chars
@@ -280,7 +234,7 @@ namespace PopUpUI.Text
 
         private float GetWordSpacing(float lineWidth, int wordCount)
         {
-            return wordCount == 0 ? 0 : (HorizontalTextLength - lineWidth) / (wordCount - 1);
+            return wordCount == 0 ? 0 : (int)((HorizontalTextLength - lineWidth) / (wordCount - 1));
         }
     }
 }

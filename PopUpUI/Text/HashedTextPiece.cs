@@ -2,7 +2,7 @@
 
 namespace PopUpUI.Text
 {
-    internal class HashedTextPiece
+    public class HashedTextPiece
     {
         public int VisibleCharLength => RendererHash.VisibleCharLength(Text);
 
