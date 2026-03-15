@@ -1,0 +1,181 @@
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using PopUpUI.Surface;
+using System;
+using System.Collections.Generic;
+
+#pragma warning disable 8632
+
+namespace PopUpUI.Text
+{
+    public class RichFixedSizeTextProcesser : RichProcesser
+    {
+        private readonly BatchDrawOptions drawOptions;
+
+        public RichFixedSizeTextProcesser(int horizontalTextLength, SpriteFont defaultFont) : this(horizontalTextLength, defaultFont, null)
+        {
+        }
+
+        public RichFixedSizeTextProcesser(int horizontalTextLength, SpriteFont defaultFont, BatchDrawOptions? options)
+            : base(Color.White, defaultFont)
+        {
+            ArgumentNullException.ThrowIfNull(defaultFont);
+
+            HorizontalTextLength = horizontalTextLength;
+            drawOptions = options ?? BatchDrawOptions.Default;
+        }
+
+        public RichFixedSizeTextProcesser(RichFixedSizeTextProcesser renderer) : base(renderer.defaultTextHash.Color, renderer.defaultTextHash.Font)
+        {
+            ArgumentNullException.ThrowIfNull(renderer);
+
+            drawOptions = renderer.drawOptions;
+
+            Text = renderer.Text;
+            HorizontalTextLength = renderer.HorizontalTextLength;
+            Opacity = renderer.Opacity;
+            Alignment = renderer.Alignment;
+            TextOffset = renderer.TextOffset;
+
+            _hashes.AddRange(renderer._hashes);
+        }
+
+        public override ITextProcesserResult GetParseResult()
+        {
+            return new RichFixedSizeTextProcesserResult(GetHashedLines(), new ProcesserData
+            {
+                HorizontalTextLength = this.HorizontalTextLength,
+                Opacity = this.Opacity,
+                Alignment = this.Alignment,
+                TextOffset = this.TextOffset,
+                LineSpacing = this.LineSpacing,
+                WordSpacing = this.WordSpacing,
+                DrawOptions = this.drawOptions
+            });
+        }
+
+        private List<(HashedTextPiece[] Parts, float TotalWordsWidth)> GetHashedLines()
+        {
+            return SplitHorizontalLength(SplitToNewLines(SplitToHashes()));
+        }
+
+        protected static List<(string Word, IRendererHash Hash)[]> SplitToNewLines(LinkedList<HashedTextPiece> hashedNodes)
+        {
+            List<(string Word, IRendererHash Hash)[]> hashedWordLines = new List<(string Word, IRendererHash Hash)[]>();
+            List<(string Word, IRendererHash Hash)> currentLine = new List<(string, IRendererHash)>();
+
+            for (var node = hashedNodes.First; node != null; node = node.Next)
+            {
+                int[] newLineIndex = ParseHelpers.AllNewLineIndexes(node.Value.Text);
+                if (newLineIndex.Length == 0)
+                {
+                    foreach (var word in node.Value.Text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        currentLine.Add((word, node.Value.RendererHash));
+                    }
+
+                    continue;
+                }
+
+                int lastStart = 0;
+                foreach (var index in newLineIndex)
+                {
+                    foreach (var word in node.Value.Text.Substring(lastStart, index - lastStart).Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        currentLine.Add((word, node.Value.RendererHash));
+                    }
+
+                    hashedWordLines.Add(currentLine.ToArray());
+
+                    currentLine.Clear();
+                    lastStart = index + 1;
+                }
+
+                foreach (var word in node.Value.Text.Substring(lastStart).Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    currentLine.Add((word, node.Value.RendererHash));
+                }
+            }
+
+            if (currentLine.Count != 0)
+            {
+                hashedWordLines.Add(currentLine.ToArray());
+            }
+
+            return hashedWordLines;
+        }
+
+        private List<(HashedTextPiece[] Parts, float TotalWordsWidth)> SplitHorizontalLength(List<(string Word, IRendererHash Hash)[]> lineParts)
+        {
+            List<HashedTextPiece> currentLine = new List<HashedTextPiece>();
+            List<(HashedTextPiece[] Parts, float LineWidth)> lines = new List<(HashedTextPiece[] Parts, float LineWidth)>();
+
+            float minimumSpaceWidth = WordSpacing;
+            foreach (var line in lineParts)
+            {
+                float lineWidth = 0;
+                int lastStart = 0;
+
+                for (int i = 0; i < line.Length; i++)
+                {
+                    (string word, IRendererHash hash) = line[i];
+                    float wordWidth = hash.GetWidth(word);
+
+                    if (lineWidth + wordWidth + (i - lastStart) * minimumSpaceWidth <= HorizontalTextLength)
+                    {
+                        currentLine.Add(new HashedTextPiece(word, hash));
+                        lineWidth += wordWidth;
+                    }
+                    else
+                    {
+                        lines.Add((currentLine.ToArray(), lineWidth));
+                        currentLine.Clear();
+
+                        lastStart = i;
+                        lineWidth = wordWidth;
+                        currentLine.Add(new HashedTextPiece(word, hash));
+                    }
+                }
+
+                lines.Add((currentLine.ToArray(), lineWidth));
+                currentLine.Clear();
+            }
+
+            return lines;
+        }
+
+        public Vector2 GetTextSize()
+        {
+            List<(string Word, IRendererHash Hash)[]> existingLines = SplitToNewLines(SplitToHashes());
+
+            float minimumSpaceWidth = WordSpacing;
+            int lineCount = 1;
+
+            foreach (var line in existingLines)
+            {
+                float lineWidth = 0;
+                int lastStart = 0;
+
+                for (int i = 0; i < line.Length; i++)
+                {
+                    (string word, IRendererHash hash) = line[i];
+
+                    float wordWidth = hash.GetWidth(word);
+
+                    if (lineWidth + wordWidth + (i - lastStart) * minimumSpaceWidth <= HorizontalTextLength)
+                    {
+                        lineWidth += wordWidth;
+                    }
+                    else
+                    {
+                        lineCount++;
+                        lastStart = i;
+                        lineWidth = wordWidth;
+                    }
+                }
+            }
+
+            return new Vector2(HorizontalTextLength, LineSpacing * lineCount);
+        }
+    }
+}

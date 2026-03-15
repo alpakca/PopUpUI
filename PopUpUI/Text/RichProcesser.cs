@@ -2,15 +2,12 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-#pragma warning disable 8524
-
 namespace PopUpUI.Text
 {
-    public abstract class RichRenderer : ITextRenderer
+    public abstract class RichProcesser : ITextProcesser
     {
         private int lineSpacing = -1;
         private float wordSpacing = -1;
@@ -52,15 +49,9 @@ namespace PopUpUI.Text
             set => defaultTextHash.Font = value;
         }
 
-        public abstract void Render(RenderTarget2D target, Vector2 offset);
+        public abstract ITextProcesserResult GetParseResult();
 
-        public abstract Vector2 GetTextSize();
-        public abstract int GetVisibleCharCount();
-
-        public abstract Vector2 ScreenCaretPosition(int caretPosition, Point? targetSize);
-        public abstract int MouseCaretPosition(Vector2 mouseOnTarget, Point? targetSize);
-
-        public RichRenderer(Color defaultColor, SpriteFont defaultFont)
+        public RichProcesser(Color defaultColor, SpriteFont defaultFont)
         {
             _hashes = new List<IRendererHash>();
             defaultTextHash = new TextHash("", defaultColor, defaultFont);
@@ -101,7 +92,7 @@ namespace PopUpUI.Text
             _regexPattern = regexBuilder.ToString();
         }
 
-        protected IRendererHash MatchedHash(Match match)
+        private IRendererHash MatchedHash(Match match)
         {
             foreach (Group group in match.Groups)
             {
@@ -112,48 +103,6 @@ namespace PopUpUI.Text
             }
 
             throw new Exception();
-        }
-
-        protected Vector2 GetAlignmentOffset(Point surfaceSize, Point textSize)
-        {
-            int xOffset = Alignment switch
-            {
-                TextAlignment.TopLeft or TextAlignment.MiddleLeft or TextAlignment.BottomLeft => 0,
-                TextAlignment.TopMiddle or TextAlignment.Center or TextAlignment.BottomMiddle => (surfaceSize.X - textSize.X) / 2,
-                TextAlignment.TopRight or TextAlignment.MiddleRight or TextAlignment.BottomRight => surfaceSize.X - textSize.X
-            };
-
-            int yOffset = Alignment switch
-            {
-                TextAlignment.TopLeft or TextAlignment.TopMiddle or TextAlignment.TopRight => 0,
-                TextAlignment.MiddleLeft or TextAlignment.Center or TextAlignment.MiddleRight => (surfaceSize.Y - textSize.Y) / 2,
-                TextAlignment.BottomLeft or TextAlignment.BottomMiddle or TextAlignment.BottomRight => surfaceSize.Y - textSize.Y
-            };
-
-            return new Vector2(xOffset, yOffset);
-        }
-
-        protected static int[] AllNewLineIndexes(string text)
-        {
-            int count = 0;
-            Span<int> indexes = stackalloc int[text.Length];
-
-            for (int i = 0; i < text.Length; i++)
-            {
-                if (text[i] == '\n') indexes[count++] = i;
-            }
-
-            return indexes.Slice(0, count).ToArray();
-        }
-
-        protected Point TextSizeFromHashedLines(List<(HashedTextPiece[] Parts, float LineWidth)> hashedLines)
-        {
-            if (HorizontalTextLength != int.MaxValue)
-            {
-                return new Point(HorizontalTextLength, LineSpacing * hashedLines.Count);
-            }
-
-            return new Point((int)hashedLines.Max(line => line.LineWidth), LineSpacing * hashedLines.Count);
         }
 
         protected LinkedList<HashedTextPiece> SplitToHashes()

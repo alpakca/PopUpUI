@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace PopUpUI.Text
 {
-    public interface ITextRenderer
+    public interface ITextProcesser
     {
         public int LineSpacing { get; set; }
         public float WordSpacing { get; set; }
@@ -12,7 +12,7 @@ namespace PopUpUI.Text
         public int HorizontalTextLength { get; set; }
         /// <summary>Gets or sets the opacity of the text. Expected value is between 0.0f and 1.0f. Default value is 1.0f.</summary>
         public float Opacity { get; set; }
-        /// <summary>Gets or sets the text that will be rendered.</summary>
+        /// <summary>Gets or sets the text that will be parsed.</summary>
         public string Text { get; set; }
 
         /// <summary>Gets or sets the alignment of the text, that is text's position relative to target it will be rendered to.
@@ -23,12 +23,6 @@ namespace PopUpUI.Text
         /// <remarks>This property does not effect text size from <see cref="GetTextSize"/>. It can be used to intentionally creating wiped text.</remarks>
         public Point TextOffset { get; set; }
 
-        public void Render(RenderTarget2D target, Vector2 offset);
-
-        public Vector2 GetTextSize();
-        public int GetVisibleCharCount();
-
-        public Vector2 ScreenCaretPosition(int caretPosition, Point? targetSize);
-        public int MouseCaretPosition(Vector2 mouseOnTarget, Point? targetSize);
+        public ITextProcesserResult GetParseResult();
     }
 }
