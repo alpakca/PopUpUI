@@ -4,9 +4,11 @@ using PopUpUI.Surface;
 using System;
 using System.Collections.Generic;
 
+#pragma warning disable 8632
+
 namespace PopUpUI.Text
 {
-    public class FixedSizeTextProcesser : DefaultLayoutProcesser
+    public class FixedSizeTextProcesser : DefaultProcesser
     {
         private readonly BatchDrawOptions drawOptions;
 
@@ -14,7 +16,7 @@ namespace PopUpUI.Text
         {
         }
 
-        public FixedSizeTextProcesser(int horizontalTextLength, SpriteFont font, BatchDrawOptions options) : base(font)
+        public FixedSizeTextProcesser(int horizontalTextLength, SpriteFont font, BatchDrawOptions? options) : base(font)
         {
             ArgumentNullException.ThrowIfNull(font, nameof(font));
 
@@ -22,19 +24,32 @@ namespace PopUpUI.Text
             drawOptions = options ?? BatchDrawOptions.Default;
         }
 
+        public FixedSizeTextProcesser(FixedSizeTextProcesser processer) : base(processer.Font)
+        {
+            this.Text = processer.Text;
+            this.HorizontalTextLength = processer.HorizontalTextLength;
+            this.Opacity = processer.Opacity;
+            this.Alignment = processer.Alignment;
+            this.TextOffset = processer.TextOffset;
+            this.TextColor = processer.TextColor;
+            this.WordSpacing = processer.WordSpacing;
+            this.LineSpacing = processer.LineSpacing;
+            this.drawOptions = processer.drawOptions;
+        }
+
         public override ITextProcesserResult GetParseResult()
         {
             return new FixedSizeTextProcesserResult(GetAlignedWords(), new ProcesserData
             {
-                HorizontalTextLength = HorizontalTextLength,
-                Opacity = Opacity,
-                Alignment = Alignment,
-                TextOffset = TextOffset,
-                TextColor = TextColor,
-                LineSpacing = LineSpacing,
-                WordSpacing = WordSpacing,
-                Font = Font,
-                DrawOptions = drawOptions
+                HorizontalTextLength = this.HorizontalTextLength,
+                Opacity = this.Opacity,
+                Alignment = this.Alignment,
+                TextOffset = this.TextOffset,
+                TextColor = this.TextColor,
+                WordSpacing = this.WordSpacing,
+                LineSpacing = this.LineSpacing,
+                Font = this.Font,
+                DrawOptions = this.drawOptions
             });
         }
 
@@ -51,7 +66,7 @@ namespace PopUpUI.Text
                 int lastStart = 0;
                 for (int i = 0; i < words.Length; i++)
                 {
-                    float wordWidth = ParseHelpers.GetWidth(Font, words[i]);
+                    float wordWidth = ProcesserHelpers.GetWidth(Font, words[i]);
 
                     if (lineWidth + wordWidth + (i - lastStart) * minimumSpaceWidth <= HorizontalTextLength)
                     {
@@ -83,7 +98,7 @@ namespace PopUpUI.Text
                 int lastStart = 0;
                 for (int i = 0; i < words.Length; i++)
                 {
-                    float wordWidth = ParseHelpers.GetWidth(Font, words[i]);
+                    float wordWidth = ProcesserHelpers.GetWidth(Font, words[i]);
 
                     if (lineWidth + wordWidth + (i - lastStart) * minimumSpaceWidth <= HorizontalTextLength)
                     {

@@ -13,6 +13,14 @@ namespace PopUpUI.Text
         private readonly List<(HashedTextPiece[] Parts, float TotalWordsWidth)> _lines;
 
         private int _visibleCharCount = -1;
+        private CaretLayout _caret;
+
+        public Vector2 TextSize => new Vector2(_data.HorizontalTextLength, _data.LineSpacing * _lines.Count);
+
+        public int LineCount => _lines.Count;
+        public int VisibleCharCount => _visibleCharCount == -1 ? _visibleCharCount = GetVisibleCharCount() : _visibleCharCount;
+
+        public ICaretLayout Caret => _caret ??= new CaretLayout(this);
 
         internal RichFixedSizeTextProcesserResult(List<(HashedTextPiece[] Parts, float TotalWordsWidth)> lines, ProcesserData data)
         {
@@ -24,13 +32,13 @@ namespace PopUpUI.Text
         {
             DrawHelper.SetBeginBatch(target, _data.DrawOptions);
 
-            offset += _data.TextOffset.ToVector2() + ParseHelpers.GetAlignmentOffset(_data.Alignment, new Point(target.Width, target.Height), TextSizeFromHashedLines());
+            offset += _data.TextOffset.ToVector2() + ProcesserHelpers.GetAlignmentOffset(_data.Alignment, new Point(target.Width, target.Height), TextSize);
 
             foreach ((HashedTextPiece[] line, float lineWidth) in _lines)
             {
                 float xOffset = 0;
 
-                float wordSpacing = ParseHelpers.GetWordSpacing(_data.HorizontalTextLength, lineWidth, line.Length);
+                float wordSpacing = ProcesserHelpers.GetWordSpacing(_data.HorizontalTextLength, lineWidth, line.Length);
                 foreach (HashedTextPiece hashedPiece in line)
                 {
                     hashedPiece.DrawHash(offset + new Vector2(xOffset, 0));
@@ -43,136 +51,134 @@ namespace PopUpUI.Text
             DrawHelper.EndBatch();
         }
 
-        private Point TextSizeFromHashedLines()
+        public int GetLineVisibleCharCount(int lineIndex)
         {
-            return new Point(_data.HorizontalTextLength, _data.LineSpacing * _lines.Count);
+            return ProcesserHelpers.LineVisibleCharCount(_lines[lineIndex].Parts);
         }
 
-        public Vector2 GetTextSize()
+        public float GetLineWidth(int lineIndex)
         {
-            return TextSizeFromHashedLines().ToVector2();
+            return _data.HorizontalTextLength;
         }
 
-        public int GetVisibleCharCount()
+        private int GetVisibleCharCount()
         {
             if (_lines.Count == 0)
             {
                 return 0;
             }
 
-            if (_visibleCharCount == -1)
-            {
-                _visibleCharCount = _lines.Sum(tuple => tuple.Parts.Sum((Func<HashedTextPiece, int>)(part => part.VisibleCharLength + 1))) - 1;
-            }
-
-            return _visibleCharCount;
+            return _visibleCharCount = _lines.Sum(tuple => tuple.Parts.Sum((Func<HashedTextPiece, int>)(part => part.VisibleCharLength + 1))) - 1;
         }
 
-        public Vector2 ScreenCaretPosition(int caretPosition, Point? targetSize)
+        private class CaretLayout : ICaretLayout
         {
-            if (_lines.Count == 0)
+            private readonly RichFixedSizeTextProcesserResult _result;
+
+            private ProcesserData Data => _result._data;
+            private List<(HashedTextPiece[] Parts, float TotalWordsWidth)> Lines => _result._lines;
+
+            public CaretPosition MinimumPosition => new CaretPosition(0, 0);
+            public CaretPosition MaximumPosition => new CaretPosition(Lines.Count - 1, _result.GetLineVisibleCharCount(Lines.Count - 1));
+
+            public CaretLayout(RichFixedSizeTextProcesserResult result)
             {
-                return _data.TextOffset.ToVector2()
-                     + (targetSize.HasValue ? ParseHelpers.GetAlignmentOffset(_data.Alignment, targetSize.Value, TextSizeFromHashedLines()) : default);
+                _result = result;
             }
 
-            int charConsumed = 0;
-
-            int lineIndex = 0;
-            int wordIndex = -1;
-            foreach (var (lineWords, _) in _lines)
+            public CaretPosition Advance(CaretPosition caretPosition, int amount)
             {
-                for (int i = 0; i < lineWords.Length; i++)
+                return ProcesserHelpers.AdvanceCaret(caretPosition, amount, _result);
+            }
+
+            public CaretPosition Clamp(CaretPosition caretPosition)
+            {
+                return ProcesserHelpers.ClampCaret(caretPosition, _result);
+            }
+
+            public CaretPosition Clamp(CaretPosition caretPosition, int lineIndexOffset, int indexInsideLineOffset)
+            {
+                return Clamp(new CaretPosition(caretPosition.LineIndex + lineIndexOffset,
+                                               caretPosition.IndexInsideLine + indexInsideLineOffset));
+            }
+
+            public int GetTextCaretPosition(CaretPosition caretPosition)
+            {
+                return Lines.Take(caretPosition.LineIndex).Sum(tuple => ProcesserHelpers.LineVisibleCharCount(tuple.Parts) + 1) // +1 for new line char
+                     + caretPosition.IndexInsideLine;
+            }
+
+            public CaretPosition GetCaretPosition(int textCaretPosition)
+            {
+                return ProcesserHelpers.GetCaretPositionFromText(textCaretPosition, _result);
+            }
+
+            public Vector2 ScreenCaretPosition(CaretPosition caretPosition, Point? targetSize)
+            {
+                if (Lines.Count == 0)
                 {
-                    if (caretPosition <= charConsumed + lineWords[i].VisibleCharLength)
+                    return Data.TextOffset.ToVector2()
+                         + (targetSize.HasValue ? ProcesserHelpers.GetAlignmentOffset(Data.Alignment, targetSize.Value, _result.TextSize) : default);
+                }
+
+                float wordSpacing = ProcesserHelpers.GetWordSpacing(Data.HorizontalTextLength, 
+                                                                    Lines[caretPosition.LineIndex].TotalWordsWidth, 
+                                                                    Lines[caretPosition.LineIndex].Parts.Length);
+
+                // length of words and spaces until the word that caret in
+                float xOffset = ProcesserHelpers.WidthUntil(Lines[caretPosition.LineIndex].Parts, wordSpacing, caretPosition.IndexInsideLine);
+
+                return ProcesserHelpers.GetScreenCaretPosition(caretPosition, Data, _result.TextSize, xOffset, targetSize);
+            }
+
+            public CaretPosition MouseCaretPosition(Vector2 mouseOnTarget, Point? targetSize)
+            {
+                if (targetSize.HasValue)
+                {
+                    mouseOnTarget -= ProcesserHelpers.GetAlignmentOffset(Data.Alignment, targetSize.Value, _result.TextSize);
+                }
+
+                mouseOnTarget -= Data.TextOffset.ToVector2();
+
+                int lineIndex = (int)(mouseOnTarget.Y / Data.LineSpacing);
+                float wordSpacing = ProcesserHelpers.GetWordSpacing(Data.HorizontalTextLength, Lines[lineIndex].TotalWordsWidth, Lines[lineIndex].Parts.Length);
+
+                int charsUntilLine = Lines.Take(lineIndex).Sum(tuple => ProcesserHelpers.LineVisibleCharCount(tuple.Parts) + 1); // +1 for newline chars
+                int caretLineWordLength = ProcesserHelpers.LineVisibleCharCount(Lines[lineIndex].Parts);
+
+                // shortcut for selecting the last character of line if line width is smaller than mouse position
+                if (Lines[lineIndex].TotalWordsWidth + wordSpacing * (Lines[lineIndex].Parts.Length - 1) < mouseOnTarget.X)
+                {
+                    return new CaretPosition(lineIndex, caretLineWordLength);
+                }
+
+                int consumedChars = 0;
+                float currentWidth = 0;
+
+                foreach (var part in Lines[lineIndex].Parts)
+                {
+                    for (int i = 0; i < part.VisibleCharLength; i++)
                     {
-                        wordIndex = i;
-                        break;
+                        if (currentWidth + part.TextWidth(0, i) + part.TextWidth(i, 1) / 2 > mouseOnTarget.X)
+                        {
+                            return new CaretPosition(lineIndex, consumedChars + i);
+                        }
                     }
 
-                    // +1 for space char, or new line char if it is the last word of line
-                    charConsumed += lineWords[i].VisibleCharLength + 1;
-                }
+                    currentWidth += part.TextWidth();
 
-                if (wordIndex != -1)
-                {
-                    break;
-                }
-
-                lineIndex++;
-            }
-
-            float wordSpacing = ParseHelpers.GetWordSpacing(_data.HorizontalTextLength, _lines[lineIndex].TotalWordsWidth, _lines[lineIndex].Parts.Length);
-
-            // length of words and spaces until the word that caret in
-            float xOffset = _lines[lineIndex].Parts.Take(wordIndex).Sum(part => part.TextWidth() + wordSpacing);
-
-            // length of word until caret position
-            xOffset += _lines[lineIndex].Parts[wordIndex].TextWidth(0, caretPosition - charConsumed);
-
-            if (targetSize.HasValue)
-            {
-                return new Vector2(xOffset, _data.LineSpacing * lineIndex)
-                     + _data.TextOffset.ToVector2()
-                     + ParseHelpers.GetAlignmentOffset(_data.Alignment, targetSize.Value, TextSizeFromHashedLines());
-            }
-
-            return new Vector2(xOffset, _data.LineSpacing * lineIndex)
-                 + _data.TextOffset.ToVector2();
-        }
-
-        public int MouseCaretPosition(Vector2 mouseOnTarget, Point? targetSize)
-        {
-            if (_lines.Count == 0)
-            {
-                return 0;
-            }
-
-            if (targetSize.HasValue)
-            {
-                mouseOnTarget -= ParseHelpers.GetAlignmentOffset(_data.Alignment, targetSize.Value, TextSizeFromHashedLines());
-            }
-
-            mouseOnTarget -= _data.TextOffset.ToVector2();
-
-            int lineIndex = (int)(mouseOnTarget.Y / _data.LineSpacing);
-            float wordSpacing = ParseHelpers.GetWordSpacing(_data.HorizontalTextLength, _lines[lineIndex].TotalWordsWidth, _lines[lineIndex].Parts.Length);
-
-            int charsUntilLine = _lines.Take(lineIndex).Sum(tuple => ParseHelpers.AllWordLengths(tuple.Parts) + 1); // +1 for newline chars
-            int caretLineWordLength = ParseHelpers.AllWordLengths(_lines[lineIndex].Parts);
-
-            // shortcut for selecting the last character of line if line width is smaller than mouse position
-            if (_lines[lineIndex].TotalWordsWidth + wordSpacing * (_lines[lineIndex].Parts.Length - 1) < mouseOnTarget.X)
-            {
-                return charsUntilLine + caretLineWordLength;
-            }
-
-            int consumedChars = 0;
-            float currentWidth = 0;
-
-            foreach (var part in _lines[lineIndex].Parts)
-            {
-                for (int i = 0; i < part.VisibleCharLength; i++)
-                {
-                    if (currentWidth + part.TextWidth(0, i) + part.TextWidth(i, 1) / 2 > mouseOnTarget.X)
+                    if (currentWidth + wordSpacing / 2 > mouseOnTarget.X)
                     {
-                        return charsUntilLine + consumedChars + i;
+                        return new CaretPosition(lineIndex, consumedChars + part.VisibleCharLength);
                     }
+
+                    currentWidth += wordSpacing;
+                    consumedChars += part.VisibleCharLength + 1;
                 }
 
-                currentWidth += part.TextWidth();
-
-                if (currentWidth + wordSpacing / 2 > mouseOnTarget.X)
-                {
-                    return charsUntilLine + consumedChars + part.VisibleCharLength;
-                }
-
-                currentWidth += wordSpacing;
-                consumedChars += part.VisibleCharLength + 1;
+                // should not reach this point - already handled in shortcut
+                return new CaretPosition(lineIndex, caretLineWordLength);
             }
-
-            // should not reach this point - already handled in shortcut
-            return charsUntilLine + caretLineWordLength;
         }
     }
 }

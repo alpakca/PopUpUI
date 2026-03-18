@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Surface;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 #pragma warning disable 8632
@@ -27,20 +28,21 @@ namespace PopUpUI.Text
             drawOptions = options ?? BatchDrawOptions.Default;
         }
 
-        public RichTextProcesser(RichTextProcesser renderer) : base(renderer.defaultTextHash.Color, renderer.defaultTextHash.Font)
+        public RichTextProcesser(RichTextProcesser processer) : base(processer.defaultTextHash.Color, processer.defaultTextHash.Font)
         {
-            ArgumentNullException.ThrowIfNull(renderer);
+            ArgumentNullException.ThrowIfNull(processer);
 
-            drawOptions = renderer.drawOptions;
+            this.Text = processer.Text;
+            this.HorizontalTextLength = processer.HorizontalTextLength;
+            this.Opacity = processer.Opacity;
+            this.Orientation = processer.Orientation;
+            this.Alignment = processer.Alignment;
+            this.TextOffset = processer.TextOffset;
+            this.WordSpacing = processer.WordSpacing;
+            this.LineSpacing = processer.LineSpacing;
+            this.drawOptions = processer.drawOptions;
 
-            Text = renderer.Text;
-            HorizontalTextLength = renderer.HorizontalTextLength;
-            Opacity = renderer.Opacity;
-            Orientation = renderer.Orientation;
-            Alignment = renderer.Alignment;
-            TextOffset = renderer.TextOffset;
-
-            _hashes.AddRange(renderer._hashes);
+            AttachHashes(processer._hashes);
         }
 
         public override ITextProcesserResult GetParseResult()
@@ -49,12 +51,12 @@ namespace PopUpUI.Text
             {
                 HorizontalTextLength = this.HorizontalTextLength,
                 Opacity = this.Opacity,
+                Orientation = this.Orientation,
                 Alignment = this.Alignment,
                 TextOffset = this.TextOffset,
-                LineSpacing = this.LineSpacing,
                 WordSpacing = this.WordSpacing,
+                LineSpacing = this.LineSpacing,
                 DrawOptions = this.drawOptions,
-                Orientation = this.Orientation
             });
         }
 
@@ -70,7 +72,7 @@ namespace PopUpUI.Text
 
             for (var node = hashedNodes.First; node != null; node = node.Next)
             {
-                int[] newLineIndex = ParseHelpers.AllNewLineIndexes(node.Value.Text);
+                int[] newLineIndex = ProcesserHelpers.AllNewLineIndexes(node.Value.Text);
                 if (newLineIndex.Length == 0)
                 {
                     AddWordsToCurrentLine(node.Value.Text, ' ', node.Value.RendererHash);

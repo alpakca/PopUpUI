@@ -10,6 +10,7 @@ namespace PopUpUI.Text
 
         /// <summary>Gets or sets maximum length of each row of text can contain. Default value is <see cref="int.MaxValue"/>.</summary>
         public int HorizontalTextLength { get; set; }
+        public float FirstRowOffset { get; set; }
         /// <summary>Gets or sets the opacity of the text. Expected value is between 0.0f and 1.0f. Default value is 1.0f.</summary>
         public float Opacity { get; set; }
         /// <summary>Gets or sets the text that will be parsed.</summary>

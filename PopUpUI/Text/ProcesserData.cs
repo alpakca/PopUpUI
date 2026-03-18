@@ -4,7 +4,7 @@ using PopUpUI.Surface;
 
 namespace PopUpUI.Text
 {
-    internal class ProcesserData
+    public class ProcesserData
     {
         public int LineSpacing { get; init; }
         public float WordSpacing { get; init; }

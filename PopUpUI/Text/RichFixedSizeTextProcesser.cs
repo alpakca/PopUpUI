@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Surface;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 #pragma warning disable 8632
 
@@ -25,19 +26,20 @@ namespace PopUpUI.Text
             drawOptions = options ?? BatchDrawOptions.Default;
         }
 
-        public RichFixedSizeTextProcesser(RichFixedSizeTextProcesser renderer) : base(renderer.defaultTextHash.Color, renderer.defaultTextHash.Font)
+        public RichFixedSizeTextProcesser(RichFixedSizeTextProcesser processer) : base(processer.defaultTextHash.Color, processer.defaultTextHash.Font)
         {
-            ArgumentNullException.ThrowIfNull(renderer);
+            ArgumentNullException.ThrowIfNull(processer);
 
-            drawOptions = renderer.drawOptions;
+            this.Text = processer.Text;
+            this.HorizontalTextLength = processer.HorizontalTextLength;
+            this.Opacity = processer.Opacity;
+            this.Alignment = processer.Alignment;
+            this.TextOffset = processer.TextOffset;
+            this.WordSpacing = processer.WordSpacing;
+            this.LineSpacing = processer.LineSpacing;
+            this.drawOptions = processer.drawOptions;
 
-            Text = renderer.Text;
-            HorizontalTextLength = renderer.HorizontalTextLength;
-            Opacity = renderer.Opacity;
-            Alignment = renderer.Alignment;
-            TextOffset = renderer.TextOffset;
-
-            _hashes.AddRange(renderer._hashes);
+            AttachHashes(processer._hashes);
         }
 
         public override ITextProcesserResult GetParseResult()
@@ -48,8 +50,8 @@ namespace PopUpUI.Text
                 Opacity = this.Opacity,
                 Alignment = this.Alignment,
                 TextOffset = this.TextOffset,
-                LineSpacing = this.LineSpacing,
                 WordSpacing = this.WordSpacing,
+                LineSpacing = this.LineSpacing,
                 DrawOptions = this.drawOptions
             });
         }
@@ -66,7 +68,7 @@ namespace PopUpUI.Text
 
             for (var node = hashedNodes.First; node != null; node = node.Next)
             {
-                int[] newLineIndex = ParseHelpers.AllNewLineIndexes(node.Value.Text);
+                int[] newLineIndex = ProcesserHelpers.AllNewLineIndexes(node.Value.Text);
                 if (newLineIndex.Length == 0)
                 {
                     foreach (var word in node.Value.Text.Split(' ', StringSplitOptions.RemoveEmptyEntries))

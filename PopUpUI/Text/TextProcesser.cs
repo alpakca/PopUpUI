@@ -6,13 +6,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-#pragma warning disable 8524
 #pragma warning disable 8632
 
 namespace PopUpUI.Text
 {
     /// <summary>Presents an object that can render text on <see cref="RenderTarget2D"/> in different ways.</summary>
-    public class TextProcesser : DefaultLayoutProcesser
+    public class TextProcesser : DefaultProcesser
     {
         private readonly BatchDrawOptions drawOptions;
 
@@ -37,22 +36,23 @@ namespace PopUpUI.Text
             drawOptions = options ?? BatchDrawOptions.Default;
         }
 
-        /// <summary>Initializes a new instance of <see cref="TextProcesser"/> class with properties from given <paramref name="renderer"/>.</summary>
-        /// <param name="renderer">A <see cref="TextProcesser"/> instance to copy properties from.</param>
+        /// <summary>Initializes a new instance of <see cref="TextProcesser"/> class with properties from given <paramref name="processer"/>.</summary>
+        /// <param name="processer">A <see cref="TextProcesser"/> instance to copy properties from.</param>
         /// <exception cref="ArgumentNullException"></exception>
-        public TextProcesser(TextProcesser renderer) : base(renderer.Font)
+        public TextProcesser(TextProcesser processer) : base(processer.Font)
         {
-            ArgumentNullException.ThrowIfNull(renderer, nameof(renderer));
+            ArgumentNullException.ThrowIfNull(processer, nameof(processer));
 
-            drawOptions = renderer.drawOptions;
-
-            Text = renderer.Text;
-            HorizontalTextLength = renderer.HorizontalTextLength;
-            Opacity = renderer.Opacity;
-            Orientation = renderer.Orientation;
-            Alignment = renderer.Alignment;
-            TextOffset = renderer.TextOffset;
-            TextColor = renderer.TextColor;
+            this.Text = processer.Text;
+            this.HorizontalTextLength = processer.HorizontalTextLength;
+            this.Opacity = processer.Opacity;
+            this.Orientation = processer.Orientation;
+            this.Alignment = processer.Alignment;
+            this.TextOffset = processer.TextOffset;
+            this.TextColor = processer.TextColor;
+            this.WordSpacing = processer.WordSpacing;
+            this.LineSpacing = processer.LineSpacing;
+            this.drawOptions = processer.drawOptions;
         }
 
         public override ITextProcesserResult GetParseResult()
@@ -65,8 +65,8 @@ namespace PopUpUI.Text
                 Alignment = this.Alignment,
                 TextOffset = this.TextOffset,
                 TextColor = this.TextColor,
-                LineSpacing = this.LineSpacing,
                 WordSpacing = this.WordSpacing,
+                LineSpacing = this.LineSpacing,
                 Font = this.Font,
                 DrawOptions = this.drawOptions
             });
@@ -87,7 +87,7 @@ namespace PopUpUI.Text
                 int lastStart = 0;
                 for (int i = 0; i < words.Length; i++)
                 {
-                    float wordWidth = ParseHelpers.GetWidth(Font, words[i]);
+                    float wordWidth = ProcesserHelpers.GetWidth(Font, words[i]);
 
                     if (lineWidth + wordWidth + (i - lastStart) * spaceWidth <= HorizontalTextLength)
                     {
@@ -127,7 +127,7 @@ namespace PopUpUI.Text
                 int lastStart = 0;
                 for (int i = 0; i < words.Length; i++)
                 {
-                    float wordWidth = ParseHelpers.GetWidth(Font, words[i]);
+                    float wordWidth = ProcesserHelpers.GetWidth(Font, words[i]);
 
                     if (lineWidth + wordWidth + (i - lastStart) * spaceWidth <= HorizontalTextLength)
                     {
