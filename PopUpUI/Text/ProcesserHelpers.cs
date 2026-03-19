@@ -117,6 +117,11 @@ namespace PopUpUI.Text
             return width;
         }
 
+        public static Vector2 FirstRowOffsetIfFirst(int lineIndex, float firstRowOffset)
+        {
+            return lineIndex == 0 ? new Vector2(firstRowOffset, 0) : new Vector2();
+        }
+
         public static CaretPosition AdvanceCaret(CaretPosition caretPosition, int amount, ITextProcesserResult result)
         {
             int newLineIndex = caretPosition.LineIndex;
@@ -149,7 +154,11 @@ namespace PopUpUI.Text
 
         public static CaretPosition ClampCaret(CaretPosition caretPosition, ITextProcesserResult result)
         {
-            int newLineIndex = Math.Clamp(caretPosition.LineIndex, 0, result.LineCount - 1);
+            int newLineIndex = 0;
+            if (result.LineCount != 0)
+            {
+                newLineIndex = Math.Clamp(caretPosition.LineIndex, 0, result.LineCount - 1);
+            }
 
             return new CaretPosition(newLineIndex, Math.Clamp(caretPosition.IndexInsideLine, 0, result.GetLineVisibleCharCount(newLineIndex)));
         }

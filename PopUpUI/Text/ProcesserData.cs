@@ -9,6 +9,7 @@ namespace PopUpUI.Text
         public int LineSpacing { get; init; }
         public float WordSpacing { get; init; }
 
+        public float FirstRowOffset { get; set; }
         /// <summary>Gets or sets maximum length of each row of text can contain. Default value is <see cref="int.MaxValue"/>.</summary>
         public int HorizontalTextLength { get; init; }
         /// <summary>Gets or sets the opacity of the text. Expected value is between 0.0f and 1.0f. Default value is 1.0f.</summary>

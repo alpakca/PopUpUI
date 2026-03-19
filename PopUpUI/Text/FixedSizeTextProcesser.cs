@@ -27,6 +27,7 @@ namespace PopUpUI.Text
         public FixedSizeTextProcesser(FixedSizeTextProcesser processer) : base(processer.Font)
         {
             this.Text = processer.Text;
+            this.FirstRowOffset = processer.FirstRowOffset;
             this.HorizontalTextLength = processer.HorizontalTextLength;
             this.Opacity = processer.Opacity;
             this.Alignment = processer.Alignment;
@@ -41,6 +42,7 @@ namespace PopUpUI.Text
         {
             return new FixedSizeTextProcesserResult(GetAlignedWords(), new ProcesserData
             {
+                FirstRowOffset = this.FirstRowOffset,
                 HorizontalTextLength = this.HorizontalTextLength,
                 Opacity = this.Opacity,
                 Alignment = this.Alignment,
@@ -90,9 +92,9 @@ namespace PopUpUI.Text
 
             float minimumSpaceWidth = WordSpacing;
 
+            float lineWidth = FirstRowOffset;
             foreach (string existingLine in Text.Split('\n', StringSplitOptions.RemoveEmptyEntries))
             {
-                float lineWidth = 0;
                 Span<string> words = existingLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
                 int lastStart = 0;
@@ -114,6 +116,8 @@ namespace PopUpUI.Text
                 }
 
                 lines.Add((words[lastStart..].ToArray(), lineWidth));
+
+                lineWidth = 0;
             }
 
             return lines;

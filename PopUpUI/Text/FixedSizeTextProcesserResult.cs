@@ -34,9 +34,9 @@ namespace PopUpUI.Text
 
             offset += _data.TextOffset.ToVector2() + ProcesserHelpers.GetAlignmentOffset(_data.Alignment, new Point(target.Width, target.Height), TextSize);
 
+            float xOffset = _data.FirstRowOffset;
             foreach ((string[] lineWords, float lineWidth) in _lines)
             {
-                float xOffset = 0;
                 float wordSpacing = ProcesserHelpers.GetWordSpacing(_data.HorizontalTextLength, lineWidth, lineWords.Length);
 
                 foreach (var word in lineWords)
@@ -46,6 +46,7 @@ namespace PopUpUI.Text
                 }
 
                 offset.Y += _data.LineSpacing;
+                xOffset = 0;
             }
 
             DrawHelper.EndBatch();
@@ -53,11 +54,21 @@ namespace PopUpUI.Text
 
         public int GetLineVisibleCharCount(int lineIndex)
         {
+            if (_lines.Count == 0)
+            {
+                return 0;
+            }
+
             return ProcesserHelpers.LineVisibleCharCount(_lines[lineIndex].LineWords);
         }
 
         public float GetLineWidth(int lineIndex)
         {
+            if (_lines.Count == 0)
+            {
+                return 0;
+            }
+
             return _data.HorizontalTextLength;
         }
 
@@ -79,7 +90,8 @@ namespace PopUpUI.Text
             private List<(string[] LineWords, float TotalWordsWidth)> Lines => _result._lines;
 
             public CaretPosition MinimumPosition => new CaretPosition(0, 0);
-            public CaretPosition MaximumPosition => new CaretPosition(Lines.Count - 1, _result.GetLineVisibleCharCount(Lines.Count - 1));
+            public CaretPosition MaximumPosition => Lines.Count != 0 ? new CaretPosition(Lines.Count - 1, _result.GetLineVisibleCharCount(Lines.Count - 1))
+                                                                     : new CaretPosition(0, 0);
 
             public CaretLayout(FixedSizeTextProcesserResult result)
             {
@@ -98,8 +110,8 @@ namespace PopUpUI.Text
 
             public CaretPosition Clamp(CaretPosition caretPosition, int lineIndexOffset, int indexInsideLineOffset)
             {
-                return new CaretPosition(caretPosition.LineIndex + lineIndexOffset,
-                                         caretPosition.IndexInsideLine + indexInsideLineOffset);
+                return Clamp(new CaretPosition(caretPosition.LineIndex + lineIndexOffset,
+                                               caretPosition.IndexInsideLine + indexInsideLineOffset));
             }
 
             public int GetTextCaretPosition(CaretPosition caretPosition)
@@ -118,6 +130,7 @@ namespace PopUpUI.Text
                 if (Lines.Count == 0)
                 {
                     return Data.TextOffset.ToVector2()
+                         + ProcesserHelpers.FirstRowOffsetIfFirst(caretPosition.LineIndex, Data.FirstRowOffset)
                          + (targetSize.HasValue ? ProcesserHelpers.GetAlignmentOffset(Data.Alignment, targetSize.Value, _result.TextSize) : default);
                 }
 
@@ -128,17 +141,17 @@ namespace PopUpUI.Text
                 // length of words and spaces until the word that caret in
                 float xOffset = ProcesserHelpers.WidthUntil(Lines[caretPosition.LineIndex].LineWords, Data.Font, wordSpacing, caretPosition.IndexInsideLine);
 
-                return ProcesserHelpers.GetScreenCaretPosition(caretPosition, Data, _result.TextSize, xOffset, targetSize);
+                return ProcesserHelpers.FirstRowOffsetIfFirst(caretPosition.LineIndex, Data.FirstRowOffset)
+                     + ProcesserHelpers.GetScreenCaretPosition(caretPosition, Data, _result.TextSize, xOffset, targetSize);
             }
 
             public CaretPosition MouseCaretPosition(Vector2 mouseOnTarget, Point? targetSize)
             {
+                mouseOnTarget -= Data.TextOffset.ToVector2();
                 if (targetSize.HasValue)
                 {
                     mouseOnTarget -= ProcesserHelpers.GetAlignmentOffset(Data.Alignment, targetSize.Value, _result.TextSize);
                 }
-
-                mouseOnTarget -= Data.TextOffset.ToVector2();
 
                 int lineIndex = (int)(mouseOnTarget.Y / Data.LineSpacing);
                 float wordSpacing = ProcesserHelpers.GetWordSpacing(Data.HorizontalTextLength, Lines[lineIndex].TotalWordsWidth, Lines[lineIndex].LineWords.Length);
@@ -153,7 +166,7 @@ namespace PopUpUI.Text
                 }
 
                 int consumedChars = 0;
-                float currentWidth = 0;
+                float currentWidth = lineIndex == 0 ? Data.FirstRowOffset : 0;
 
                 foreach (var word in Lines[lineIndex].LineWords)
                 {

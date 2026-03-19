@@ -42,9 +42,11 @@ namespace PopUpUI.Text
             offset += _data.TextOffset.ToVector2() + ProcesserHelpers.GetAlignmentOffset(_data.Alignment, new Point(target.Width, target.Height), TextSize);
 
             float spaceWidth = _data.WordSpacing;
+            float xOffset = _data.FirstRowOffset;
             foreach ((HashedTextPiece[] line, float lineWidth) in _lines)
             {
-                Vector2 lineOffset = ProcesserHelpers.GetOrientationOffset(_data.Orientation, _data.HorizontalTextLength, lineWidth);
+                Vector2 lineOffset = ProcesserHelpers.GetOrientationOffset(_data.Orientation, _data.HorizontalTextLength, lineWidth)
+                                   + new Vector2(xOffset, 0);
 
                 foreach (HashedTextPiece hashedPiece in line)
                 {
@@ -53,6 +55,7 @@ namespace PopUpUI.Text
                 }
 
                 offset.Y += _data.LineSpacing;
+                xOffset = 0;
             }
 
             DrawHelper.EndBatch();
@@ -70,11 +73,21 @@ namespace PopUpUI.Text
 
         public int GetLineVisibleCharCount(int lineIndex)
         {
+            if (_lines.Count == 0)
+            {
+                return 0;
+            }
+
             return ProcesserHelpers.LineVisibleCharCount(_lines[lineIndex].Parts);
         }
 
         public float GetLineWidth(int lineIndex)
         {
+            if (_lines.Count == 0)
+            {
+                return 0;
+            }
+
             return _lines[lineIndex].LineWidth;
         }
 
@@ -96,7 +109,8 @@ namespace PopUpUI.Text
             private List<(HashedTextPiece[] Parts, float LineWidth)> Lines => _result._lines;
 
             public CaretPosition MinimumPosition => new CaretPosition(0, 0);
-            public CaretPosition MaximumPosition => new CaretPosition(Lines.Count - 1, _result.GetLineVisibleCharCount(Lines.Count - 1));
+            public CaretPosition MaximumPosition => Lines.Count != 0 ? new CaretPosition(Lines.Count - 1, _result.GetLineVisibleCharCount(Lines.Count - 1))
+                                                                     : new CaretPosition(0, 0);
 
             public CaretLayout(RichTextProcesserResult result)
             {
@@ -135,6 +149,7 @@ namespace PopUpUI.Text
                 if (Lines.Count == 0)
                 {
                     return Data.TextOffset.ToVector2()
+                         + ProcesserHelpers.FirstRowOffsetIfFirst(caretPosition.LineIndex, Data.FirstRowOffset)
                          + (targetSize.HasValue ? ProcesserHelpers.GetAlignmentOffset(Data.Alignment, targetSize.Value, _result.TextSize) : default);
                 }
 
@@ -143,22 +158,23 @@ namespace PopUpUI.Text
                 // length of words and spaces until the word that caret in
                 float xOffset = ProcesserHelpers.WidthUntil(Lines[caretPosition.LineIndex].Parts, spaceWidth, caretPosition.IndexInsideLine);
 
-                return ProcesserHelpers.GetScreenCaretPosition(caretPosition, Data, _result.TextSize, xOffset, targetSize);
+                return ProcesserHelpers.FirstRowOffsetIfFirst(caretPosition.LineIndex, Data.FirstRowOffset)
+                     + ProcesserHelpers.GetScreenCaretPosition(caretPosition, Data, _result.TextSize, xOffset, targetSize);
             }
 
             public CaretPosition MouseCaretPosition(Vector2 mouseOnTarget, Point? targetSize)
             {
+                mouseOnTarget -= Data.TextOffset.ToVector2();
                 if (targetSize.HasValue)
                 {
                     mouseOnTarget -= ProcesserHelpers.GetAlignmentOffset(Data.Alignment, targetSize.Value, _result.TextSize);
                 }
 
-                mouseOnTarget -= Data.TextOffset.ToVector2();
-
                 int lineIndex = (int)(mouseOnTarget.Y / Data.LineSpacing);
                 int caretLineWordLength = ProcesserHelpers.LineVisibleCharCount(Lines[lineIndex].Parts);
 
-                mouseOnTarget -= ProcesserHelpers.GetOrientationOffset(Data.Orientation, Data.HorizontalTextLength, Lines[lineIndex].LineWidth);
+                mouseOnTarget -= ProcesserHelpers.FirstRowOffsetIfFirst(lineIndex, Data.FirstRowOffset)
+                               + ProcesserHelpers.GetOrientationOffset(Data.Orientation, Data.HorizontalTextLength, Lines[lineIndex].LineWidth);
 
                 // shortcut for selecting the last character of line if line width is smaller than mouse position
                 if (Lines[lineIndex].LineWidth < mouseOnTarget.X)

@@ -44,6 +44,7 @@ namespace PopUpUI.Text
             ArgumentNullException.ThrowIfNull(processer, nameof(processer));
 
             this.Text = processer.Text;
+            this.FirstRowOffset = processer.FirstRowOffset;
             this.HorizontalTextLength = processer.HorizontalTextLength;
             this.Opacity = processer.Opacity;
             this.Orientation = processer.Orientation;
@@ -59,6 +60,7 @@ namespace PopUpUI.Text
         {
             return new TextProcesserResult(GetModifiedText(), new ProcesserData
             {
+                FirstRowOffset = this.FirstRowOffset,
                 HorizontalTextLength = this.HorizontalTextLength,
                 Opacity = this.Opacity,
                 Orientation = this.Orientation,
@@ -119,9 +121,9 @@ namespace PopUpUI.Text
             float spaceWidth = WordSpacing;
             List<(string Line, float LineWidth)> lines = new List<(string Line, float LineWidth)>();
 
+            float lineWidth = FirstRowOffset;
             foreach (var existingLine in Text.Split('\n'))
             {
-                float lineWidth = 0;
                 Span<string> words = existingLine.Split(' ');
 
                 int lastStart = 0;
@@ -142,7 +144,9 @@ namespace PopUpUI.Text
                     }
                 }
 
-                lines.Add((string.Join(' ', words.Slice(lastStart)!), lineWidth + (words.Length - 1 - lastStart - 1) * spaceWidth));
+                lines.Add((string.Join(' ', words.Slice(lastStart)), lineWidth + (words.Length - 1 - lastStart - 1) * spaceWidth));
+
+                lineWidth = 0;
             }
 
             return lines;

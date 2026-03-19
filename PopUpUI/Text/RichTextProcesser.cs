@@ -33,6 +33,7 @@ namespace PopUpUI.Text
             ArgumentNullException.ThrowIfNull(processer);
 
             this.Text = processer.Text;
+            this.FirstRowOffset = processer.FirstRowOffset;
             this.HorizontalTextLength = processer.HorizontalTextLength;
             this.Opacity = processer.Opacity;
             this.Orientation = processer.Orientation;
@@ -49,6 +50,7 @@ namespace PopUpUI.Text
         {
             return new RichTextProcesserResult(GetHashedLines(), new ProcesserData
             {
+                FirstRowOffset = this.FirstRowOffset,
                 HorizontalTextLength = this.HorizontalTextLength,
                 Opacity = this.Opacity,
                 Orientation = this.Orientation,
@@ -120,9 +122,9 @@ namespace PopUpUI.Text
             List<(HashedTextPiece[] Parts, float LineWidth)> lines = new List<(HashedTextPiece[] Parts, float LineWidth)>();
 
             float spaceWidth = WordSpacing;
+            float lineWidth = FirstRowOffset;
             foreach (var line in lineParts)
             {
-                float lineWidth = 0;
                 int lastStart = 0;
 
                 for (int i = 0; i < line.Length; i++)
@@ -147,7 +149,9 @@ namespace PopUpUI.Text
                 }
 
                 lines.Add((currentLine.ToArray(), lineWidth + (line.Length - 1 - lastStart) * spaceWidth));
+
                 currentLine.Clear();
+                lineWidth = 0;
             }
 
             return lines;

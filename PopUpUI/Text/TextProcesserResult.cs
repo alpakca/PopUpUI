@@ -41,11 +41,16 @@ namespace PopUpUI.Text
 
             DrawHelper.SetBeginBatch(target, _data.DrawOptions);
 
+            float xOffset = _data.FirstRowOffset;
             foreach ((string line, float lineWidth) in _lines)
             {
-                DrawHelper.Batch.DrawString(_data.Font, 
-                                            line, offset + ProcesserHelpers.GetOrientationOffset(_data.Orientation, _data.HorizontalTextLength, lineWidth), 
+                DrawHelper.Batch.DrawString(_data.Font, line, 
+                                            new Vector2(xOffset, 0) 
+                                            + offset 
+                                            + ProcesserHelpers.GetOrientationOffset(_data.Orientation, _data.HorizontalTextLength, lineWidth), 
                                             _data.TextColor * _data.Opacity);
+
+                xOffset = 0;
                 offset.Y += _data.LineSpacing;
             }
 
@@ -54,11 +59,21 @@ namespace PopUpUI.Text
 
         public int GetLineVisibleCharCount(int lineIndex)
         {
+            if (_lines.Count == 0)
+            {
+                return 0;
+            }
+
             return _lines[lineIndex].Line.Length;
         }
 
         public float GetLineWidth(int lineIndex)
         {
+            if (_lines.Count == 0)
+            {
+                return 0;
+            }
+
             return _lines[lineIndex].LineWidth;
         }
 
@@ -90,7 +105,8 @@ namespace PopUpUI.Text
             private List<(string Line, float LineWidth)> Lines => _result._lines;
 
             public CaretPosition MinimumPosition => new CaretPosition(0, 0);
-            public CaretPosition MaximumPosition => new CaretPosition(Lines.Count - 1, _result.GetLineVisibleCharCount(Lines.Count - 1));
+            public CaretPosition MaximumPosition => Lines.Count != 0 ? new CaretPosition(Lines.Count - 1, _result.GetLineVisibleCharCount(Lines.Count - 1))
+                                                                     : new CaretPosition(0, 0);
 
             public CaretLayout(TextProcesserResult result)
             {
@@ -126,26 +142,27 @@ namespace PopUpUI.Text
 
             public Vector2 ScreenCaretPosition(CaretPosition caretPosition, Point? targetSize)
             {
-                return ProcesserHelpers.GetScreenCaretPosition(
-                    caretPosition, 
-                    Data, 
-                    _result.TextSize, 
-                    ProcesserHelpers.GetWidth(Data.Font, Lines[caretPosition.LineIndex].Line.Substring(0, caretPosition.IndexInsideLine)), 
+                return ProcesserHelpers.FirstRowOffsetIfFirst(caretPosition.LineIndex, Data.FirstRowOffset)
+                    + ProcesserHelpers.GetScreenCaretPosition(
+                    caretPosition,
+                    Data,
+                    _result.TextSize,
+                    ProcesserHelpers.GetWidth(Data.Font, Lines[caretPosition.LineIndex].Line.Substring(0, caretPosition.IndexInsideLine)),
                     targetSize);
             }
 
             public CaretPosition MouseCaretPosition(Vector2 mouseOnTarget, Point? targetSize)
             {
+                mouseOnTarget -= Data.TextOffset.ToVector2();
                 if (targetSize.HasValue)
                 {
                     mouseOnTarget -= ProcesserHelpers.GetAlignmentOffset(Data.Alignment, targetSize.Value, _result.TextSize);
                 }
 
-                mouseOnTarget -= Data.TextOffset.ToVector2();
-
                 int lineIndex = (int)(mouseOnTarget.Y / Data.LineSpacing);
 
-                mouseOnTarget -= ProcesserHelpers.GetOrientationOffset(Data.Orientation, Data.HorizontalTextLength, Lines[lineIndex].LineWidth);
+                mouseOnTarget -= ProcesserHelpers.FirstRowOffsetIfFirst(lineIndex, Data.FirstRowOffset)
+                               + ProcesserHelpers.GetOrientationOffset(Data.Orientation, Data.HorizontalTextLength, Lines[lineIndex].LineWidth);
 
                 // shortcut for selecting the last character of line if line width is smaller than mouse position
                 if (Lines[lineIndex].LineWidth < mouseOnTarget.X)
