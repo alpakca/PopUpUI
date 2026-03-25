@@ -20,6 +20,11 @@ namespace PopUpUI.Text
             return RendererHash.GetWidth(Text);
         }
 
+        public float TextWidth(int startIndex)
+        {
+            return RendererHash.GetWidth(Text.Substring(startIndex));
+        }
+
         public float TextWidth(int startIndex, int length)
         {
             return RendererHash.GetWidth(Text.Substring(startIndex, length));

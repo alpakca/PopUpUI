@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
+using static System.Net.Mime.MediaTypeNames;
 
 #pragma warning disable 8524
 
@@ -73,24 +74,80 @@ namespace PopUpUI.Text
             return indexes.Slice(0, count).ToArray();
         }
 
-        public static float WidthUntil(string[] pieces, SpriteFont font, float wordSpacing, int index)
+        public static float GetLineWidth(string[] pieces, SpriteFont font, float wordSpacing, int startIndex, int length)
         {
             int charConsumed = 0;
             float width = 0;
+            int passedWordCount = 0;
 
-            int i = 0;
-            for (; i < pieces.Length; i++)
+            for (int i = 0; i < pieces.Length; i++)
             {
-                if (charConsumed > index)
+                if (startIndex > charConsumed + pieces[i].Length)
+                {
+                    charConsumed += pieces[i].Length + 1;
+                    continue;
+                }
+                else if (startIndex > charConsumed)
+                {
+                    int charsSkipped = startIndex - charConsumed;
+                    width += GetWidth(font, pieces[i].Substring(charsSkipped, Math.Clamp(pieces[i].Length - charsSkipped, 0, length)));
+
+                    passedWordCount++;
+                    charConsumed += pieces[i].Length + 1;
+                    continue;
+                }
+
+                if (charConsumed > startIndex + length)
                 {
                     break;
                 }
 
-                width += GetWidth(font, pieces[i].Substring(0, Math.Min(pieces[i].Length, index - charConsumed)));
+                width += GetWidth(font, pieces[i].Substring(0, Math.Min(pieces[i].Length, startIndex + length - charConsumed)));
+
+                passedWordCount++;
                 charConsumed += pieces[i].Length + 1;
             }
 
-            width += i != 0 ? (i - 1) * wordSpacing : 0;
+            width += passedWordCount != 0 ? (passedWordCount - 1) * wordSpacing : 0;
+
+            return width;
+        }
+
+        public static float GetLineWidth(HashedTextPiece[] pieces, float wordSpacing, int startIndex, int length)
+        {
+            int charConsumed = 0;
+            float width = 0;
+            int passedWordCount = 0;
+
+            for (int i = 0; i < pieces.Length; i++)
+            {
+                if (startIndex > charConsumed + pieces[i].VisibleCharLength)
+                {
+                    charConsumed += pieces[i].VisibleCharLength + 1;
+                    continue;
+                }
+                else if (startIndex > charConsumed)
+                {
+                    int charsSkipped = startIndex - charConsumed;
+                    width += pieces[i].TextWidth(charsSkipped, Math.Clamp(pieces[i].VisibleCharLength - charsSkipped, 0, length));
+
+                    passedWordCount++;
+                    charConsumed += pieces[i].VisibleCharLength + 1;
+                    continue;
+                }
+
+                if (charConsumed > startIndex + length)
+                {
+                    break;
+                }
+
+                width += pieces[i].TextWidth(0, Math.Min(pieces[i].VisibleCharLength, startIndex + length - charConsumed));
+
+                passedWordCount++;
+                charConsumed += pieces[i].VisibleCharLength + 1;
+            }
+
+            width += passedWordCount != 0 ? (passedWordCount - 1) * wordSpacing : 0;
 
             return width;
         }
@@ -122,7 +179,7 @@ namespace PopUpUI.Text
             return lineIndex == 0 ? new Vector2(firstRowOffset, 0) : new Vector2();
         }
 
-        public static CaretPosition AdvanceCaret(CaretPosition caretPosition, int amount, ITextProcesserResult result)
+        public static TextPosition AdvanceCaret(TextPosition caretPosition, int amount, ITextProcesserResult result)
         {
             int newLineIndex = caretPosition.LineIndex;
             int newInsideInsideLine = caretPosition.IndexInsideLine + amount;
@@ -135,56 +192,56 @@ namespace PopUpUI.Text
                     return result.Caret.MinimumPosition;
                 }
 
-                newInsideInsideLine += result.GetLineVisibleCharCount(newLineIndex) + 1;
+                newInsideInsideLine += result.Lines.GetLineVisibleCharCount(newLineIndex) + 1;
             }
 
-            while (newInsideInsideLine > result.GetLineVisibleCharCount(newLineIndex))
+            while (newInsideInsideLine > result.Lines.GetLineVisibleCharCount(newLineIndex))
             {
                 newLineIndex++;
-                if (newLineIndex >= result.LineCount)
+                if (newLineIndex >= result.Lines.LineCount)
                 {
                     return result.Caret.MaximumPosition;
                 }
 
-                newInsideInsideLine -= result.GetLineVisibleCharCount(newLineIndex - 1) + 1;
+                newInsideInsideLine -= result.Lines.GetLineVisibleCharCount(newLineIndex - 1) + 1;
             }
 
-            return new CaretPosition(newLineIndex, newInsideInsideLine);
+            return new TextPosition(newLineIndex, newInsideInsideLine);
         }
 
-        public static CaretPosition ClampCaret(CaretPosition caretPosition, ITextProcesserResult result)
+        public static TextPosition ClampCaret(TextPosition caretPosition, ITextProcesserResult result)
         {
             int newLineIndex = 0;
-            if (result.LineCount != 0)
+            if (result.Lines.LineCount != 0)
             {
-                newLineIndex = Math.Clamp(caretPosition.LineIndex, 0, result.LineCount - 1);
+                newLineIndex = Math.Clamp(caretPosition.LineIndex, 0, result.Lines.LineCount - 1);
             }
 
-            return new CaretPosition(newLineIndex, Math.Clamp(caretPosition.IndexInsideLine, 0, result.GetLineVisibleCharCount(newLineIndex)));
+            return new TextPosition(newLineIndex, Math.Clamp(caretPosition.IndexInsideLine, 0, result.Lines.GetLineVisibleCharCount(newLineIndex)));
         }
 
-        public static CaretPosition GetCaretPositionFromText(int textCaretPosition, ITextProcesserResult result)
+        public static TextPosition GetCaretPositionFromText(int textCaretPosition, ITextProcesserResult result)
         {
             if (textCaretPosition < 0)
             {
                 return result.Caret.MinimumPosition;
             }
-            else if (textCaretPosition > result.VisibleCharCount)
+            else if (textCaretPosition > result.Lines.VisibleCharCount)
             {
                 return result.Caret.MaximumPosition;
             }
 
             int lineIndex = 0;
-            while (textCaretPosition > result.GetLineVisibleCharCount(lineIndex))
+            while (textCaretPosition > result.Lines.GetLineVisibleCharCount(lineIndex))
             {
                 lineIndex++;
-                textCaretPosition -= result.GetLineVisibleCharCount(lineIndex - 1) + 1;
+                textCaretPosition -= result.Lines.GetLineVisibleCharCount(lineIndex - 1) + 1;
             }
 
-            return new CaretPosition(lineIndex, textCaretPosition);
+            return new TextPosition(lineIndex, textCaretPosition);
         }
 
-        public static Vector2 GetScreenCaretPosition(CaretPosition caretPosition, ProcesserData data, Vector2 textSize, float xOffset, Point? targetSize)
+        public static Vector2 GetScreenCaretPosition(TextPosition caretPosition, ProcesserData data, Vector2 textSize, float xOffset, Point? targetSize)
         {
             if (targetSize.HasValue)
             {
@@ -197,7 +254,7 @@ namespace PopUpUI.Text
                  + data.TextOffset.ToVector2();
         }
 
-        public static Vector2 GetScreenCaretPosition(CaretPosition caretPosition, ProcesserData data, Vector2 textSize, float xOffset, float lineWidth, Point? targetSize)
+        public static Vector2 GetScreenCaretPosition(TextPosition caretPosition, ProcesserData data, Vector2 textSize, float xOffset, float lineWidth, Point? targetSize)
         {
             if (targetSize.HasValue)
             {
