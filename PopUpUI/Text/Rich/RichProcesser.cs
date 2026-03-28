@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace PopUpUI.Text
+namespace PopUpUI.Text.Rich
 {
     public abstract class RichProcesser : ITextProcesser
     {

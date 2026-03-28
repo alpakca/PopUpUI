@@ -1,27 +1,25 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Toolkit;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace PopUpUI.Text
+namespace PopUpUI.Text.Rich
 {
-    public class RichTextProcesserResult : ITextProcesserResult
+    public class RichFixedSizeTextProcesserResult : ITextProcesserResult
     {
         private readonly ProcesserData _data;
-        private readonly List<(HashedTextPiece[] Parts, float LineWidth)> _lines;
+        private readonly List<(HashedTextPiece[] Parts, float TotalWordsWidth)> _lines;
 
-        private Vector2 _textSize;
         private LineLayout _lineLayout;
         private CaretLayout _caret;
 
         public ILineLayout Lines => _lineLayout ??= new LineLayout(this);
         public ICaretLayout Caret => _caret ??= new CaretLayout(this);
 
-        public Vector2 TextSize => _textSize == default ? _textSize = GetTextSize() : _textSize;
+        public Vector2 TextSize => new Vector2(_data.HorizontalTextLength, _data.LineSpacing * _lines.Count);
 
-        internal RichTextProcesserResult(List<(HashedTextPiece[] Parts, float LineWidth)> lines, ProcesserData data)
+        internal RichFixedSizeTextProcesserResult(List<(HashedTextPiece[] Parts, float TotalWordsWidth)> lines, ProcesserData data)
         {
             _data = data;
             _lines = lines;
@@ -29,27 +27,18 @@ namespace PopUpUI.Text
 
         public void Render(RenderTarget2D target, Vector2 offset)
         {
-            // right or middle orientations will cause a too large x offset that text won't appear, with maximum horizontal text length
-            if (_data.Orientation != TextOrientation.Left && _data.HorizontalTextLength == int.MaxValue)
-            {
-                throw new ArgumentException("Maximum HorizontalTextLength should only be used with TextOrientation.Left");
-            }
-
             DrawHelper.SetBeginBatch(target, _data.DrawOptions);
 
             offset += _data.TextOffset.ToVector2() + ProcesserHelpers.GetAlignmentOffset(_data.Alignment, new Point(target.Width, target.Height), TextSize);
 
-            float spaceWidth = _data.WordSpacing;
             float xOffset = _data.FirstRowOffset;
             foreach ((HashedTextPiece[] line, float lineWidth) in _lines)
             {
-                Vector2 lineOffset = ProcesserHelpers.GetOrientationOffset(_data.Orientation, _data.HorizontalTextLength, lineWidth)
-                                   + new Vector2(xOffset, 0);
-
+                float wordSpacing = ProcesserHelpers.GetWordSpacing(_data.HorizontalTextLength, lineWidth, line.Length);
                 foreach (HashedTextPiece hashedPiece in line)
                 {
-                    hashedPiece.DrawHash(offset + lineOffset, _data.Opacity);
-                    lineOffset.X += hashedPiece.TextWidth() + spaceWidth;
+                    hashedPiece.DrawHash(offset + new Vector2(xOffset, 0), _data.Opacity);
+                    xOffset += hashedPiece.TextWidth() + wordSpacing;
                 }
 
                 offset.Y += _data.LineSpacing;
@@ -59,28 +48,18 @@ namespace PopUpUI.Text
             DrawHelper.EndBatch();
         }
 
-        private Vector2 GetTextSize()
-        {
-            if (_data.HorizontalTextLength != int.MaxValue)
-            {
-                return new Vector2(_data.HorizontalTextLength, _data.LineSpacing * _lines.Count);
-            }
-
-            return new Vector2((int)_lines.Max(line => line.LineWidth), _data.LineSpacing * _lines.Count);
-        }
-
         private class LineLayout : ILineLayout
         {
             private int _visibleCharCount = -1;
-            private readonly RichTextProcesserResult _result;
+            private readonly RichFixedSizeTextProcesserResult _result;
 
             private ProcesserData Data => _result._data;
-            private List<(HashedTextPiece[] Parts, float LineWidth)> Lines => _result._lines;
+            private List<(HashedTextPiece[] Parts, float TotalWordsWidth)> Lines => _result._lines;
 
             public int LineCount => Lines.Count;
             public int VisibleCharCount => _visibleCharCount == -1 ? _visibleCharCount = GetVisibleCharCount() : _visibleCharCount;
 
-            public LineLayout(RichTextProcesserResult result)
+            public LineLayout(RichFixedSizeTextProcesserResult result)
             {
                 _result = result;
             }
@@ -112,7 +91,7 @@ namespace PopUpUI.Text
                     return 0;
                 }
 
-                return Lines[lineIndex].LineWidth;
+                return Data.HorizontalTextLength;
             }
 
             public float GetLineWidth(TextPosition position)
@@ -122,9 +101,11 @@ namespace PopUpUI.Text
                     return 0;
                 }
 
-                return ProcesserHelpers.GetLineWidth(Lines[position.LineIndex].Parts, 
-                                                     Data.WordSpacing, 
-                                                     position.IndexInsideLine, 
+                return ProcesserHelpers.GetLineWidth(Lines[position.LineIndex].Parts,
+                                                     ProcesserHelpers.GetWordSpacing(Data.HorizontalTextLength,
+                                                                                     Lines[position.LineIndex].TotalWordsWidth,
+                                                                                     Lines[position.LineIndex].Parts.Length),
+                                                     position.IndexInsideLine,
                                                      GetLineVisibleCharCount(position.LineIndex) - position.IndexInsideLine);
             }
 
@@ -135,22 +116,27 @@ namespace PopUpUI.Text
                     return 0;
                 }
 
-                return ProcesserHelpers.GetLineWidth(Lines[position.LineIndex].Parts, Data.WordSpacing, position.IndexInsideLine, length);
+                return ProcesserHelpers.GetLineWidth(Lines[position.LineIndex].Parts,
+                                                     ProcesserHelpers.GetWordSpacing(Data.HorizontalTextLength,
+                                                                                     Lines[position.LineIndex].TotalWordsWidth,
+                                                                                     Lines[position.LineIndex].Parts.Length),
+                                                     position.IndexInsideLine,
+                                                     length);
             }
         }
 
         private class CaretLayout : ICaretLayout
         {
-            private readonly RichTextProcesserResult _result;
+            private readonly RichFixedSizeTextProcesserResult _result;
 
             private ProcesserData Data => _result._data;
-            private List<(HashedTextPiece[] Parts, float LineWidth)> Lines => _result._lines;
+            private List<(HashedTextPiece[] Parts, float TotalWordsWidth)> Lines => _result._lines;
 
             public TextPosition MinimumPosition => new TextPosition(0, 0);
             public TextPosition MaximumPosition => Lines.Count != 0 ? new TextPosition(Lines.Count - 1, _result.Lines.GetLineVisibleCharCount(Lines.Count - 1))
                                                                      : new TextPosition(0, 0);
 
-            public CaretLayout(RichTextProcesserResult result)
+            public CaretLayout(RichFixedSizeTextProcesserResult result)
             {
                 _result = result;
             }
@@ -167,7 +153,7 @@ namespace PopUpUI.Text
 
             public TextPosition Clamp(TextPosition caretPosition, int lineIndexOffset, int indexInsideLineOffset)
             {
-                return Clamp(new TextPosition(caretPosition.LineIndex + lineIndexOffset, 
+                return Clamp(new TextPosition(caretPosition.LineIndex + lineIndexOffset,
                                                caretPosition.IndexInsideLine + indexInsideLineOffset));
             }
 
@@ -191,10 +177,12 @@ namespace PopUpUI.Text
                          + (targetSize.HasValue ? ProcesserHelpers.GetAlignmentOffset(Data.Alignment, targetSize.Value, _result.TextSize) : default);
                 }
 
-                float spaceWidth = Data.WordSpacing;
+                float wordSpacing = ProcesserHelpers.GetWordSpacing(Data.HorizontalTextLength,
+                                                                    Lines[caretPosition.LineIndex].TotalWordsWidth,
+                                                                    Lines[caretPosition.LineIndex].Parts.Length);
 
                 // length of words and spaces until the word that caret in
-                float xOffset = ProcesserHelpers.GetLineWidth(Lines[caretPosition.LineIndex].Parts, spaceWidth, 0, caretPosition.IndexInsideLine);
+                float xOffset = ProcesserHelpers.GetLineWidth(Lines[caretPosition.LineIndex].Parts, wordSpacing, 0, caretPosition.IndexInsideLine);
 
                 return ProcesserHelpers.FirstRowOffsetIfFirst(caretPosition.LineIndex, Data.FirstRowOffset)
                      + ProcesserHelpers.GetScreenCaretPosition(caretPosition, Data, _result.TextSize, xOffset, targetSize);
@@ -202,28 +190,28 @@ namespace PopUpUI.Text
 
             public TextPosition MouseCaretPosition(Vector2 mouseOnTarget, Point? targetSize)
             {
-                mouseOnTarget -= Data.TextOffset.ToVector2();
                 if (targetSize.HasValue)
                 {
                     mouseOnTarget -= ProcesserHelpers.GetAlignmentOffset(Data.Alignment, targetSize.Value, _result.TextSize);
                 }
 
+                mouseOnTarget -= Data.TextOffset.ToVector2();
+
                 int lineIndex = (int)(mouseOnTarget.Y / Data.LineSpacing);
+                float wordSpacing = ProcesserHelpers.GetWordSpacing(Data.HorizontalTextLength, Lines[lineIndex].TotalWordsWidth, Lines[lineIndex].Parts.Length);
+
+                int charsUntilLine = Lines.Take(lineIndex).Sum(tuple => ProcesserHelpers.LineVisibleCharCount(tuple.Parts) + 1); // +1 for newline chars
                 int caretLineWordLength = ProcesserHelpers.LineVisibleCharCount(Lines[lineIndex].Parts);
 
-                mouseOnTarget -= ProcesserHelpers.FirstRowOffsetIfFirst(lineIndex, Data.FirstRowOffset)
-                               + ProcesserHelpers.GetOrientationOffset(Data.Orientation, Data.HorizontalTextLength, Lines[lineIndex].LineWidth);
-
                 // shortcut for selecting the last character of line if line width is smaller than mouse position
-                if (Lines[lineIndex].LineWidth < mouseOnTarget.X)
+                if (Lines[lineIndex].TotalWordsWidth + wordSpacing * (Lines[lineIndex].Parts.Length - 1) < mouseOnTarget.X)
                 {
                     return new TextPosition(lineIndex, caretLineWordLength);
                 }
 
                 int consumedChars = 0;
-                float currentWidth = 0;
+                float currentWidth = lineIndex == 0 ? Data.FirstRowOffset : 0;
 
-                float spaceWidth = Data.WordSpacing;
                 foreach (var part in Lines[lineIndex].Parts)
                 {
                     for (int i = 0; i < part.VisibleCharLength; i++)
@@ -236,12 +224,12 @@ namespace PopUpUI.Text
 
                     currentWidth += part.TextWidth();
 
-                    if (currentWidth + spaceWidth / 2 > mouseOnTarget.X)
+                    if (currentWidth + wordSpacing / 2 > mouseOnTarget.X)
                     {
                         return new TextPosition(lineIndex, consumedChars + part.VisibleCharLength);
                     }
 
-                    currentWidth += spaceWidth;
+                    currentWidth += wordSpacing;
                     consumedChars += part.VisibleCharLength + 1;
                 }
 

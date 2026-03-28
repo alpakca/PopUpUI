@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace PopUpUI.Text
 {
-    public abstract class DefaultProcesser : ITextProcesser
+    public abstract class BasicProcesser : ITextProcesser
     {
         private int lineSpacing = -1;
         private float wordSpacing = -1;
@@ -36,7 +36,7 @@ namespace PopUpUI.Text
 
         public abstract ITextProcesserResult GetParseResult();
 
-        public DefaultProcesser(SpriteFont font)
+        public BasicProcesser(SpriteFont font)
         {
             Font = font;
         }

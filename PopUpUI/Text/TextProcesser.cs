@@ -11,7 +11,7 @@ using System.Linq;
 namespace PopUpUI.Text
 {
     /// <summary>Presents an object that can render text on <see cref="RenderTarget2D"/> in different ways.</summary>
-    public class TextProcesser : DefaultProcesser
+    public class TextProcesser : BasicProcesser
     {
         private readonly BatchDrawOptions drawOptions;
 

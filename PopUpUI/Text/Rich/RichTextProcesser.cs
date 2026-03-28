@@ -3,12 +3,10 @@ using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Surface;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 
 #pragma warning disable 8632
 
-namespace PopUpUI.Text
+namespace PopUpUI.Text.Rich
 {
     public class RichTextProcesser : RichProcesser
     {

@@ -3,11 +3,10 @@ using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Surface;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 #pragma warning disable 8632
 
-namespace PopUpUI.Text
+namespace PopUpUI.Text.Rich
 {
     public class RichFixedSizeTextProcesser : RichProcesser
     {
@@ -17,7 +16,7 @@ namespace PopUpUI.Text
         {
         }
 
-        public RichFixedSizeTextProcesser(int horizontalTextLength, SpriteFont defaultFont, BatchDrawOptions? options)
+        public RichFixedSizeTextProcesser(int horizontalTextLength, SpriteFont defaultFont, BatchDrawOptions options)
             : base(Color.White, defaultFont)
         {
             ArgumentNullException.ThrowIfNull(defaultFont);
@@ -30,15 +29,15 @@ namespace PopUpUI.Text
         {
             ArgumentNullException.ThrowIfNull(processer);
 
-            this.Text = processer.Text;
-            this.FirstRowOffset = processer.FirstRowOffset;
-            this.HorizontalTextLength = processer.HorizontalTextLength;
-            this.Opacity = processer.Opacity;
-            this.Alignment = processer.Alignment;
-            this.TextOffset = processer.TextOffset;
-            this.WordSpacing = processer.WordSpacing;
-            this.LineSpacing = processer.LineSpacing;
-            this.drawOptions = processer.drawOptions;
+            Text = processer.Text;
+            FirstRowOffset = processer.FirstRowOffset;
+            HorizontalTextLength = processer.HorizontalTextLength;
+            Opacity = processer.Opacity;
+            Alignment = processer.Alignment;
+            TextOffset = processer.TextOffset;
+            WordSpacing = processer.WordSpacing;
+            LineSpacing = processer.LineSpacing;
+            drawOptions = processer.drawOptions;
 
             AttachHashes(processer._hashes);
         }
@@ -47,14 +46,14 @@ namespace PopUpUI.Text
         {
             return new RichFixedSizeTextProcesserResult(GetHashedLines(), new ProcesserData
             {
-                FirstRowOffset = this.FirstRowOffset,
-                HorizontalTextLength = this.HorizontalTextLength,
-                Opacity = this.Opacity,
-                Alignment = this.Alignment,
-                TextOffset = this.TextOffset,
-                WordSpacing = this.WordSpacing,
-                LineSpacing = this.LineSpacing,
-                DrawOptions = this.drawOptions
+                FirstRowOffset = FirstRowOffset,
+                HorizontalTextLength = HorizontalTextLength,
+                Opacity = Opacity,
+                Alignment = Alignment,
+                TextOffset = TextOffset,
+                WordSpacing = WordSpacing,
+                LineSpacing = LineSpacing,
+                DrawOptions = drawOptions
             });
         }
 

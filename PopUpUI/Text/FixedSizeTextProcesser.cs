@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace PopUpUI.Text
 {
-    public class FixedSizeTextProcesser : DefaultProcesser
+    public class FixedSizeTextProcesser : BasicProcesser
     {
         private readonly BatchDrawOptions drawOptions;
 

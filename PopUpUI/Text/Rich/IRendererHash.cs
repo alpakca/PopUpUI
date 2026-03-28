@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 
-namespace PopUpUI.Text
+namespace PopUpUI.Text.Rich
 {
     public interface IRendererHash
     {
