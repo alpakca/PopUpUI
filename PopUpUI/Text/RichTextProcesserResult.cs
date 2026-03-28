@@ -48,7 +48,7 @@ namespace PopUpUI.Text
 
                 foreach (HashedTextPiece hashedPiece in line)
                 {
-                    hashedPiece.DrawHash(offset + lineOffset);
+                    hashedPiece.DrawHash(offset + lineOffset, _data.Opacity);
                     lineOffset.X += hashedPiece.TextWidth() + spaceWidth;
                 }
 
@@ -194,7 +194,7 @@ namespace PopUpUI.Text
                 float spaceWidth = Data.WordSpacing;
 
                 // length of words and spaces until the word that caret in
-                float xOffset = ProcesserHelpers.WidthUntil(Lines[caretPosition.LineIndex].Parts, spaceWidth, caretPosition.IndexInsideLine);
+                float xOffset = ProcesserHelpers.GetLineWidth(Lines[caretPosition.LineIndex].Parts, spaceWidth, 0, caretPosition.IndexInsideLine);
 
                 return ProcesserHelpers.FirstRowOffsetIfFirst(caretPosition.LineIndex, Data.FirstRowOffset)
                      + ProcesserHelpers.GetScreenCaretPosition(caretPosition, Data, _result.TextSize, xOffset, targetSize);

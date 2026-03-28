@@ -9,6 +9,6 @@ namespace PopUpUI.Text
 
         public float GetWidth(string str);
         public int VisibleCharLength(string str);
-        public void Draw(string text, Vector2 position);
+        public void Draw(string text, Vector2 position, float opacity);
     }
 }

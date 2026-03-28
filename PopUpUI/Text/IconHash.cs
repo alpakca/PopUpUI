@@ -25,9 +25,9 @@ namespace PopUpUI.Text
             Icon = icon;
         }
 
-        public void Draw(string text, Vector2 position)
+        public void Draw(string text, Vector2 position, float opacity)
         {
-            DrawHelper.Batch.Draw(Icon, new Rectangle(position.ToPoint() + Offset, Size), Color.White);
+            DrawHelper.Batch.Draw(Icon, new Rectangle(position.ToPoint() + Offset, Size), Color.White * opacity);
         }
 
         public float GetWidth(string str)

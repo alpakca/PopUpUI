@@ -9,7 +9,7 @@ namespace PopUpUI.Text
     public class FixedSizeTextProcesserResult : ITextProcesserResult
     {
         private readonly ProcesserData _data;
-        private readonly List<(string[] LineWords, float TotalWordsWidth)> _lines;
+        private readonly List<(StringTextPiece[] LineWords, float TotalWordsWidth)> _lines;
 
         private LineLayout _lineLayout;
         private CaretLayout _caret;
@@ -19,7 +19,7 @@ namespace PopUpUI.Text
 
         public Vector2 TextSize => new Vector2(_data.HorizontalTextLength, _data.LineSpacing * _lines.Count);
 
-        internal FixedSizeTextProcesserResult(List<(string[] LineWords, float LineWidth)> lines, ProcesserData data)
+        internal FixedSizeTextProcesserResult(List<(StringTextPiece[] LineWords, float LineWidth)> lines, ProcesserData data)
         {
             _data = data;
             _lines = lines;
@@ -32,14 +32,13 @@ namespace PopUpUI.Text
             offset += _data.TextOffset.ToVector2() + ProcesserHelpers.GetAlignmentOffset(_data.Alignment, new Point(target.Width, target.Height), TextSize);
 
             float xOffset = _data.FirstRowOffset;
-            foreach ((string[] lineWords, float lineWidth) in _lines)
+            foreach ((StringTextPiece[] lineWords, float lineWidth) in _lines)
             {
                 float wordSpacing = ProcesserHelpers.GetWordSpacing(_data.HorizontalTextLength, lineWidth, lineWords.Length);
-
-                foreach (var word in lineWords)
+                foreach (StringTextPiece piece in lineWords)
                 {
-                    DrawHelper.Batch.DrawString(_data.Font, word, offset + new Vector2(xOffset, 0), _data.TextColor * _data.Opacity);
-                    xOffset += ProcesserHelpers.GetWidth(_data.Font, word) + wordSpacing;
+                    piece.Draw(offset + new Vector2(xOffset, 0), _data.TextColor, _data.Opacity);
+                    xOffset += piece.TextWidth() + wordSpacing;
                 }
 
                 offset.Y += _data.LineSpacing;
@@ -55,7 +54,7 @@ namespace PopUpUI.Text
             private readonly FixedSizeTextProcesserResult _result;
 
             private ProcesserData Data => _result._data;
-            private List<(string[] LineWords, float TotalWordsWidth)> Lines => _result._lines;
+            private List<(StringTextPiece[] LineWords, float TotalWordsWidth)> Lines => _result._lines;
 
             public int LineCount => Lines.Count;
             public int VisibleCharCount => _visibleCharCount == -1 ? _visibleCharCount = GetVisibleCharCount() : _visibleCharCount;
@@ -103,7 +102,6 @@ namespace PopUpUI.Text
                 }
 
                 return ProcesserHelpers.GetLineWidth(Lines[position.LineIndex].LineWords,
-                                                     Data.Font,
                                                      ProcesserHelpers.GetWordSpacing(Data.HorizontalTextLength,
                                                                                      Lines[position.LineIndex].TotalWordsWidth,
                                                                                      Lines[position.LineIndex].LineWords.Length),
@@ -119,7 +117,6 @@ namespace PopUpUI.Text
                 }
 
                 return ProcesserHelpers.GetLineWidth(Lines[position.LineIndex].LineWords,
-                                                     Data.Font,
                                                      ProcesserHelpers.GetWordSpacing(Data.HorizontalTextLength,
                                                                                      Lines[position.LineIndex].TotalWordsWidth,
                                                                                      Lines[position.LineIndex].LineWords.Length),
@@ -133,7 +130,7 @@ namespace PopUpUI.Text
             private readonly FixedSizeTextProcesserResult _result;
 
             private ProcesserData Data => _result._data;
-            private List<(string[] LineWords, float TotalWordsWidth)> Lines => _result._lines;
+            private List<(StringTextPiece[] LineWords, float TotalWordsWidth)> Lines => _result._lines;
 
             public TextPosition MinimumPosition => new TextPosition(0, 0);
             public TextPosition MaximumPosition => Lines.Count != 0 ? new TextPosition(Lines.Count - 1, _result.Lines.GetLineVisibleCharCount(Lines.Count - 1))
@@ -185,8 +182,7 @@ namespace PopUpUI.Text
                                                                     Lines[caretPosition.LineIndex].LineWords.Length);
 
                 // length of words and spaces until the word that caret in
-                float xOffset = ProcesserHelpers.GetLineWidth(Lines[caretPosition.LineIndex].LineWords, Data.Font, wordSpacing, 0, caretPosition.IndexInsideLine);
-                //float xOffset = ProcesserHelpers.WidthUntil(Lines[caretPosition.LineIndex].LineWords, Data.Font, wordSpacing, caretPosition.IndexInsideLine);
+                float xOffset = ProcesserHelpers.GetLineWidth(Lines[caretPosition.LineIndex].LineWords, wordSpacing, 0, caretPosition.IndexInsideLine);
 
                 return ProcesserHelpers.FirstRowOffsetIfFirst(caretPosition.LineIndex, Data.FirstRowOffset)
                      + ProcesserHelpers.GetScreenCaretPosition(caretPosition, Data, _result.TextSize, xOffset, targetSize);
@@ -217,25 +213,23 @@ namespace PopUpUI.Text
 
                 foreach (var word in Lines[lineIndex].LineWords)
                 {
-                    for (int i = 0; i < word.Length; i++)
+                    for (int i = 0; i < word.VisibleCharLength; i++)
                     {
-                        if (currentWidth
-                          + ProcesserHelpers.GetWidth(Data.Font, word.Substring(0, i))
-                          + ProcesserHelpers.GetWidth(Data.Font, word[i].ToString()) / 2 > mouseOnTarget.X)
+                        if (currentWidth + word.TextWidth(0, i) + word.TextWidth(i, 1) / 2 > mouseOnTarget.X)
                         {
                             return new TextPosition(lineIndex, consumedChars + i);
                         }
                     }
 
-                    currentWidth += ProcesserHelpers.GetWidth(Data.Font, word);
+                    currentWidth += word.TextWidth();
 
                     if (currentWidth + wordSpacing / 2 > mouseOnTarget.X)
                     {
-                        return new TextPosition(lineIndex, consumedChars + word.Length);
+                        return new TextPosition(lineIndex, consumedChars + word.VisibleCharLength);
                     }
 
                     currentWidth += wordSpacing;
-                    consumedChars += word.Length + 1;
+                    consumedChars += word.VisibleCharLength + 1;
                 }
 
                 // should not reach this point - already handled in shortcut part

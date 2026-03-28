@@ -24,9 +24,9 @@ namespace PopUpUI.Text
             Font = font;
         }
 
-        public void Draw(string text, Vector2 position)
+        public void Draw(string text, Vector2 position, float opacity)
         {
-            DrawHelper.Batch.DrawString(Font, text, position, Color);
+            DrawHelper.Batch.DrawString(Font, text, position, Color * opacity);
         }
 
         public float GetWidth(string str)

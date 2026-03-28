@@ -2,7 +2,6 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
-using static System.Net.Mime.MediaTypeNames;
 
 #pragma warning disable 8524
 
@@ -10,6 +9,17 @@ namespace PopUpUI.Text
 {
     public static class ProcesserHelpers
     {
+        public static StringTextPiece[] ToStringPiece(Span<string> words, SpriteFont font)
+        {
+            StringTextPiece[] pieces = new StringTextPiece[words.Length];
+            for (int i = 0; i < words.Length; i++)
+            {
+                pieces[i] = new StringTextPiece(words[i], font);
+            }
+
+            return pieces;
+        }
+
         public static Vector2 GetAlignmentOffset(TextAlignment alignment, Point surfaceSize, Vector2 textSize)
         {
             float xOffset = alignment switch
@@ -44,16 +54,10 @@ namespace PopUpUI.Text
             return font.MeasureString(str).X;
         }
 
-        public static int LineVisibleCharCount(string[] words)
+        public static int LineVisibleCharCount(ITextPiece[] pieces)
         {
-            return words.Sum(word => word.Length)
-                 + words.Length - 1;  // for space characters
-        }
-
-        public static int LineVisibleCharCount(HashedTextPiece[] words)
-        {
-            return words.Sum(word => word.VisibleCharLength)
-                 + words.Length - 1; // for space characters
+            return pieces.Sum(piece => piece.VisibleCharLength)
+                 + pieces.Length - 1; // for space characters between words
         }
 
         public static float GetWordSpacing(int horizontalTextLength, float totalWordsWidth, int wordCount)
@@ -74,46 +78,7 @@ namespace PopUpUI.Text
             return indexes.Slice(0, count).ToArray();
         }
 
-        public static float GetLineWidth(string[] pieces, SpriteFont font, float wordSpacing, int startIndex, int length)
-        {
-            int charConsumed = 0;
-            float width = 0;
-            int passedWordCount = 0;
-
-            for (int i = 0; i < pieces.Length; i++)
-            {
-                if (startIndex > charConsumed + pieces[i].Length)
-                {
-                    charConsumed += pieces[i].Length + 1;
-                    continue;
-                }
-                else if (startIndex > charConsumed)
-                {
-                    int charsSkipped = startIndex - charConsumed;
-                    width += GetWidth(font, pieces[i].Substring(charsSkipped, Math.Clamp(pieces[i].Length - charsSkipped, 0, length)));
-
-                    passedWordCount++;
-                    charConsumed += pieces[i].Length + 1;
-                    continue;
-                }
-
-                if (charConsumed > startIndex + length)
-                {
-                    break;
-                }
-
-                width += GetWidth(font, pieces[i].Substring(0, Math.Min(pieces[i].Length, startIndex + length - charConsumed)));
-
-                passedWordCount++;
-                charConsumed += pieces[i].Length + 1;
-            }
-
-            width += passedWordCount != 0 ? (passedWordCount - 1) * wordSpacing : 0;
-
-            return width;
-        }
-
-        public static float GetLineWidth(HashedTextPiece[] pieces, float wordSpacing, int startIndex, int length)
+        public static float GetLineWidth(ITextPiece[] pieces, float wordSpacing, int startIndex, int length)
         {
             int charConsumed = 0;
             float width = 0;
@@ -148,28 +113,6 @@ namespace PopUpUI.Text
             }
 
             width += passedWordCount != 0 ? (passedWordCount - 1) * wordSpacing : 0;
-
-            return width;
-        }
-
-        public static float WidthUntil(HashedTextPiece[] pieces, float wordSpacing, int index)
-        {
-            int charConsumed = 0;
-            float width = 0;
-
-            int i = 0;
-            for (; i < pieces.Length; i++)
-            {
-                if (charConsumed > index)
-                {
-                    break;
-                }
-
-                width += pieces[i].TextWidth(0, Math.Min(pieces[i].VisibleCharLength, index - charConsumed));
-                charConsumed += pieces[i].VisibleCharLength + 1;
-            }
-
-            width += i != 0 ? (i - 1) * wordSpacing : 0;
 
             return width;
         }
@@ -247,7 +190,7 @@ namespace PopUpUI.Text
             {
                 return new Vector2(xOffset, data.LineSpacing * caretPosition.LineIndex)
                      + data.TextOffset.ToVector2()
-                     + ProcesserHelpers.GetAlignmentOffset(data.Alignment, targetSize.Value, textSize);
+                     + GetAlignmentOffset(data.Alignment, targetSize.Value, textSize);
             }
 
             return new Vector2(xOffset, data.LineSpacing * caretPosition.LineIndex)
@@ -260,13 +203,13 @@ namespace PopUpUI.Text
             {
                 return new Vector2(xOffset, data.LineSpacing * caretPosition.LineIndex)
                      + data.TextOffset.ToVector2()
-                     + ProcesserHelpers.GetOrientationOffset(data.Orientation, data.HorizontalTextLength, lineWidth)
-                     + ProcesserHelpers.GetAlignmentOffset(data.Alignment, targetSize.Value, textSize);
+                     + GetOrientationOffset(data.Orientation, data.HorizontalTextLength, lineWidth)
+                     + GetAlignmentOffset(data.Alignment, targetSize.Value, textSize);
             }
 
             return new Vector2(xOffset, data.LineSpacing * caretPosition.LineIndex)
                  + data.TextOffset.ToVector2()
-                 + ProcesserHelpers.GetOrientationOffset(data.Orientation, data.HorizontalTextLength, lineWidth);
+                 + GetOrientationOffset(data.Orientation, data.HorizontalTextLength, lineWidth);
         }
     }
 }

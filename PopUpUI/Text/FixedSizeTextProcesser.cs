@@ -86,9 +86,9 @@ namespace PopUpUI.Text
             return new Vector2(HorizontalTextLength, LineSpacing * lineCount);
         }
 
-        private List<(string[] LineWords, float LineWidth)> GetAlignedWords()
+        private List<(StringTextPiece[] LineWords, float LineWidth)> GetAlignedWords()
         {
-            List<(string[] LineWords, float LineWidth)> lines = new List<(string[] LineWords, float LineWidth)>();
+            List<(StringTextPiece[] LineWords, float LineWidth)> lines = new List<(StringTextPiece[] LineWords, float LineWidth)>();
 
             float minimumSpaceWidth = WordSpacing;
 
@@ -108,14 +108,14 @@ namespace PopUpUI.Text
                     }
                     else
                     {
-                        lines.Add((words[lastStart..i].ToArray(), lineWidth));
+                        lines.Add((ProcesserHelpers.ToStringPiece(words[lastStart..i], Font), lineWidth));
                         lastStart = i;
 
                         lineWidth = wordWidth;
                     }
                 }
 
-                lines.Add((words[lastStart..].ToArray(), lineWidth));
+                lines.Add((ProcesserHelpers.ToStringPiece(words[lastStart..], Font), lineWidth));
 
                 lineWidth = 0;
             }

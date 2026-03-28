@@ -2,7 +2,7 @@
 
 namespace PopUpUI.Text
 {
-    public class HashedTextPiece
+    public class HashedTextPiece : ITextPiece
     {
         public int VisibleCharLength => RendererHash.VisibleCharLength(Text);
 
@@ -30,9 +30,9 @@ namespace PopUpUI.Text
             return RendererHash.GetWidth(Text.Substring(startIndex, length));
         }
 
-        public void DrawHash(Vector2 position)
+        public void DrawHash(Vector2 position, float opacity)
         {
-            RendererHash.Draw(Text, position);
+            RendererHash.Draw(Text, position, opacity);
         }
     }
 }
