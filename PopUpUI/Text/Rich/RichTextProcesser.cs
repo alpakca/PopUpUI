@@ -60,11 +60,11 @@ namespace PopUpUI.Text.Rich
             });
         }
 
-        private List<(HashedTextPiece[] Parts, float LineWidth)> GetHashedLines()
+        private List<(ITextPiece[] Parts, float LineWidth)> GetHashedLines()
         {
-            return SplitHorizontalLength(SplitToNewLines(SplitToHashes()));
+            return SplitHorizontalLength(SplitToNewLines());
         }
-
+        /*
         private static List<(string Word, IRendererHash Hash)[]> SplitToNewLines(LinkedList<HashedTextPiece> hashedNodes)
         {
             List<(string Word, IRendererHash Hash)[]> hashedWordLines = new List<(string Word, IRendererHash Hash)[]>();
@@ -112,9 +112,49 @@ namespace PopUpUI.Text.Rich
                     currentLine.Add((words[i], hash));
                 }
             }
+        }*/
+
+        private List<(ITextPiece[] Parts, float LineWidth)> SplitHorizontalLength(List<ITextPiece[]> lineParts)
+        {
+            List<ITextPiece> currentLine = new List<ITextPiece>();
+            List<(ITextPiece[] Parts, float LineWidth)> lines = new List<(ITextPiece[] Parts, float LineWidth)>();
+
+            float spaceWidth = WordSpacing;
+            float lineWidth = FirstRowOffset;
+            foreach (var line in lineParts)
+            {
+                int lastStart = 0;
+
+                for (int i = 0; i < line.Length; i++)
+                {
+                    float wordWidth = line[i].TextWidth();
+
+                    if (lineWidth + wordWidth + (i - lastStart) * spaceWidth <= HorizontalTextLength)
+                    {
+                        currentLine.Add(line[i]);
+                        lineWidth += wordWidth;
+                    }
+                    else
+                    {
+                        lines.Add((currentLine.ToArray(), lineWidth + (i - lastStart) * spaceWidth));
+                        currentLine.Clear();
+
+                        lastStart = i;
+                        lineWidth = wordWidth;
+                        currentLine.Add(line[i]);
+                    }
+                }
+
+                lines.Add((currentLine.ToArray(), lineWidth + (line.Length - 1 - lastStart) * spaceWidth));
+
+                currentLine.Clear();
+                lineWidth = 0;
+            }
+
+            return lines;
         }
 
-        private List<(HashedTextPiece[] Parts, float LineWidth)> SplitHorizontalLength(List<(string Word, IRendererHash Hash)[]> lineParts)
+        /*private List<(HashedTextPiece[] Parts, float LineWidth)> SplitHorizontalLength(List<(string Word, IRendererHash Hash)[]> lineParts)
         {
             List<HashedTextPiece> currentLine = new List<HashedTextPiece>();
             List<(HashedTextPiece[] Parts, float LineWidth)> lines = new List<(HashedTextPiece[] Parts, float LineWidth)>();
@@ -155,7 +195,7 @@ namespace PopUpUI.Text.Rich
             return lines;
         }
 
-        public Vector2 GetTextSize()
+        /*public Vector2 GetTextSize()
         {
             List<(string Word, IRendererHash Hash)[]> existingLines = SplitToNewLines(SplitToHashes());
 
@@ -196,6 +236,6 @@ namespace PopUpUI.Text.Rich
             }
 
             return new Vector2(maxWidth, LineSpacing * lineCount);
-        }
+        }*/
     }
 }

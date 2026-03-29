@@ -2,14 +2,14 @@
 
 namespace PopUpUI.Text.Rich
 {
-    public class HashedTextPiece : ITextPiece
+    public class SingleHashedTextPiece : ITextPiece
     {
         public int VisibleCharLength => RendererHash.VisibleCharLength(Text);
 
         public string Text { get; set; }
         public IRendererHash RendererHash { get; set; }
 
-        public HashedTextPiece(string text, IRendererHash hash)
+        public SingleHashedTextPiece(string text, IRendererHash hash)
         {
             Text = text;
             RendererHash = hash;
@@ -30,7 +30,7 @@ namespace PopUpUI.Text.Rich
             return RendererHash.GetWidth(Text.Substring(startIndex, length));
         }
 
-        public void DrawHash(Vector2 position, float opacity)
+        public void Draw(Vector2 position, Color color, float opacity)
         {
             RendererHash.Draw(Text, position, opacity);
         }

@@ -78,14 +78,18 @@ namespace PopUpUI.Text.Rich
             for (int i = 0; i < _hashes.Count; i++)
             {
                 IRendererHash item = _hashes[i];
-                regexBuilder.Append("(?'").Append(i + 1).Append('\'').Append(item.Symbol);
-
                 if (item.WrapsText)
                 {
-                    regexBuilder.Append(".{0,}").Append(item.Symbol);
+                    // example for symbol %
+                    // %(?'2'[^%]*)%|
+                    regexBuilder.Append($"{item.Symbol}(?'{i + 1}'[^{item.Symbol}]*){item.Symbol}|");
                 }
-
-                regexBuilder.Append(")|");
+                else
+                {
+                    // example for symbol :emoji:
+                    // (?'2':emoji:)|
+                    regexBuilder.Append($"(?'{i + 1}'{item.Symbol})|");
+                }
             }
 
             regexBuilder.Remove(regexBuilder.Length - 1, 1); // remove the last '|' char
@@ -106,12 +110,105 @@ namespace PopUpUI.Text.Rich
             throw new Exception();
         }
 
-        protected LinkedList<HashedTextPiece> SplitToHashes()
+        protected List<ITextPiece[]> SplitToNewLines()
         {
-            LinkedList<HashedTextPiece> hashedNodes = new LinkedList<HashedTextPiece>();
+            LinkedList<SingleHashedTextPiece> hashedNodes = SplitToHashes();
+
+            List<ITextPiece[]> hashedWordLines = new List<ITextPiece[]>();
+            List<ITextPiece> currentLine = new List<ITextPiece>();
+
+            List<string> currentPieceParts = new List<string>();
+            List<IRendererHash> currentPieceHashes = new List<IRendererHash>();
+
+            for (var node = hashedNodes.First; node != null; node = node.Next)
+            {
+                int[] newLineIndex = ProcesserHelpers.AllNewLineIndexes(node.Value.Text);
+                if (newLineIndex.Length == 0)
+                {
+                    AppendToCurrentLine(node.Value.Text, node.Value.RendererHash);
+                    continue;
+                }
+
+                int lastStart = 0;
+                foreach (var index in newLineIndex)
+                {
+                    AppendToCurrentLine(node.Value.Text.Substring(lastStart, index - lastStart), node.Value.RendererHash);
+                    AddCurrentPieceToLine();
+
+                    hashedWordLines.Add(currentLine.ToArray());
+
+                    currentLine.Clear();
+                    lastStart = index + 1;
+                }
+
+                AppendToCurrentLine(node.Value.Text.Substring(lastStart), node.Value.RendererHash);
+            }
+
+            AddCurrentPieceToLine();
+            if (currentLine.Count != 0)
+            {
+                hashedWordLines.Add(currentLine.ToArray());
+            }
+
+            return hashedWordLines;
+
+            void AppendToCurrentLine(string text, IRendererHash hash)
+            {
+                int start = 0;
+                int end = 0;
+                for (int i = 0; i < text.Length; i++)
+                {
+                    if (text[i] == ' ')
+                    {
+                        if (start != end)
+                        {
+                            currentPieceParts.Add(text[start..end]);
+                            currentPieceHashes.Add(hash);
+
+                            start = end;
+                        }
+
+                        start++;
+                        AddCurrentPieceToLine();
+                    }
+
+                    end++;
+                }
+
+                if (start != end)
+                {
+                    currentPieceParts.Add(text[start..]);
+                    currentPieceHashes.Add(hash);
+                }
+            }
+
+            void AddCurrentPieceToLine()
+            {
+                if (currentPieceParts.Count == 0)
+                {
+                    return;
+                }
+
+                if (currentPieceParts.Count == 1)
+                {
+                    currentLine.Add(new SingleHashedTextPiece(currentPieceParts[0], currentPieceHashes[0]));
+                }
+                else
+                {
+                    currentLine.Add(new MultiHashedTextPiece(currentPieceParts.ToArray(), currentPieceHashes.ToArray()));
+                }
+
+                currentPieceParts.Clear();
+                currentPieceHashes.Clear();
+            }
+        }
+
+        private LinkedList<SingleHashedTextPiece> SplitToHashes()
+        {
+            LinkedList<SingleHashedTextPiece> hashedNodes = new LinkedList<SingleHashedTextPiece>();
             if (_regexPattern == "")
             {
-                hashedNodes.AddLast(new HashedTextPiece(Text, defaultTextHash));
+                hashedNodes.AddLast(new SingleHashedTextPiece(Text, defaultTextHash));
                 return hashedNodes;
             }
 
@@ -120,7 +217,7 @@ namespace PopUpUI.Text.Rich
             {
                 if (lastStart < match.Index)
                 {
-                    hashedNodes.AddLast(new HashedTextPiece(Text.Substring(lastStart, match.Index - lastStart), defaultTextHash));
+                    hashedNodes.AddLast(new SingleHashedTextPiece(Text.Substring(lastStart, match.Index - lastStart), defaultTextHash));
                 }
 
                 if (match.Length > 0)
@@ -135,7 +232,7 @@ namespace PopUpUI.Text.Rich
                         length -= matchedHash.Symbol.Length * 2;
                     }
 
-                    hashedNodes.AddLast(new HashedTextPiece(Text.Substring(index, length), matchedHash));
+                    hashedNodes.AddLast(new SingleHashedTextPiece(Text.Substring(index, length), matchedHash));
                 }
 
                 lastStart = match.Index + match.Length;
@@ -143,7 +240,7 @@ namespace PopUpUI.Text.Rich
 
             if (lastStart < Text.Length)
             {
-                hashedNodes.AddLast(new HashedTextPiece(Text.Substring(lastStart), defaultTextHash));
+                hashedNodes.AddLast(new SingleHashedTextPiece(Text.Substring(lastStart), defaultTextHash));
             }
 
             return hashedNodes;

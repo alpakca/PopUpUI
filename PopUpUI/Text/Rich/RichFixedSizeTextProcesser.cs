@@ -57,61 +57,15 @@ namespace PopUpUI.Text.Rich
             });
         }
 
-        private List<(HashedTextPiece[] Parts, float TotalWordsWidth)> GetHashedLines()
+        private List<(ITextPiece[] Parts, float TotalWordsWidth)> GetHashedLines()
         {
-            return SplitHorizontalLength(SplitToNewLines(SplitToHashes()));
+            return SplitHorizontalLength(SplitToNewLines());
         }
 
-        protected static List<(string Word, IRendererHash Hash)[]> SplitToNewLines(LinkedList<HashedTextPiece> hashedNodes)
+        private List<(ITextPiece[] Parts, float TotalWordsWidth)> SplitHorizontalLength(List<ITextPiece[]> lineParts)
         {
-            List<(string Word, IRendererHash Hash)[]> hashedWordLines = new List<(string Word, IRendererHash Hash)[]>();
-            List<(string Word, IRendererHash Hash)> currentLine = new List<(string, IRendererHash)>();
-
-            for (var node = hashedNodes.First; node != null; node = node.Next)
-            {
-                int[] newLineIndex = ProcesserHelpers.AllNewLineIndexes(node.Value.Text);
-                if (newLineIndex.Length == 0)
-                {
-                    foreach (var word in node.Value.Text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-                    {
-                        currentLine.Add((word, node.Value.RendererHash));
-                    }
-
-                    continue;
-                }
-
-                int lastStart = 0;
-                foreach (var index in newLineIndex)
-                {
-                    foreach (var word in node.Value.Text.Substring(lastStart, index - lastStart).Split(' ', StringSplitOptions.RemoveEmptyEntries))
-                    {
-                        currentLine.Add((word, node.Value.RendererHash));
-                    }
-
-                    hashedWordLines.Add(currentLine.ToArray());
-
-                    currentLine.Clear();
-                    lastStart = index + 1;
-                }
-
-                foreach (var word in node.Value.Text.Substring(lastStart).Split('\n', StringSplitOptions.RemoveEmptyEntries))
-                {
-                    currentLine.Add((word, node.Value.RendererHash));
-                }
-            }
-
-            if (currentLine.Count != 0)
-            {
-                hashedWordLines.Add(currentLine.ToArray());
-            }
-
-            return hashedWordLines;
-        }
-
-        private List<(HashedTextPiece[] Parts, float TotalWordsWidth)> SplitHorizontalLength(List<(string Word, IRendererHash Hash)[]> lineParts)
-        {
-            List<HashedTextPiece> currentLine = new List<HashedTextPiece>();
-            List<(HashedTextPiece[] Parts, float LineWidth)> lines = new List<(HashedTextPiece[] Parts, float LineWidth)>();
+            List<ITextPiece> currentLine = new List<ITextPiece>();
+            List<(ITextPiece[] Parts, float LineWidth)> lines = new List<(ITextPiece[] Parts, float LineWidth)>();
 
             float minimumSpaceWidth = WordSpacing;
             float lineWidth = FirstRowOffset;
@@ -121,12 +75,11 @@ namespace PopUpUI.Text.Rich
 
                 for (int i = 0; i < line.Length; i++)
                 {
-                    (string word, IRendererHash hash) = line[i];
-                    float wordWidth = hash.GetWidth(word);
+                    float wordWidth = line[i].TextWidth();
 
                     if (lineWidth + wordWidth + (i - lastStart) * minimumSpaceWidth <= HorizontalTextLength)
                     {
-                        currentLine.Add(new HashedTextPiece(word, hash));
+                        currentLine.Add(line[i]);
                         lineWidth += wordWidth;
                     }
                     else
@@ -136,7 +89,7 @@ namespace PopUpUI.Text.Rich
 
                         lastStart = i;
                         lineWidth = wordWidth;
-                        currentLine.Add(new HashedTextPiece(word, hash));
+                        currentLine.Add(line[i]);
                     }
                 }
 
@@ -148,7 +101,7 @@ namespace PopUpUI.Text.Rich
 
             return lines;
         }
-
+        /*
         public Vector2 GetTextSize()
         {
             List<(string Word, IRendererHash Hash)[]> existingLines = SplitToNewLines(SplitToHashes());
@@ -181,6 +134,6 @@ namespace PopUpUI.Text.Rich
             }
 
             return new Vector2(HorizontalTextLength, LineSpacing * lineCount);
-        }
+        }*/
     }
 }

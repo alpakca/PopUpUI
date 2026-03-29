@@ -10,7 +10,7 @@ namespace PopUpUI.Text.Rich
     public class RichTextProcesserResult : ITextProcesserResult
     {
         private readonly ProcesserData _data;
-        private readonly List<(HashedTextPiece[] Parts, float LineWidth)> _lines;
+        private readonly List<(ITextPiece[] Parts, float LineWidth)> _lines;
 
         private Vector2 _textSize;
         private LineLayout _lineLayout;
@@ -21,7 +21,7 @@ namespace PopUpUI.Text.Rich
 
         public Vector2 TextSize => _textSize == default ? _textSize = GetTextSize() : _textSize;
 
-        internal RichTextProcesserResult(List<(HashedTextPiece[] Parts, float LineWidth)> lines, ProcesserData data)
+        internal RichTextProcesserResult(List<(ITextPiece[] Parts, float LineWidth)> lines, ProcesserData data)
         {
             _data = data;
             _lines = lines;
@@ -41,14 +41,14 @@ namespace PopUpUI.Text.Rich
 
             float spaceWidth = _data.WordSpacing;
             float xOffset = _data.FirstRowOffset;
-            foreach ((HashedTextPiece[] line, float lineWidth) in _lines)
+            foreach ((ITextPiece[] line, float lineWidth) in _lines)
             {
                 Vector2 lineOffset = ProcesserHelpers.GetOrientationOffset(_data.Orientation, _data.HorizontalTextLength, lineWidth)
                                    + new Vector2(xOffset, 0);
 
-                foreach (HashedTextPiece hashedPiece in line)
+                foreach (ITextPiece hashedPiece in line)
                 {
-                    hashedPiece.DrawHash(offset + lineOffset, _data.Opacity);
+                    hashedPiece.Draw(offset + lineOffset, default, _data.Opacity); // color parameter is not used in rich processers
                     lineOffset.X += hashedPiece.TextWidth() + spaceWidth;
                 }
 
@@ -75,7 +75,7 @@ namespace PopUpUI.Text.Rich
             private readonly RichTextProcesserResult _result;
 
             private ProcesserData Data => _result._data;
-            private List<(HashedTextPiece[] Parts, float LineWidth)> Lines => _result._lines;
+            private List<(ITextPiece[] Parts, float LineWidth)> Lines => _result._lines;
 
             public int LineCount => Lines.Count;
             public int VisibleCharCount => _visibleCharCount == -1 ? _visibleCharCount = GetVisibleCharCount() : _visibleCharCount;
@@ -144,7 +144,7 @@ namespace PopUpUI.Text.Rich
             private readonly RichTextProcesserResult _result;
 
             private ProcesserData Data => _result._data;
-            private List<(HashedTextPiece[] Parts, float LineWidth)> Lines => _result._lines;
+            private List<(ITextPiece[] Parts, float LineWidth)> Lines => _result._lines;
 
             public TextPosition MinimumPosition => new TextPosition(0, 0);
             public TextPosition MaximumPosition => Lines.Count != 0 ? new TextPosition(Lines.Count - 1, _result.Lines.GetLineVisibleCharCount(Lines.Count - 1))
