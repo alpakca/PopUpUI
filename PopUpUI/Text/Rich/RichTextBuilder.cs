@@ -12,22 +12,18 @@ namespace PopUpUI.Text.Rich
 {
     public class RichTextBuilder
     {
-        private static readonly BuilderNode newLineNode = new BuilderNode(null!, null);
+        private static readonly BuilderNode newLineNode = new BuilderNode(Environment.NewLine, null);
 
         private int _visibleLength;
         private int _totalCharLength;
         private readonly LinkedList<BuilderNode> _chunks;
 
-        public int Length => _visibleLength;
+        public int TotalCharLength => _totalCharLength;
+        public int VisibleLength => _visibleLength;
 
         public RichTextBuilder()
         {
             _chunks = new LinkedList<BuilderNode>();
-        }
-
-        public RichTextBuilder(string text) : this()
-        {
-            Append(text);
         }
 
         public char this[int index]
@@ -45,6 +41,27 @@ namespace PopUpUI.Text.Rich
             }
         }
 
+        public string this[Range range]
+        {
+            get
+            {
+                return ToString(range.Start.IsFromEnd ? _visibleLength - range.Start.Value : range.Start.Value,
+                                range.End.IsFromEnd ? _visibleLength - range.End.Value : range.End.Value);
+            }
+        }
+
+        public IRendererHash? GetHashAtIndex(int index)
+        {
+            if (index < 0 || index >= _visibleLength)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index));
+            }
+
+            (LinkedListNode<BuilderNode>? indexNode, _) = GetNodeContainsIndex(index);
+
+            return indexNode!.Value.Hash;
+        }
+
         public RichTextBuilder Append(string text)
         {
             InternalAppend(text, null);
@@ -52,9 +69,16 @@ namespace PopUpUI.Text.Rich
             return this;
         }
 
-        public RichTextBuilder Append(string text, IRendererHash hash)
+        public RichTextBuilder Append(string text, IRendererHash? hash)
         {
             InternalAppend(text, hash);
+
+            return this;
+        }
+
+        public RichTextBuilder AppendLine()
+        {
+            AppendNewLineNode();
 
             return this;
         }
@@ -67,7 +91,7 @@ namespace PopUpUI.Text.Rich
             return this;
         }
 
-        public RichTextBuilder AppendLine(string text, IRendererHash hash)
+        public RichTextBuilder AppendLine(string text, IRendererHash? hash)
         {
             InternalAppend(text, hash);
             AppendNewLineNode();
@@ -245,39 +269,120 @@ namespace PopUpUI.Text.Rich
             return this;
         }
 
+        public RichTextBuilder Subbuilder(int startIndex, int length)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(startIndex, 0);
+            ArgumentOutOfRangeException.ThrowIfLessThan(length, 0);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(startIndex + length, _visibleLength);
+
+            if (startIndex == _visibleLength || length == 0)
+            {
+                return new RichTextBuilder();
+            }
+
+            (LinkedListNode<BuilderNode>? node, int consumedCharCount) = GetNodeContainsIndex(startIndex);
+
+            RichTextBuilder builder = new RichTextBuilder();
+            while (length > 0)
+            {
+                int start = Math.Max(startIndex - consumedCharCount, 0);
+                int count = Math.Clamp(length, 0, node!.Value.Text.Length - start);
+
+                string text = node.Value.Text.Substring(start, count);
+                builder.Append(text, node.Value.Hash);
+
+                length -= count;
+                consumedCharCount += count;
+
+                node = node.Next;
+            }
+
+            return builder;
+        }
+
         public override string ToString()
         {
             Span<char> chars = stackalloc char[_totalCharLength];
 
             int offset = 0;
-            LinkedListNode<BuilderNode>? node = _chunks.First;
-            for (; node != null; node = node.Next)
+            for (LinkedListNode<BuilderNode>? node = _chunks.First; node != null; node = node.Next)
             {
-                if (node.Value == newLineNode)
-                {
-                    chars[offset] = '\n';
-                    offset++;
-
-                    continue;
-                }
-
                 if (node.Value.WrapsText)
                 {
+                    // symbol around text
+                    node.Value.Hash!.Symbol.CopyTo(chars.Slice(offset));
+                    offset += node.Value.Hash.Symbol.Length;
+
+                    // actual text
+                    node.Value.Text.CopyTo(chars.Slice(offset));
+                    offset += node.Value.Text.Length;
+
+                    // symbol around text
                     node.Value.Hash!.Symbol.CopyTo(chars.Slice(offset));
                     offset += node.Value.Hash.Symbol.Length;
                 }
-
-                node.Value.Text.CopyTo(chars.Slice(offset));
-                offset += node.Value.Text.Length;
-
-                if (node.Value.WrapsText)
+                else
                 {
-                    node.Value.Hash!.Symbol.CopyTo(chars.Slice(offset));
-                    offset += node.Value.Hash.Symbol.Length;
+                    // actual text
+                    node.Value.Text.CopyTo(chars.Slice(offset));
+                    offset += node.Value.Text.Length;
                 }
             }
 
             return new string(chars);
+        }
+
+        /// <summary>Gets the string representing the </summary>
+        /// <param name="startIndex"></param>
+        /// <param name="length">The length of visible characters.</param>
+        /// <returns></returns>
+        public string ToString(int startIndex, int length)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(startIndex, 0);
+            ArgumentOutOfRangeException.ThrowIfLessThan(length, 0);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(startIndex + length, _visibleLength);
+
+            if (startIndex == _visibleLength || length == 0)
+            {
+                return string.Empty;
+            }
+
+            // we can't just use length here because we don't know how many hashes there are and their hash lenghts
+            Span<char> chars = stackalloc char[_totalCharLength - startIndex];
+
+            int offset = 0;
+            (LinkedListNode<BuilderNode>? node, int consumedCharCount) = GetNodeContainsIndex(startIndex);
+            while (length > 0)
+            {
+                int start = Math.Max(startIndex - consumedCharCount, 0);
+                int count = Math.Clamp(length, 0, node!.Value.Text.Length - start);
+
+                if (node.Value.WrapsText)
+                {
+                    // symbol around text
+                    node.Value.Hash!.Symbol.CopyTo(chars.Slice(offset));
+                    offset += node.Value.Hash.Symbol.Length;
+
+                    // actual text
+                    node.Value.Text.Substring(start, count).CopyTo(chars.Slice(offset));
+                    offset += count;
+
+                    // symbol around text
+                    node.Value.Hash!.Symbol.CopyTo(chars.Slice(offset));
+                    offset += node.Value.Hash.Symbol.Length;
+                }
+                else
+                {
+                    // actual text
+                    node.Value.Text.Substring(start, count).CopyTo(chars.Slice(offset));
+                    offset += count;
+                }
+
+                length -= count;
+                node = node.Next;
+            }
+
+            return new string(chars.Slice(0, offset));
         }
 
         private class BuilderNode
