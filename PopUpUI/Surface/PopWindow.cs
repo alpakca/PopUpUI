@@ -112,7 +112,7 @@ namespace PopUpUI.Surface
                 foreach (var drawInfo in element.GetDrawInfos())
                 {
                     // only render the texture if it can be seen
-                    if (DestinationIsVisible(drawInfo.DestinationArea))
+                    if (IsDestinationVisible(drawInfo.DestinationArea))
                     {
                         DrawHelper.Batch.Draw(drawInfo.GetTexture(), drawInfo.DestinationArea, drawInfo.Opacity * Color.White);
                     }
@@ -134,7 +134,7 @@ namespace PopUpUI.Surface
                     Rectangle destination = new Rectangle(ScrolledOffset + drawInfo.Location, drawInfo.Size);
                     
                     // only render the texture if it can be seen
-                    if (DestinationIsVisible(destination))
+                    if (IsDestinationVisible(destination))
                     {
                         DrawHelper.Batch.Draw(drawInfo.GetTexture(), destination, drawInfo.Opacity * Color.White);
 
@@ -143,7 +143,7 @@ namespace PopUpUI.Surface
             }
         }
 
-        private bool DestinationIsVisible(Rectangle destination)
+        private bool IsDestinationVisible(Rectangle destination)
         {
             return destination.Bottom > 0 || destination.Right > 0 || destination.Top < _boundaries.Height || destination.Left < _boundaries.Width;
         }

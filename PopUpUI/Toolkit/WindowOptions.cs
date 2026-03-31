@@ -63,14 +63,14 @@ namespace PopUpUI.Toolkit
         }
 
         /// <summary>Gets or sets the position of the main window.</summary>
-        public static Point WindowPosition
+        public static Point Position
         {
             get => gameInstance.Window.Position;
             set => gameInstance.Window.Position = value;
         }
 
         /// <summary>Gets or sets the size of the main window.</summary>
-        public static Point WindowSize
+        public static Point Size
         {
             get => new Point(Width, Height);
             set
@@ -118,8 +118,8 @@ namespace PopUpUI.Toolkit
         /// <summary>Changes window's position to appear center of the screen.</summary>
         public static void CenterWindow()
         {
-            WindowPosition = new Point((GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width - Width) / 2,
-                                       (GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - Height) / 2);
+            Position = new Point((GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width - Width) / 2,
+                                 (GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - Height) / 2);
         }
     }
 }
