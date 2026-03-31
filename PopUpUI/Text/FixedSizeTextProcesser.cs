@@ -55,43 +55,11 @@ namespace PopUpUI.Text
             });
         }
 
-        public Vector2 GetTextSize()
-        {
-            float minimumSpaceWidth = WordSpacing;
-            int lineCount = 1;
-
-            foreach (string existingLine in Text.Split('\n', StringSplitOptions.RemoveEmptyEntries))
-            {
-                float lineWidth = 0;
-                Span<string> words = existingLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-                int lastStart = 0;
-                for (int i = 0; i < words.Length; i++)
-                {
-                    float wordWidth = ProcesserHelpers.GetWidth(Font, words[i]);
-
-                    if (lineWidth + wordWidth + (i - lastStart) * minimumSpaceWidth <= HorizontalTextLength)
-                    {
-                        lineWidth += wordWidth;
-                    }
-                    else
-                    {
-                        lineCount++;
-                        lastStart = i;
-                        lineWidth = wordWidth;
-                    }
-                }
-            }
-
-            return new Vector2(HorizontalTextLength, LineSpacing * lineCount);
-        }
-
         private List<(StringTextPiece[] LineWords, float LineWidth)> GetAlignedWords()
         {
             List<(StringTextPiece[] LineWords, float LineWidth)> lines = new List<(StringTextPiece[] LineWords, float LineWidth)>();
 
             float minimumSpaceWidth = WordSpacing;
-
             float lineWidth = FirstRowOffset;
             foreach (string existingLine in Text.Split('\n', StringSplitOptions.RemoveEmptyEntries))
             {

@@ -74,48 +74,6 @@ namespace PopUpUI.Text
             });
         }
 
-        public Vector2 GetTextSize()
-        {
-            float spaceWidth = WordSpacing;
-
-            int lineCount = 1;
-            float maxWidth = 0;
-
-            foreach (var existingLine in Text.Split('\n'))
-            {
-                float lineWidth = 0;
-                string[] words = existingLine.Split(' ');
-
-                int lastStart = 0;
-                for (int i = 0; i < words.Length; i++)
-                {
-                    float wordWidth = ProcesserHelpers.GetWidth(Font, words[i]);
-
-                    if (lineWidth + wordWidth + (i - lastStart) * spaceWidth <= HorizontalTextLength)
-                    {
-                        lineWidth += wordWidth;
-                    }
-                    else
-                    {
-                        maxWidth = Math.Max(maxWidth, lineWidth + (i - lastStart) * spaceWidth);
-
-                        lineCount++;
-                        lastStart = i;
-                        lineWidth = wordWidth;
-                    }
-                }
-
-                maxWidth = Math.Max(maxWidth, lineWidth + (words.Length - 1 - lastStart) * spaceWidth);
-            }
-
-            if (HorizontalTextLength == int.MaxValue)
-            {
-                return new Vector2(HorizontalTextLength, LineSpacing * lineCount);
-            }
-
-            return new Vector2(maxWidth, LineSpacing * lineCount);
-        }
-
         private List<ITextPiece[]> SplitToSpaces()
         {
             List<ITextPiece[]> splitLines = new List<ITextPiece[]>();

@@ -44,7 +44,7 @@ namespace PopUpUI.Text.Rich
 
         public override ITextProcesserResult GetParseResult()
         {
-            return new RichFixedSizeTextProcesserResult(GetHashedLines(), new ProcesserData
+            return new RichFixedSizeTextProcesserResult(SplitHorizontalLength(), new ProcesserData
             {
                 FirstRowOffset = FirstRowOffset,
                 HorizontalTextLength = HorizontalTextLength,
@@ -57,12 +57,7 @@ namespace PopUpUI.Text.Rich
             });
         }
 
-        private List<(ITextPiece[] Parts, float TotalWordsWidth)> GetHashedLines()
-        {
-            return SplitHorizontalLength(SplitToNewLines());
-        }
-
-        private List<ITextPiece[]> SplitToNewLines()
+        private List<ITextPiece[]> SplitNewLinesAndWords()
         {
             LinkedList<SingleHashedTextPiece> hashedNodes = SplitToHashes();
 
@@ -155,44 +150,39 @@ namespace PopUpUI.Text.Rich
             }
         }
 
-        private List<(ITextPiece[] Parts, float TotalWordsWidth)> SplitHorizontalLength(List<ITextPiece[]> lineParts)
+        private List<(ITextPiece[] Parts, float TotalWordsWidth)> SplitHorizontalLength()
         {
-            List<ITextPiece> currentLine = new List<ITextPiece>();
-            List<(ITextPiece[] Parts, float LineWidth)> lines = new List<(ITextPiece[] Parts, float LineWidth)>();
+            List<ITextPiece[]> splitLineWords = SplitNewLinesAndWords();
+            List<(ITextPiece[] Parts, float LineWidth)> splitLines = new List<(ITextPiece[] Parts, float LineWidth)>();
 
             float minimumSpaceWidth = WordSpacing;
             float lineWidth = FirstRowOffset;
-            foreach (var line in lineParts)
+            foreach (var lineWords in splitLineWords)
             {
                 int lastStart = 0;
-
-                for (int i = 0; i < line.Length; i++)
+                for (int i = 0; i < lineWords.Length; i++)
                 {
-                    float wordWidth = line[i].TextWidth();
+                    float wordWidth = lineWords[i].TextWidth();
 
                     if (lineWidth + wordWidth + (i - lastStart) * minimumSpaceWidth <= HorizontalTextLength)
                     {
-                        currentLine.Add(line[i]);
                         lineWidth += wordWidth;
                     }
                     else
                     {
-                        lines.Add((currentLine.ToArray(), lineWidth));
-                        currentLine.Clear();
+                        splitLines.Add((lineWords.AsSpan()[lastStart..i].ToArray(), lineWidth));
 
                         lastStart = i;
                         lineWidth = wordWidth;
-                        currentLine.Add(line[i]);
                     }
                 }
 
-                lines.Add((currentLine.ToArray(), lineWidth));
+                splitLines.Add((lineWords.AsSpan()[lastStart..].ToArray(), lineWidth));
 
-                currentLine.Clear();
                 lineWidth = 0;
             }
 
-            return lines;
+            return splitLines;
         }
     }
 }

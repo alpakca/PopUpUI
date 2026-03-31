@@ -162,11 +162,11 @@ namespace PopUpUI.Text.Rich
 
         private List<(ITextPiece[] Parts, float LineWidth)> SplitHorizontalLength()
         {
-            List<ITextPiece[]> splitNewLines = SplitNewLineAndSpaces();
+            List<ITextPiece[]> splitLineParts = SplitNewLineAndSpaces();
             List<(ITextPiece[] Parts, float LineWidth)> splitLines = new List<(ITextPiece[] Parts, float LineWidth)>();
 
             float lineWidth = FirstRowOffset;
-            foreach (var lineParts in splitNewLines)
+            foreach (var lineParts in splitLineParts)
             {
                 int lastStart = 0;
                 for (int i = 0; i < lineParts.Length; i++)
