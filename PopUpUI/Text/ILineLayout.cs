@@ -12,8 +12,10 @@ namespace PopUpUI.Text
         public int VisibleCharCount { get; } // also contains new line chars at the end of the lines
 
         public int GetLineVisibleCharCount(int lineIndex);
+        public int GetVisibleCharCount(int startLineIndex, int lineCount);
+
         public float GetLineWidth(int lineIndex);
-        public float GetLineWidth(TextPosition position);
-        public float GetLineWidth(TextPosition position, int length);
+        public float GetLineWidth(TextPosition startPosition);
+        public float GetLineWidth(TextPosition startPosition, int length);
     }
 }

@@ -58,7 +58,7 @@ namespace PopUpUI.Text
 
         public override ITextProcesserResult GetParseResult()
         {
-            return new TextProcesserResult(GetModifiedText(), new ProcesserData
+            return new TextProcesserResult(SplitHorizontalLength(), new ProcesserData
             {
                 FirstRowOffset = this.FirstRowOffset,
                 HorizontalTextLength = this.HorizontalTextLength,
@@ -116,40 +116,91 @@ namespace PopUpUI.Text
             return new Vector2(maxWidth, LineSpacing * lineCount);
         }
 
-        private List<(string Line, float LineWidth)> GetModifiedText()
+        private List<ITextPiece[]> SplitToSpaces()
         {
-            float spaceWidth = WordSpacing;
-            List<(string Line, float LineWidth)> lines = new List<(string Line, float LineWidth)>();
+            List<ITextPiece[]> splitLines = new List<ITextPiece[]>();
+            List<ITextPiece> currentLine = new List<ITextPiece>();
 
-            float lineWidth = FirstRowOffset;
             foreach (var existingLine in Text.Split('\n'))
             {
-                Span<string> words = existingLine.Split(' ');
-
-                int lastStart = 0;
-                for (int i = 0; i < words.Length; i++)
+                if (existingLine == string.Empty)
                 {
-                    float wordWidth = ProcesserHelpers.GetWidth(Font, words[i]);
+                    splitLines.Add(Array.Empty<ITextPiece>());
+                    continue;
+                }
 
-                    if (lineWidth + wordWidth + (i - lastStart) * spaceWidth <= HorizontalTextLength)
+                int start = 0;
+                int end = 0;
+                bool trackingSpace = existingLine[0] == ' ';
+
+                for (int i = 0; i < existingLine.Length; i++)
+                {
+                    if (existingLine[i] == ' ' && !trackingSpace)
                     {
-                        lineWidth += wordWidth;
+                        currentLine.Add(new StringTextPiece(existingLine[start..end], Font));
+
+                        start = end;
+                        trackingSpace = true;
+                    }
+                    else if (existingLine[i] != ' ' && trackingSpace)
+                    {
+                        currentLine.Add(new SpaceTextPiece(end - start, WordSpacing));
+
+                        start = end;
+                        trackingSpace = false;
+                    }
+
+                    end++;
+                }
+
+                if (!trackingSpace)
+                {
+                    currentLine.Add(new StringTextPiece(existingLine[start..], Font));
+                }
+                else
+                {
+                    currentLine.Add(new SpaceTextPiece(end - start, WordSpacing));
+                }
+
+                splitLines.Add(currentLine.ToArray());
+                currentLine.Clear();
+            }
+
+            return splitLines;
+        }
+
+        private List<(ITextPiece[] Parts, float LineWidth)> SplitHorizontalLength()
+        {
+            List<ITextPiece[]> splitSpaceLines = SplitToSpaces();
+            List<(ITextPiece[] Parts, float LineWidth)> splitLines = new List<(ITextPiece[] Parts, float LineWidth)>();
+
+            float lineWidth = FirstRowOffset;
+            foreach (var lineParts in splitSpaceLines)
+            {
+                int lastStart = 0;
+                for (int i = 0; i < lineParts.Length; i++)
+                {
+                    float partWidth = lineParts[i].TextWidth();
+
+                    if (lineWidth + partWidth <= HorizontalTextLength)
+                    {
+                        lineWidth += partWidth;
                     }
                     else
                     {
-                        lines.Add((string.Join(' ', words.Slice(lastStart, i - lastStart)!), lineWidth + (i - lastStart - 1) * spaceWidth));
+                        splitLines.Add((lineParts.AsSpan()[lastStart..i].ToArray(), lineWidth));
 
                         lastStart = i;
-                        lineWidth = wordWidth;
+                        lineWidth = partWidth;
                     }
                 }
 
-                lines.Add((string.Join(' ', words.Slice(lastStart)), lineWidth + (words.Length - 1 - lastStart - 1) * spaceWidth));
+                splitLines.Add((lineParts.AsSpan()[lastStart..].ToArray(), lineWidth));
 
                 lineWidth = 0;
             }
 
-            return lines;
+            return splitLines;
         }
     }
 }

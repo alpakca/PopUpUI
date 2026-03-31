@@ -54,10 +54,15 @@ namespace PopUpUI.Text
             return font.MeasureString(str).X;
         }
 
-        public static int LineVisibleCharCount(ITextPiece[] pieces)
+        public static int WordsVisibleCharCount(ITextPiece[] words)
         {
-            return pieces.Sum(piece => piece.VisibleCharLength)
-                 + pieces.Length - 1; // for space characters between words
+            return words.Sum(word => word.VisibleCharLength)
+                 + words.Length - 1; // for space characters between words
+        }
+
+        public static int PartsVisibleCharCount(ITextPiece[] parts)
+        {
+            return parts.Sum(part => part.VisibleCharLength);
         }
 
         public static float GetWordSpacing(int horizontalTextLength, float totalWordsWidth, int wordCount)
@@ -78,26 +83,26 @@ namespace PopUpUI.Text
             return indexes.Slice(0, count).ToArray();
         }
 
-        public static float GetLineWidth(ITextPiece[] pieces, float wordSpacing, int startIndex, int length)
+        public static float GetWordsLineWidth(ITextPiece[] words, float wordSpacing, int startIndex, int length)
         {
             int charConsumed = 0;
             float width = 0;
             int passedWordCount = 0;
 
-            for (int i = 0; i < pieces.Length; i++)
+            for (int i = 0; i < words.Length; i++)
             {
-                if (startIndex > charConsumed + pieces[i].VisibleCharLength)
+                if (startIndex > charConsumed + words[i].VisibleCharLength)
                 {
-                    charConsumed += pieces[i].VisibleCharLength + 1;
+                    charConsumed += words[i].VisibleCharLength + 1;
                     continue;
                 }
                 else if (startIndex > charConsumed)
                 {
                     int charsSkipped = startIndex - charConsumed;
-                    width += pieces[i].TextWidth(charsSkipped, Math.Clamp(pieces[i].VisibleCharLength - charsSkipped, 0, length));
+                    width += words[i].TextWidth(charsSkipped, Math.Clamp(words[i].VisibleCharLength - charsSkipped, 0, length));
 
                     passedWordCount++;
-                    charConsumed += pieces[i].VisibleCharLength + 1;
+                    charConsumed += words[i].VisibleCharLength + 1;
                     continue;
                 }
 
@@ -106,13 +111,47 @@ namespace PopUpUI.Text
                     break;
                 }
 
-                width += pieces[i].TextWidth(0, Math.Min(pieces[i].VisibleCharLength, startIndex + length - charConsumed));
+                width += words[i].TextWidth(0, Math.Min(words[i].VisibleCharLength, startIndex + length - charConsumed));
 
                 passedWordCount++;
-                charConsumed += pieces[i].VisibleCharLength + 1;
+                charConsumed += words[i].VisibleCharLength + 1;
             }
 
             width += passedWordCount != 0 ? (passedWordCount - 1) * wordSpacing : 0;
+
+            return width;
+        }
+
+        public static float GetPartsLineWidth(ITextPiece[] parts, int startIndex, int length)
+        {
+            int charConsumed = 0;
+            float width = 0;
+
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (startIndex > charConsumed + parts[i].VisibleCharLength)
+                {
+                    charConsumed += parts[i].VisibleCharLength;
+                    continue;
+                }
+                else if (startIndex > charConsumed)
+                {
+                    int charsSkipped = startIndex - charConsumed;
+                    width += parts[i].TextWidth(charsSkipped, Math.Clamp(parts[i].VisibleCharLength - charsSkipped, 0, length));
+
+                    charConsumed += parts[i].VisibleCharLength;
+                    continue;
+                }
+
+                if (charConsumed > startIndex + length)
+                {
+                    break;
+                }
+
+                width += parts[i].TextWidth(0, Math.Min(parts[i].VisibleCharLength, startIndex + length - charConsumed));
+
+                charConsumed += parts[i].VisibleCharLength;
+            }
 
             return width;
         }
@@ -163,6 +202,12 @@ namespace PopUpUI.Text
             return new TextPosition(newLineIndex, Math.Clamp(caretPosition.IndexInsideLine, 0, result.Lines.GetLineVisibleCharCount(newLineIndex)));
         }
 
+        public static int GetTextCaretPosition(TextPosition caretPosition, ILineLayout lineLayout)
+        {
+            // +1 for newline char for the last line before caretPosition.LineIndex
+            return lineLayout.GetVisibleCharCount(0, caretPosition.LineIndex) + 1 + caretPosition.IndexInsideLine;
+        }
+
         public static TextPosition GetCaretPositionFromText(int textCaretPosition, ITextProcesserResult result)
         {
             if (textCaretPosition < 0)
@@ -197,7 +242,8 @@ namespace PopUpUI.Text
                  + data.TextOffset.ToVector2();
         }
 
-        public static Vector2 GetScreenCaretPosition(TextPosition caretPosition, ProcesserData data, Vector2 textSize, float xOffset, float lineWidth, Point? targetSize)
+        public static Vector2 GetScreenCaretPositionOriented(TextPosition caretPosition, ProcesserData data, Vector2 textSize, 
+                                                             float xOffset, float lineWidth, Point? targetSize)
         {
             if (targetSize.HasValue)
             {
