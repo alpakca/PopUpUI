@@ -23,14 +23,14 @@ namespace PopUpUI.Containers
             set => sortedElements.Capacity = value;
         }
 
-        /// <summary>Gets the element that is top most in the collection.</summary>
+        /// <summary>Gets the element that is at bottom in the collection.</summary>
         public T? Bottom => Count == 0 ? default : sortedElements.Min.Value;
-        /// <summary>Gets the Z-Index of element that is top most in the collection.</summary>
+        /// <summary>Gets the Z-Index of element that is at bottom in the collection.</summary>
         public int BottomIndex => Count == 0 ? default : sortedElements.Min.Key;
 
-        /// <summary>Gets the element that is at bottom in the collection.</summary>
+        /// <summary>Gets the element that is top most in the collection.</summary>
         public T? Top => Count == 0 ? default : sortedElements.Max.Value;
-        /// <summary>Gets the Z-Index of element that is at bottom in the collection.</summary>
+        /// <summary>Gets the Z-Index of element that is top most in the collection.</summary>
         public int TopIndex => Count == 0 ? default : sortedElements.Max.Key;
 
         /// <summary>Initializes a new instance of <see cref="ZIndexCollection{T}"/> class with Z-Indexes in an ascending order..</summary>
@@ -128,7 +128,7 @@ namespace PopUpUI.Containers
         /// <returns><see langword="true"/> if <paramref name="element"/> is found in the collection; otherwise <see langword="false"/>.</returns>
         public bool Contains(T element)
         {
-            return sortedElements.IndexOfValue(element) >= 0;
+            return sortedElements.ContainsValue(element);
         }
 
         /// <summary>Copies the elements of the collection to given array, starting from given index.</summary>
@@ -144,9 +144,9 @@ namespace PopUpUI.Containers
 
             if (array.Length - arrayIndex < Count) throw new ArgumentException();
 
-            for (int i = 0; i < Count; i++)
+            for (int i = 0; i < sortedElements.Values.Count; i++)
             {
-                array[arrayIndex + i] = sortedElements.GetValueAtIndex(i);
+                array[arrayIndex + i] = sortedElements.Values[i];
             }
         }
 
