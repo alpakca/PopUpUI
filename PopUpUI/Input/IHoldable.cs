@@ -8,7 +8,7 @@ namespace PopUpUI.Input
     {
         /// <summary>Gets the current hold status of element.</summary>
         public bool IsHeld { get; }
-        public IHoldablePacket HoldPacket { get; }
+        public HoldablePacket HoldPacket { get; }
 
         /// <summary>Checks if element can be held based on position of mouse.</summary>
         /// <param name="point">The mouse position inside <see cref="PopUpWindow"/> element is in.</param>

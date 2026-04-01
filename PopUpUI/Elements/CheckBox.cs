@@ -9,7 +9,7 @@ namespace PopUpUI.Elements
         protected bool isChecked;
 
         public bool IsChecked => isChecked;
-        public ISelectablePacket SelectablePacket { get; }
+        public SelectablePacket SelectablePacket { get; }
 
         public event Action<CheckBox> CheckChange;
 

@@ -10,8 +10,8 @@ namespace PopUpUI.Elements
         protected bool wasSelected;
 
         public bool IsHeld => isHeld;
-        public IHoldablePacket HoldPacket { get; set; }
-        public ISelectablePacket SelectablePacket { get; set; }
+        public HoldablePacket HoldPacket { get; set; }
+        public SelectablePacket SelectablePacket { get; set; }
 
         public event Action<Clickable> Clicked;
 

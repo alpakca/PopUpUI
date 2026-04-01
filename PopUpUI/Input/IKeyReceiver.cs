@@ -1,5 +1,4 @@
 ﻿using Microsoft.Xna.Framework.Input;
-using PopUpUI.Elements;
 
 namespace PopUpUI.Input
 {
@@ -8,7 +7,7 @@ namespace PopUpUI.Input
     {
         /// <summary>Indicates if element can take input.</summary>
         public bool ReceivesKeyInput { get; }
-        public IKeyReceiverPacket KeyReceiverPacket { get; }
+        public KeyReceiverPacket KeyReceiverPacket { get; }
 
         /// <summary>Called when element got a key input.</summary>
         /// <param name="e">A <see cref="PopUpWindowEventArgs"/> object that contains event data.</param>

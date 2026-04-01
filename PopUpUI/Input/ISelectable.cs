@@ -1,13 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
-using PopUpUI.Elements;
-using System;
 
 namespace PopUpUI.Input
 {
     /// <summary>Defines a mechanism for <see cref="PopUpElement"/> for achieving selecting operations.</summary>
     public interface ISelectable
     {
-        public ISelectablePacket SelectablePacket { get; }
+        public SelectablePacket SelectablePacket { get; }
 
         /// <summary>Checks if element can be selected based on position of mouse.</summary>
         /// <param name="point">The mouse position inside <see cref="PopUpWindow"/> element is in.</param>

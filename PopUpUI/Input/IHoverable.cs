@@ -9,7 +9,7 @@ namespace PopUpUI.Input
     {
         /// <summary>Gets the current hover status of element.</summary>
         public bool IsHovered { get; }
-        public IHoverablePacket HoverablePacket { get; }
+        public HoverablePacket HoverablePacket { get; }
 
         /// <summary>Checks if element can be hovered based on position of mouse.</summary>
         /// <param name="point">The mouse position inside <see cref="PopUpWindow"/> element is in.</param>

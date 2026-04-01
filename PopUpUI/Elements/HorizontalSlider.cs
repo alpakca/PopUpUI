@@ -11,8 +11,8 @@ namespace PopUpUI.Elements
         protected Point lastMousePosition;
 
         public bool IsHeld => isHeld;
-        public IHoldablePacket HoldPacket { get; set; }
-        public ISelectablePacket SelectablePacket { get; set; }
+        public HoldablePacket HoldPacket { get; set; }
+        public SelectablePacket SelectablePacket { get; set; }
 
         public int Range { get; }
 

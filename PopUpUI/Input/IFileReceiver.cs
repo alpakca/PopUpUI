@@ -4,7 +4,7 @@ namespace PopUpUI.Input
 {
     internal interface IFileReceiver
     {
-        public IFileReceiverPacket FilePacket { get; }
+        public FileReceiverPacket FilePacket { get; }
 
         public bool CanReceiveFileDrop(Point mousePosition);
         public void OnFileDrop(PopUpWindowEventArgs e, FileDropEventArgs fileArgs);

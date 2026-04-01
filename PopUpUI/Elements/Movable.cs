@@ -12,7 +12,7 @@ namespace PopUpUI.Elements
         public bool IsHeld => isHeld;
         public MovementDirection MovementDirection { get; }
 
-        public IHoldablePacket HoldPacket { get; set; }
+        public HoldablePacket HoldPacket { get; set; }
 
         public Movable(MovementDirection movementDirection)
         {

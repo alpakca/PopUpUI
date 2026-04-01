@@ -6,7 +6,7 @@ namespace PopUpUI.Input
     /// <summary>Defines a mechanism for <see cref="PopUpElement"/> for receiving mouse wheel value changes.</summary>
     public interface IMouseWheelReceiver
     {
-        public IMouseWheelReceiverPacket MouseWheelReceiverPacket { get; }
+        public MouseWheelReceiverPacket MouseWheelReceiverPacket { get; }
 
         /// <summary>Checks if element can receive mouse wheel change based on position of mouse.</summary>
         /// <param name="point">The mouse position inside <see cref="PopUpWindow"/> element is in.</param>
