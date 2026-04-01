@@ -52,6 +52,8 @@ namespace PopUpUI.Toolkit
 
         public static void RenderUpdate(GameTime gameTime)
         {
+            PopWindowManager.RenderUpdate();
+
             RenderCall?.Invoke(gameTime);
         }
 

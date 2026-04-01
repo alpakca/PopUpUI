@@ -44,6 +44,11 @@ namespace PopUpUI.Elements.Visual
 
         public Animation2D HoldAnimation { get; set; }
 
+        public VisualClickable()
+        {
+            drawInfo = new AnimationDrawInfo();
+        }
+
         protected override void OnClick()
         {
             drawInfo.Animation = defaultAnimation;
@@ -60,7 +65,7 @@ namespace PopUpUI.Elements.Visual
 
         public override IEnumerable<UIDrawInfo> GetDrawInfos()
         {
-            yield return drawInfo;
+            return [drawInfo];
         }
     }
 }

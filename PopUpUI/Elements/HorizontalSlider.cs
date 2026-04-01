@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using PopUpUI.Input;
 using System;
+using System.Diagnostics;
 
 namespace PopUpUI.Elements
 {
@@ -8,12 +9,16 @@ namespace PopUpUI.Elements
     {
         protected int xOffset;
         protected bool isHeld;
+
+        private int heldOffsetInWidth;
         protected Point lastMousePosition;
 
         public bool IsHeld => isHeld;
         public HoldablePacket HoldPacket { get; set; }
         public SelectablePacket SelectablePacket { get; set; }
 
+        /// <summary>Gets the range of the slider. This range is different from Boundaries.Width, 
+        /// as Boundaries.Width refers to width of sliding object.</summary>
         public int Range { get; }
 
         public HorizontalSlider(int range)
@@ -28,9 +33,17 @@ namespace PopUpUI.Elements
             OnSliding();
         }
 
+        public void SlideTo(int offset)
+        {
+            xOffset = Math.Clamp(offset, 0, Range - _boundaries.Width);
+
+            OnSliding();
+        }
+
         public virtual void OnHolding(PopUpWindowEventArgs e)
         {
-            Slide(e.MousePoint.X - lastMousePosition.X);
+            SlideTo(e.MousePoint.X - _boundaries.X - heldOffsetInWidth);
+            lastMousePosition = e.MousePoint;
 
             HoldPacket?.RaiseHeld(this, e);
         }
@@ -40,6 +53,7 @@ namespace PopUpUI.Elements
             if (startedHolding)
             {
                 lastMousePosition = e.MousePoint;
+                heldOffsetInWidth = e.MousePoint.X - _boundaries.X - xOffset;
             }
 
             this.isHeld = startedHolding;
@@ -52,12 +66,22 @@ namespace PopUpUI.Elements
 
         public virtual void OnSelect(PopUpWindowEventArgs e)
         {
-            if (!IsSliderSelected(e.MousePoint))
+            if (IsSliderSelected(e.MousePoint))
             {
-                Slide((Range - e.MousePoint.X) / 2);
+                SelectablePacket?.RaiseSelected(this, e);
+                return;
             }
 
-            SelectablePacket?.RaiseSelected(this, e);
+            // move slider to left
+            if (e.MousePoint.X - _boundaries.X < xOffset)
+            {
+                Slide((e.MousePoint.X - _boundaries.X - xOffset) / 2 - _boundaries.Width);
+            }
+            // move slider to right
+            else
+            {
+                Slide((e.MousePoint.X - xOffset + _boundaries.Width) / 2);
+            }
         }
 
         public virtual void OnSelectingOutside(PopUpWindowEventArgs e)

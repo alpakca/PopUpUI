@@ -35,11 +35,12 @@ namespace PopUpUI.Elements.Visual
 
         public VisualMovable(MovementDirection movementDirection) : base(movementDirection)
         {
+            drawInfo = new AnimationDrawInfo();
         }
 
         public override IEnumerable<UIDrawInfo> GetDrawInfos()
         {
-            yield return drawInfo;
+            return [drawInfo];
         }
 
         protected override void OnPositionChange()

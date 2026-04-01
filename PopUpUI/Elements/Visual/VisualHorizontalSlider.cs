@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using PopUpUI.Input;
 using PopUpUI.Surface;
+using System.Collections.Generic;
 
 namespace PopUpUI.Elements.Visual
 {
@@ -42,6 +43,7 @@ namespace PopUpUI.Elements.Visual
 
         public VisualHorizontalSlider(int range) : base(range)
         {
+            drawInfo = new AnimationDrawInfo();
         }
 
         public override void OnHoldStateChange(PopUpWindowEventArgs e, bool startedHolding)
@@ -56,6 +58,11 @@ namespace PopUpUI.Elements.Visual
             drawInfo.Location = _boundaries.Location + new Point(xOffset, 0);
 
             base.OnSliding();
+        }
+
+        public override IEnumerable<UIDrawInfo> GetDrawInfos()
+        {
+            return [drawInfo];
         }
     }
 }

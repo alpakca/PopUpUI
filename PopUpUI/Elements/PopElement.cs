@@ -10,8 +10,8 @@ namespace PopUpUI.Elements
         protected float _opacity = 1f;
         protected Rectangle _boundaries;
 
-        public string Name { get; set; }
-        public Visibility Visibility { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public Visibility Visibility { get; set; } = Visibility.Visible;
 
         public virtual float Opacity 
         {

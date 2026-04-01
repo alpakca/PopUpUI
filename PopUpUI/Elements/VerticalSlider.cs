@@ -8,6 +8,8 @@ namespace PopUpUI.Elements
     {
         protected int yOffset;
         protected bool isHeld;
+
+        protected int heldOffsetInHeight;
         protected Point lastMousePosition;
 
         public bool IsHeld => isHeld;
@@ -28,9 +30,17 @@ namespace PopUpUI.Elements
             OnSliding();
         }
 
+        public void SlideTo(int offset)
+        {
+            yOffset = Math.Clamp(offset, 0, Range - _boundaries.Height);
+
+            OnSliding();
+        }
+
         public virtual void OnHolding(PopUpWindowEventArgs e)
         {
-            Slide(e.MousePoint.X - lastMousePosition.X);
+            SlideTo(e.MousePoint.Y - _boundaries.Y - heldOffsetInHeight);
+            lastMousePosition = e.MousePoint;
 
             HoldPacket?.RaiseHeld(this, e);
         }
@@ -40,6 +50,7 @@ namespace PopUpUI.Elements
             if (startedHolding)
             {
                 lastMousePosition = e.MousePoint;
+                heldOffsetInHeight = e.MousePoint.Y - _boundaries.Y - yOffset;
             }
 
             this.isHeld = startedHolding;
@@ -52,12 +63,22 @@ namespace PopUpUI.Elements
 
         public void OnSelect(PopUpWindowEventArgs e)
         {
-            if (!IsSliderSelected(e.MousePoint))
+            if (IsSliderSelected(e.MousePoint))
             {
-                Slide((Range - e.MousePoint.Y) / 2);
+                SelectablePacket?.RaiseSelected(this, e);
+                return;
             }
 
-            SelectablePacket?.RaiseSelected(this, e);
+            // move slider to up
+            if (e.MousePoint.Y - _boundaries.Y < yOffset)
+            {
+                Slide((e.MousePoint.Y - _boundaries.Y - yOffset) / 2 - _boundaries.Height);
+            }
+            // move slider to down
+            else
+            {
+                Slide((e.MousePoint.Y - yOffset + _boundaries.Height) / 2);
+            }
         }
 
         public void OnSelectingOutside(PopUpWindowEventArgs e)
@@ -79,8 +100,8 @@ namespace PopUpUI.Elements
         // lets select slider from its range, causing slider to advance to the mouse position direction
         public bool CanBeSelected(Point mousePosition)
         {
-            return _boundaries.X <= mousePosition.X && mousePosition.X < _boundaries.X + Range &&
-                   _boundaries.Y <= mousePosition.Y && mousePosition.Y < _boundaries.Y + _boundaries.Height;
+            return _boundaries.X <= mousePosition.X && mousePosition.X < _boundaries.X + _boundaries.Width &&
+                   _boundaries.Y <= mousePosition.Y && mousePosition.Y < _boundaries.Y + Range;
         }
     }
 }

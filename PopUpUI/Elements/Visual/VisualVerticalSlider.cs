@@ -1,6 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using PopUpUI.Input;
 using PopUpUI.Surface;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace PopUpUI.Elements.Visual
 {
@@ -42,6 +44,7 @@ namespace PopUpUI.Elements.Visual
 
         public VisualVerticalSlider(int range) : base(range)
         {
+            drawInfo = new AnimationDrawInfo();
         }
 
         public override void OnHoldStateChange(PopUpWindowEventArgs e, bool startedHolding)
@@ -53,9 +56,15 @@ namespace PopUpUI.Elements.Visual
 
         protected override void OnSliding()
         {
+            Trace.WriteLine(yOffset);
             drawInfo.Location = _boundaries.Location + new Point(0, yOffset);
 
             base.OnSliding();
+        }
+
+        public override IEnumerable<UIDrawInfo> GetDrawInfos()
+        {
+            return [drawInfo];
         }
     }
 }

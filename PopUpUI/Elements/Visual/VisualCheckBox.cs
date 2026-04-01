@@ -39,7 +39,7 @@ namespace PopUpUI.Elements.Visual
 
         public override IEnumerable<UIDrawInfo> GetDrawInfos()
         {
-            yield return drawInfo;
+            return [drawInfo];
         }
     }
 }
