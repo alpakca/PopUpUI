@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using PopUpUI.Input;
 using System;
-using System.Diagnostics;
 
 namespace PopUpUI.Elements
 {

@@ -2,7 +2,6 @@
 using PopUpUI.Input;
 using PopUpUI.Surface;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace PopUpUI.Elements.Visual
 {
@@ -56,7 +55,6 @@ namespace PopUpUI.Elements.Visual
 
         protected override void OnSliding()
         {
-            Trace.WriteLine(yOffset);
             drawInfo.Location = _boundaries.Location + new Point(0, yOffset);
 
             base.OnSliding();

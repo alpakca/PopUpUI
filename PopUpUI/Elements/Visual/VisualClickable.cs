@@ -8,7 +8,6 @@ namespace PopUpUI.Elements.Visual
     internal class VisualClickable : Clickable
     {
         private Animation2D defaultAnimation;
-
         private readonly AnimationDrawInfo drawInfo;
 
         public override Rectangle Boundaries 
@@ -56,11 +55,11 @@ namespace PopUpUI.Elements.Visual
             base.OnClick();
         }
 
-        public override void OnSelect(PopUpWindowEventArgs e)
+        public override void OnHoldStateChange(PopUpWindowEventArgs e, bool startedHolding)
         {
-            drawInfo.Animation = HoldAnimation ?? defaultAnimation;
+            drawInfo.Animation = startedHolding ? HoldAnimation ?? defaultAnimation : defaultAnimation;
 
-            base.OnSelect(e);
+            base.OnHoldStateChange(e, startedHolding);
         }
 
         public override IEnumerable<UIDrawInfo> GetDrawInfos()

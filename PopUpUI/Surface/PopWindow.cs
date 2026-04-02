@@ -177,48 +177,31 @@ namespace PopUpUI.Surface
             bool endAllHolds = false;
             foreach (var element in Elements.WhereWithType<IHoldable>(i => true))
             {
-                if (endAllHolds)
+                if (endAllHolds && element.IsHeld)
                 {
                     element.OnHoldStateChange(e, false);
+                    continue;
                 }
-
+                
                 if ((element.CanBeHeld(e.MousePoint) || element.IsHeld) && element.HoldPacket.ButtonsToHold.HasAnyFlagFrom(e.PressedButtons))
                 {
-                    if (!element.IsHeld) element.OnHoldStateChange(e, true);
-
-                    if (!EnableMultiHold) endAllHolds = true;
+                    if (!element.IsHeld)
+                    {
+                        element.OnHoldStateChange(e, true);
+                    }
                 }
                 else if (element.IsHeld)
                 {
                     element.OnHoldStateChange(e, false);
                 }
 
-                if (element.IsHeld) element.OnHolding(e);
-            }
-
-            /*
-            IEnumerable<IHoldable> holdableElements = Elements.WhereWithType<IHoldable>(element => element.CanBeHeld(e.MousePoint) || element.IsHeld);
-
-            IEnumerable<IHoldable> alreadyHeldElements = holdableElements.ToList().Where(element => element.IsHeld);
-            foreach (var holdable in alreadyHeldElements)
-            {
-                holdable.HoldStatusUpdate(e, holdable.HoldPacket.ButtonsToHold.HasAnyFlagFrom(e.PressedButtons));
-
-                if (!EnableMultiHold) break;
-            }
-
-            if (!alreadyHeldElements.Any() || EnableMultiHold)
-            {
-                foreach (var element in holdableElements.Except(alreadyHeldElements))
+                if (element.IsHeld) 
                 {
-                    if (element.CanBeHeld(e.MousePoint))
-                    {
-                        element.HoldStatusUpdate(e, element.HoldPacket.ButtonsToHold.HasAnyFlagFrom(e.PressedButtons));
+                    element.OnHolding(e);
 
-                        if (!EnableMultiHold) break;
-                    }
+                    if (!EnableMultiHold) endAllHolds = true;
                 }
-            }*/
+            }
         }
 
         internal void OnMouseButtonStateChange(PopUpWindowEventArgs e)
