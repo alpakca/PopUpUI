@@ -7,8 +7,6 @@ using PopUpUI.Input;
 using PopUpUI.Toolkit;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Xml.Linq;
 
 #pragma warning disable 8632
 
@@ -19,8 +17,6 @@ namespace PopUpUI.Surface
         private Rectangle _boundaries;
         private RenderTarget2D _windowTexture;
 
-        private readonly BatchDrawOptions _drawOptions;
-
         /// <summary>Enables more than one <see cref="IHoldable"/> instances to be updated at the same time. Default value is <see langword="true"/>.</summary>
         public bool EnableMultiHold { get; set; } = true;
         /// <summary>Enables more than one <see cref="IHoverable"/> instances to be updated at the same time. Default value is <see langword="true"/>.</summary>
@@ -30,12 +26,9 @@ namespace PopUpUI.Surface
         /// <summary>Gets or sets the scale to use when drawing this window to screen. It doesn't effect bounds or texture of <see cref="WindowTexture"/>.</summary>
         public float Scale { get; set; } = 1;
 
-        public bool EnableScrolling { get; set; } = false;
-        public bool ScrollsVertically { get; set; } = true;
-        public float ScrollSpeed { get; set; } = 1;
-        public Point ScrolledOffset { get; set; }
+        public RenderTarget2D WindowTexture => _windowTexture;
 
-        public Texture2D WindowTexture => _windowTexture;
+        public BatchDrawOptions DrawOptions { get; }
         public PopElementCollection Elements { get; }
 
         public Rectangle Boundaries
@@ -62,7 +55,7 @@ namespace PopUpUI.Surface
 
         public PopWindow(Point size, BatchDrawOptions? drawOptions)
         {
-            _drawOptions = drawOptions ?? BatchDrawOptions.Default;
+            DrawOptions = drawOptions ?? BatchDrawOptions.Default;
 
             Boundaries = new Rectangle(new Point(), size);
             Elements = new PopElementCollection();
@@ -73,13 +66,15 @@ namespace PopUpUI.Surface
             Dispose();
         }
 
-        public void Dispose()
+        public virtual Point TransformMousePoint(Point mousePoint) => mousePoint;
+
+        public virtual void Dispose()
         {
             _windowTexture?.Dispose();
             GC.SuppressFinalize(this);
         }
 
-        internal void Update()
+        internal virtual void Update()
         {
             foreach (var element in Elements)
             {
@@ -92,29 +87,15 @@ namespace PopUpUI.Surface
             }
         }
 
-        internal void RenderUpdate()
+        internal virtual void RenderUpdate()
         {
             foreach (var element in Elements)
             {
                 element.RenderUpdate();
             }
 
-            DrawHelper.SetBeginBatch(_windowTexture, _drawOptions);
+            DrawHelper.SetBeginBatch(_windowTexture, DrawOptions);
 
-            if (!EnableScrolling || ScrolledOffset == Point.Zero)
-            {
-                RenderWithoutScroll();
-            }
-            else
-            {
-                RenderWithScroll();
-            }
-
-            DrawHelper.EndBatch();
-        }
-
-        private void RenderWithoutScroll()
-        {
             foreach (var element in Elements)
             {
                 if (element.Visibility != Visibility.Visible)
@@ -131,37 +112,16 @@ namespace PopUpUI.Surface
                     }
                 }
             }
+
+            DrawHelper.EndBatch();
         }
 
-        private void RenderWithScroll()
-        {
-            foreach (var element in Elements)
-            {
-                if (element.Visibility != Visibility.Visible)
-                {
-                    continue;
-                }
-
-                foreach (var drawInfo in element.GetDrawInfos())
-                {
-                    Rectangle destination = new Rectangle(ScrolledOffset + drawInfo.Location, drawInfo.Size);
-
-                    // only render the texture if it can be seen
-                    if (IsDestinationVisible(destination))
-                    {
-                        DrawHelper.Batch.Draw(drawInfo.GetTexture(), destination, drawInfo.Opacity * Color.White);
-
-                    }
-                }
-            }
-        }
-
-        private bool IsDestinationVisible(Rectangle destination)
+        protected bool IsDestinationVisible(Rectangle destination)
         {
             return destination.Bottom > 0 || destination.Right > 0 || destination.Top < _boundaries.Height || destination.Left < _boundaries.Width;
         }
 
-        internal void OnMousePositionChange(PopUpWindowEventArgs e)
+        internal virtual void OnMousePositionChange(PopUpWindowEventArgs e)
         {
             HandleHoverableElementEvents(e);
             HandleHoldableElementEvents(e);
@@ -260,9 +220,9 @@ namespace PopUpUI.Surface
             }
         }
 
-        internal void OnMouseButtonStateChange(PopUpWindowEventArgs e)
+        internal virtual void OnMouseButtonStateChange(PopUpWindowEventArgs e)
         {
-            ISelectable selectedElement = Elements.FindWithType<ISelectable>(element => element.CanBeSelected(e.MousePoint) &&
+            ISelectable? selectedElement = Elements.FindWithType<ISelectable>(element => element.CanBeSelected(e.MousePoint) &&
                                                                                         element.SelectablePacket.ButtonsToSelect.HasAnyFlagFrom(e.NewlyPressedButtons));
 
             selectedElement?.OnSelect(e);
@@ -274,47 +234,37 @@ namespace PopUpUI.Surface
             }
         }
 
-        internal void OnMouseWheelChange(PopUpWindowEventArgs e)
+        internal virtual void OnMouseWheelChange(PopUpWindowEventArgs e)
         {
-            IMouseWheelReceiver mouseWheelReceiver = Elements.FindWithType<IMouseWheelReceiver>(element => element.CanReceiveWheelChangeInput(e.MousePoint));
+            IMouseWheelReceiver? mouseWheelReceiver = Elements.FindWithType<IMouseWheelReceiver>(element => element.CanReceiveWheelChangeInput(e.MousePoint));
 
-            if (mouseWheelReceiver != null)
-            {
-                mouseWheelReceiver.OnMouseWheelChangeReceive(e);
-            }
-            else if (EnableScrolling)
-            {
-                ScrolledOffset += ScrollsVertically ? new Point(0, (int)(e.MouseWheelChange / 6 * ScrollSpeed))
-                                                    : new Point((int)(e.MouseWheelChange / 6 * ScrollSpeed), 0);
-
-                ScrolledOffset = new Point(Math.Min(ScrolledOffset.X, 0), Math.Min(ScrolledOffset.Y, 0));
-            }
+            mouseWheelReceiver?.OnMouseWheelChangeReceive(e);
         }
 
-        internal void OnKeyDown(PopUpWindowEventArgs e, Keys key)
+        internal virtual void OnKeyDown(PopUpWindowEventArgs e, Keys key)
         {
-            IKeyReceiver keyReceiver = Elements.FindWithType<IKeyReceiver>(element => element.ReceivesKeyInput);
+            IKeyReceiver? keyReceiver = Elements.FindWithType<IKeyReceiver>(element => element.ReceivesKeyInput);
 
             keyReceiver?.OnKeyDown(e, key);
         }
 
-        internal void OnKeyUp(PopUpWindowEventArgs e, Keys key)
+        internal virtual void OnKeyUp(PopUpWindowEventArgs e, Keys key)
         {
-            IKeyReceiver keyReceiver = Elements.FindWithType<IKeyReceiver>(element => element.ReceivesKeyInput);
+            IKeyReceiver? keyReceiver = Elements.FindWithType<IKeyReceiver>(element => element.ReceivesKeyInput);
 
             keyReceiver?.OnKeyUp(e, key);
         }
 
-        internal void OnTextInput(PopUpWindowEventArgs e, char ch)
+        internal virtual void OnTextInput(PopUpWindowEventArgs e, char ch)
         {
-            ITextReceiver textReceiver = Elements.FindWithType<ITextReceiver>(element => element.ReceivesTextInput);
+            ITextReceiver? textReceiver = Elements.FindWithType<ITextReceiver>(element => element.ReceivesTextInput);
 
             textReceiver?.OnTextInputReceive(e, ch);
         }
 
-        internal void OnFileDrop(PopUpWindowEventArgs e, FileDropEventArgs fileArgs)
+        internal virtual void OnFileDrop(PopUpWindowEventArgs e, FileDropEventArgs fileArgs)
         {
-            IFileReceiver fileReceiver = Elements.FindWithType<IFileReceiver>(element => element.CanReceiveFileDrop(e.MousePoint));
+            IFileReceiver? fileReceiver = Elements.FindWithType<IFileReceiver>(element => element.CanReceiveFileDrop(e.MousePoint));
 
             fileReceiver?.OnFileDrop(e, fileArgs);
         }

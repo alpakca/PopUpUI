@@ -54,7 +54,7 @@ namespace PopUpUI.Toolkit
 
         private static PopUpWindowEventArgs ScaledWindowArgs(PopWindow window, PopUpWindowEventArgs e)
         {
-            return e with { MousePoint = ((e.MousePoint - window.ScrolledOffset).TimesFloat(1 / GlobalScale) - window.Boundaries.Location).TimesFloat(1 / window.Scale) };
+            return e with { MousePoint = (window.TransformMousePoint(e.MousePoint).TimesFloat(1 / GlobalScale) - window.Boundaries.Location).TimesFloat(1 / window.Scale) };
         }
 
         private static void InputManager_KeyDown(PopUpWindowEventArgs e, Microsoft.Xna.Framework.Input.Keys arg)
