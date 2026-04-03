@@ -9,25 +9,13 @@ namespace PopUpUI.Text.Rich
 {
     public abstract class RichProcesser : ITextProcesser
     {
-        private int lineSpacing = -1;
-        private float wordSpacing = -1;
-
         private string _regexPattern = "";
         private readonly List<IRendererHash> _hashes;
         private readonly TextHash defaultTextHash;
 
-        public int LineSpacing
-        {
-            get => lineSpacing >= 0 ? lineSpacing : defaultTextHash.Font.LineSpacing;
-            set => lineSpacing = value;
-        }
-
-        public float WordSpacing
-        {
-            get => wordSpacing >= 0 ? wordSpacing : defaultTextHash.GetWidth(" ");
-            set => wordSpacing = value;
-        }
-
+        public int LineSpacing { get; set; }
+        public float WordSpacing { get; set; }
+        
         public int HorizontalTextLength { get; set; } = int.MaxValue;
         public float FirstRowOffset { get; set; } = 0;
         public string Text { get; set; } = "";
@@ -54,12 +42,13 @@ namespace PopUpUI.Text.Rich
         {
             _hashes = new List<IRendererHash>();
             defaultTextHash = new TextHash("", defaultColor, defaultFont);
+
+            LineSpacing = defaultFont.LineSpacing;
+            WordSpacing = defaultFont.MeasureString(" ").X;
         }
 
-        public RichProcesser(RichProcesser processer)
+        public RichProcesser(RichProcesser processer) : this(processer.defaultTextHash.Color, processer.defaultTextHash.Font)
         {
-            _hashes = new List<IRendererHash>(processer._hashes);
-            defaultTextHash = new TextHash("", processer.defaultTextHash.Color, processer.defaultTextHash.Font);
         }
 
         public void AttachHash(IRendererHash hash)

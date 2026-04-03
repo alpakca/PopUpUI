@@ -1,24 +1,13 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
 namespace PopUpUI.Text
 {
     public abstract class BasicProcesser : ITextProcesser
     {
-        private int lineSpacing = -1;
-        private float wordSpacing = -1;
-
-        public int LineSpacing
-        {
-            get => lineSpacing >= 0 ? lineSpacing : Font.LineSpacing;
-            set => lineSpacing = value;
-        }
-
-        public float WordSpacing
-        {
-            get => wordSpacing >= 0 ? wordSpacing : Font.MeasureString(" ").X;
-            set => wordSpacing = value;
-        }
+        public int LineSpacing { get; set; }
+        public float WordSpacing { get; set; }
 
         public int HorizontalTextLength { get; set; } = int.MaxValue;
         public float FirstRowOffset { get; set; } = 0;
@@ -36,7 +25,11 @@ namespace PopUpUI.Text
 
         public BasicProcesser(SpriteFont font)
         {
+            ArgumentNullException.ThrowIfNull(font);
+
             Font = font;
+            LineSpacing = font.LineSpacing;
+            WordSpacing = font.MeasureString(" ").X;
         }
     }
 }
