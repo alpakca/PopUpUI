@@ -46,10 +46,8 @@ namespace PopUpUI.Text
             this.Text = processer.Text;
             this.FirstRowOffset = processer.FirstRowOffset;
             this.HorizontalTextLength = processer.HorizontalTextLength;
-            this.Opacity = processer.Opacity;
             this.Orientation = processer.Orientation;
             this.Alignment = processer.Alignment;
-            this.TextOffset = processer.TextOffset;
             this.TextColor = processer.TextColor;
             this.WordSpacing = processer.WordSpacing;
             this.LineSpacing = processer.LineSpacing;
@@ -62,10 +60,8 @@ namespace PopUpUI.Text
             {
                 FirstRowOffset = this.FirstRowOffset,
                 HorizontalTextLength = this.HorizontalTextLength,
-                Opacity = this.Opacity,
                 Orientation = this.Orientation,
                 Alignment = this.Alignment,
-                TextOffset = this.TextOffset,
                 TextColor = this.TextColor,
                 WordSpacing = this.WordSpacing,
                 LineSpacing = this.LineSpacing,

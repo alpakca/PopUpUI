@@ -234,12 +234,10 @@ namespace PopUpUI.Text
             if (targetSize.HasValue)
             {
                 return new Vector2(xOffset, data.LineSpacing * caretPosition.LineIndex)
-                     + data.TextOffset.ToVector2()
                      + GetAlignmentOffset(data.Alignment, targetSize.Value, textSize);
             }
 
-            return new Vector2(xOffset, data.LineSpacing * caretPosition.LineIndex)
-                 + data.TextOffset.ToVector2();
+            return new Vector2(xOffset, data.LineSpacing * caretPosition.LineIndex);
         }
 
         public static Vector2 GetScreenCaretPositionOriented(TextPosition caretPosition, ProcesserData data, Vector2 textSize, 
@@ -248,13 +246,11 @@ namespace PopUpUI.Text
             if (targetSize.HasValue)
             {
                 return new Vector2(xOffset, data.LineSpacing * caretPosition.LineIndex)
-                     + data.TextOffset.ToVector2()
                      + GetOrientationOffset(data.Orientation, data.HorizontalTextLength, lineWidth)
                      + GetAlignmentOffset(data.Alignment, targetSize.Value, textSize);
             }
 
             return new Vector2(xOffset, data.LineSpacing * caretPosition.LineIndex)
-                 + data.TextOffset.ToVector2()
                  + GetOrientationOffset(data.Orientation, data.HorizontalTextLength, lineWidth);
         }
     }

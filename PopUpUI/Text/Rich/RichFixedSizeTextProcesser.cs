@@ -32,9 +32,7 @@ namespace PopUpUI.Text.Rich
             Text = processer.Text;
             FirstRowOffset = processer.FirstRowOffset;
             HorizontalTextLength = processer.HorizontalTextLength;
-            Opacity = processer.Opacity;
             Alignment = processer.Alignment;
-            TextOffset = processer.TextOffset;
             WordSpacing = processer.WordSpacing;
             LineSpacing = processer.LineSpacing;
             drawOptions = processer.drawOptions;
@@ -46,9 +44,7 @@ namespace PopUpUI.Text.Rich
             {
                 FirstRowOffset = FirstRowOffset,
                 HorizontalTextLength = HorizontalTextLength,
-                Opacity = Opacity,
                 Alignment = Alignment,
-                TextOffset = TextOffset,
                 WordSpacing = WordSpacing,
                 LineSpacing = LineSpacing,
                 DrawOptions = drawOptions

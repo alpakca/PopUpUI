@@ -30,11 +30,9 @@ namespace PopUpUI.Text.Rich
 
         public int HorizontalTextLength { get; set; } = int.MaxValue;
         public float FirstRowOffset { get; set; } = 0;
-        public float Opacity { get; set; } = 1;
         public string Text { get; set; } = "";
 
         public TextAlignment Alignment { get; set; } = TextAlignment.TopLeft;
-        public Point TextOffset { get; set; } = new Point();
 
         /// <summary>Gets or sets the color of the text. Default value is <see cref="Color.White"/>.</summary>
         public Color DefaultTextColor

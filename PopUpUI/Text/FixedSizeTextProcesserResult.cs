@@ -25,11 +25,11 @@ namespace PopUpUI.Text
             _lines = lines;
         }
 
-        public void Render(RenderTarget2D target, Vector2 offset)
+        public void Render(RenderTarget2D target, Vector2 offset, float opacity)
         {
             DrawHelper.SetBeginBatch(target, _data.DrawOptions);
 
-            offset += _data.TextOffset.ToVector2() + ProcesserHelpers.GetAlignmentOffset(_data.Alignment, new Point(target.Width, target.Height), TextSize);
+            offset += ProcesserHelpers.GetAlignmentOffset(_data.Alignment, new Point(target.Width, target.Height), TextSize);
 
             float xOffset = _data.FirstRowOffset;
             foreach ((StringTextPiece[] words, float lineWidth) in _lines)
@@ -37,7 +37,7 @@ namespace PopUpUI.Text
                 float wordSpacing = ProcesserHelpers.GetWordSpacing(_data.HorizontalTextLength, lineWidth, words.Length);
                 foreach (StringTextPiece word in words)
                 {
-                    word.Draw(offset + new Vector2(xOffset, 0), _data.TextColor, _data.Opacity);
+                    word.Draw(offset + new Vector2(xOffset, 0), _data.TextColor, opacity);
                     xOffset += word.TextWidth() + wordSpacing;
                 }
 
@@ -184,8 +184,7 @@ namespace PopUpUI.Text
             {
                 if (Lines.Count == 0)
                 {
-                    return Data.TextOffset.ToVector2()
-                         + ProcesserHelpers.FirstRowOffsetIfFirst(caretPosition.LineIndex, Data.FirstRowOffset)
+                    return ProcesserHelpers.FirstRowOffsetIfFirst(caretPosition.LineIndex, Data.FirstRowOffset)
                          + (targetSize.HasValue ? ProcesserHelpers.GetAlignmentOffset(Data.Alignment, targetSize.Value, _result.TextSize) : default);
                 }
 
@@ -202,7 +201,6 @@ namespace PopUpUI.Text
 
             public TextPosition MouseCaretPosition(Vector2 mouseOnTarget, Point? targetSize)
             {
-                mouseOnTarget -= Data.TextOffset.ToVector2();
                 if (targetSize.HasValue)
                 {
                     mouseOnTarget -= ProcesserHelpers.GetAlignmentOffset(Data.Alignment, targetSize.Value, _result.TextSize);

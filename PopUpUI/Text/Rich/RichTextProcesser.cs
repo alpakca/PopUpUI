@@ -34,10 +34,8 @@ namespace PopUpUI.Text.Rich
             this.Text = processer.Text;
             this.FirstRowOffset = processer.FirstRowOffset;
             this.HorizontalTextLength = processer.HorizontalTextLength;
-            this.Opacity = processer.Opacity;
             this.Orientation = processer.Orientation;
             this.Alignment = processer.Alignment;
-            this.TextOffset = processer.TextOffset;
             this.WordSpacing = processer.WordSpacing;
             this.LineSpacing = processer.LineSpacing;
             this.drawOptions = processer.drawOptions;
@@ -49,10 +47,8 @@ namespace PopUpUI.Text.Rich
             {
                 FirstRowOffset = this.FirstRowOffset,
                 HorizontalTextLength = this.HorizontalTextLength,
-                Opacity = this.Opacity,
                 Orientation = this.Orientation,
                 Alignment = this.Alignment,
-                TextOffset = this.TextOffset,
                 WordSpacing = this.WordSpacing,
                 LineSpacing = this.LineSpacing,
                 DrawOptions = this.drawOptions,

@@ -25,11 +25,11 @@ namespace PopUpUI.Text.Rich
             _lines = lines;
         }
 
-        public void Render(RenderTarget2D target, Vector2 offset)
+        public void Render(RenderTarget2D target, Vector2 offset, float opacity)
         {
             DrawHelper.SetBeginBatch(target, _data.DrawOptions);
 
-            offset += _data.TextOffset.ToVector2() + ProcesserHelpers.GetAlignmentOffset(_data.Alignment, new Point(target.Width, target.Height), TextSize);
+            offset += ProcesserHelpers.GetAlignmentOffset(_data.Alignment, new Point(target.Width, target.Height), TextSize);
 
             float xOffset = _data.FirstRowOffset;
             foreach ((ITextPiece[] line, float lineWidth) in _lines)
@@ -37,7 +37,7 @@ namespace PopUpUI.Text.Rich
                 float wordSpacing = ProcesserHelpers.GetWordSpacing(_data.HorizontalTextLength, lineWidth, line.Length);
                 foreach (ITextPiece hashedPiece in line)
                 {
-                    hashedPiece.Draw(offset + new Vector2(xOffset, 0), default, _data.Opacity); // color parameter is not used in rich processers
+                    hashedPiece.Draw(offset + new Vector2(xOffset, 0), default, opacity); // color parameter is not used in rich processers
                     xOffset += hashedPiece.TextWidth() + wordSpacing;
                 }
 
@@ -184,8 +184,7 @@ namespace PopUpUI.Text.Rich
             {
                 if (Lines.Count == 0)
                 {
-                    return Data.TextOffset.ToVector2()
-                         + ProcesserHelpers.FirstRowOffsetIfFirst(caretPosition.LineIndex, Data.FirstRowOffset)
+                    return ProcesserHelpers.FirstRowOffsetIfFirst(caretPosition.LineIndex, Data.FirstRowOffset)
                          + (targetSize.HasValue ? ProcesserHelpers.GetAlignmentOffset(Data.Alignment, targetSize.Value, _result.TextSize) : default);
                 }
 
@@ -206,8 +205,6 @@ namespace PopUpUI.Text.Rich
                 {
                     mouseOnTarget -= ProcesserHelpers.GetAlignmentOffset(Data.Alignment, targetSize.Value, _result.TextSize);
                 }
-
-                mouseOnTarget -= Data.TextOffset.ToVector2();
 
                 int lineIndex = (int)(mouseOnTarget.Y / Data.LineSpacing);
                 float wordSpacing = ProcesserHelpers.GetWordSpacing(Data.HorizontalTextLength, Lines[lineIndex].TotalWordsWidth, Lines[lineIndex].Words.Length);
