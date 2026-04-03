@@ -21,6 +21,6 @@ namespace PopUpUI.Input
         /// <summary>Called when hover status of element has changed, started or ended.</summary>
         /// <param name="e">A <see cref="PopUpWindowEventArgs"/> object that contains event data.</param>
         /// <param name="isHovered">The new value for the hover.</param>
-        public void OnHoverStateChange(PopUpWindowEventArgs e, bool isHovered);
+        public void OnHoverStateChange(PopUpWindowEventArgs e, bool startedHovering);
     }
 }

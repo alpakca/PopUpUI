@@ -7,12 +7,14 @@ using PopUpUI.Input;
 using PopUpUI.Toolkit;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Xml.Linq;
 
 #pragma warning disable 8632
 
 namespace PopUpUI.Surface
 {
-    public class PopWindow
+    public class PopWindow : IDisposable
     {
         private Rectangle _boundaries;
         private RenderTarget2D _windowTexture;
@@ -36,7 +38,7 @@ namespace PopUpUI.Surface
         public Texture2D WindowTexture => _windowTexture;
         public PopElementCollection Elements { get; }
 
-        public Rectangle Boundaries 
+        public Rectangle Boundaries
         {
             get => _boundaries;
             set
@@ -64,6 +66,17 @@ namespace PopUpUI.Surface
 
             Boundaries = new Rectangle(new Point(), size);
             Elements = new PopElementCollection();
+        }
+
+        ~PopWindow()
+        {
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            _windowTexture?.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         internal void Update()
@@ -132,7 +145,7 @@ namespace PopUpUI.Surface
                 foreach (var drawInfo in element.GetDrawInfos())
                 {
                     Rectangle destination = new Rectangle(ScrolledOffset + drawInfo.Location, drawInfo.Size);
-                    
+
                     // only render the texture if it can be seen
                     if (IsDestinationVisible(destination))
                     {
@@ -150,8 +163,14 @@ namespace PopUpUI.Surface
 
         internal void OnMousePositionChange(PopUpWindowEventArgs e)
         {
+            HandleHoverableElementEvents(e);
+            HandleHoldableElementEvents(e);
+        }
+
+        private void HandleHoverableElementEvents(PopUpWindowEventArgs e)
+        {
             bool endAllHovers = false;
-            foreach (var element in Elements.WhereWithType<IHoverable>(i => true))
+            foreach (var element in Elements.WhereWithType<IHoverable>())
             {
                 if (endAllHovers)
                 {
@@ -172,35 +191,72 @@ namespace PopUpUI.Surface
 
                 if (element.IsHovered) element.OnHovering(e);
             }
+        }
 
-
-            bool endAllHolds = false;
-            foreach (var element in Elements.WhereWithType<IHoldable>(i => true))
+        private void HandleHoldableElementEvents(PopUpWindowEventArgs e)
+        {
+            if (!EnableMultiHold)
             {
-                if (endAllHolds && element.IsHeld)
+                IHoldable? elementToHold = null;
+                IEnumerable<IHoldable> holdableElements = Elements.WhereWithType<IHoldable>();
+
+                foreach (var element in holdableElements)
                 {
-                    element.OnHoldStateChange(e, false);
-                    continue;
-                }
-                
-                if ((element.CanBeHeld(e.MousePoint) || element.IsHeld) && element.HoldPacket.ButtonsToHold.HasAnyFlagFrom(e.PressedButtons))
-                {
-                    if (!element.IsHeld)
+                    if (element.IsHeld && HoldableShouldBeHeld(element, e))
                     {
-                        element.OnHoldStateChange(e, true);
+                        elementToHold = element;
+                        break;
                     }
                 }
-                else if (element.IsHeld)
+
+                if (elementToHold == null)
                 {
-                    element.OnHoldStateChange(e, false);
+                    foreach (var element in holdableElements)
+                    {
+                        if (HoldableShouldBeHeld(element, e))
+                        {
+                            elementToHold = element;
+                            break;
+                        }
+                    }
                 }
 
-                if (element.IsHeld) 
+                foreach (var element in holdableElements)
                 {
-                    element.OnHolding(e);
+                    bool shouldBeHeld = element == elementToHold;
 
-                    if (!EnableMultiHold) endAllHolds = true;
+                    if (shouldBeHeld != element.IsHeld)
+                    {
+                        element.OnHoldStateChange(e, shouldBeHeld);
+                    }
+
+                    if (shouldBeHeld)
+                    {
+                        element.OnHolding(e);
+                    }
                 }
+            }
+            else
+            {
+                foreach (var element in Elements.WhereWithType<IHoldable>())
+                {
+                    bool shouldBeHeld = HoldableShouldBeHeld(element, e);
+
+                    if (shouldBeHeld != element.IsHeld)
+                    {
+                        element.OnHoldStateChange(e, shouldBeHeld);
+                    }
+
+                    if (element.IsHeld)
+                    {
+                        element.OnHolding(e);
+                    }
+                }
+            }
+
+            static bool HoldableShouldBeHeld(IHoldable element, PopUpWindowEventArgs e)
+            {
+                return (element.CanBeHeld(e.MousePoint) || element.IsHeld) && element.HoldPacket.ButtonsToHold.HasAnyFlagFrom(e.PressedButtons);
             }
         }
 
@@ -230,6 +286,8 @@ namespace PopUpUI.Surface
             {
                 ScrolledOffset += ScrollsVertically ? new Point(0, (int)(e.MouseWheelChange / 6 * ScrollSpeed))
                                                     : new Point((int)(e.MouseWheelChange / 6 * ScrollSpeed), 0);
+
+                ScrolledOffset = new Point(Math.Min(ScrolledOffset.X, 0), Math.Min(ScrolledOffset.Y, 0));
             }
         }
 

@@ -37,6 +37,18 @@ namespace PopUpUI.Containers
             }
         }
 
+        internal IEnumerable<T> WhereWithType<T>()
+        {
+            for (int i = Count - 1; i >= 0; i--)
+            {
+                if (sortedElements.Values[i].Visibility != Visibility.Hidden &&
+                    sortedElements.Values[i] is T instance)
+                {
+                    yield return instance;
+                }
+            }
+        }
+
         internal T? FindWithType<T>(Predicate<T> match)
         {
             for (int i = Count - 1; i >= 0; i--)
