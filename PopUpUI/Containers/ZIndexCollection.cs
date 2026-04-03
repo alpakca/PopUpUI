@@ -10,40 +10,42 @@ namespace PopUpUI.Containers
     /// <typeparam name="T"></typeparam>
     public class ZIndexCollection<T> : ICollection<T>
     {
-        protected readonly RepeatableSortedList<int, T> sortedElements;
+        private readonly RepeatableSortedList<int, T> _sortedElements;
+
+        protected RepeatableSortedList<int, T> SortedElements => _sortedElements;
 
         bool ICollection<T>.IsReadOnly => false;
 
         /// <summary>Gets the count of <see cref="T"/>s this collection contains.</summary>
-        public int Count => sortedElements.Count;
+        public int Count => _sortedElements.Count;
         /// <summary>Gets or sets the total number of elements collection can hold without resizing.</summary>
         public int Capacity
         {
-            get => sortedElements.Capacity;
-            set => sortedElements.Capacity = value;
+            get => _sortedElements.Capacity;
+            set => _sortedElements.Capacity = value;
         }
 
         /// <summary>Gets the element that is at bottom in the collection.</summary>
-        public T? Bottom => Count == 0 ? default : sortedElements.Min.Value;
+        public T? Bottom => Count == 0 ? default : _sortedElements.Min.Value;
         /// <summary>Gets the Z-Index of element that is at bottom in the collection.</summary>
-        public int BottomIndex => Count == 0 ? default : sortedElements.Min.Key;
+        public int BottomIndex => Count == 0 ? default : _sortedElements.Min.Key;
 
         /// <summary>Gets the element that is top most in the collection.</summary>
-        public T? Top => Count == 0 ? default : sortedElements.Max.Value;
+        public T? Top => Count == 0 ? default : _sortedElements.Max.Value;
         /// <summary>Gets the Z-Index of element that is top most in the collection.</summary>
-        public int TopIndex => Count == 0 ? default : sortedElements.Max.Key;
+        public int TopIndex => Count == 0 ? default : _sortedElements.Max.Key;
 
         /// <summary>Initializes a new instance of <see cref="ZIndexCollection{T}"/> class with Z-Indexes in an ascending order..</summary>
         public ZIndexCollection()
         {
-            sortedElements = new RepeatableSortedList<int, T>();
+            _sortedElements = new RepeatableSortedList<int, T>();
         }
 
         /// <summary>Initializes a new instance of <see cref="ZIndexCollection{T}"/> class with a comparer for Z-Indexes.</summary>
         /// <param name="zIndexComparer">Comparer for the Z-Indexes.</param>
         public ZIndexCollection(IComparer<int>? zIndexComparer)
         {
-            sortedElements = new RepeatableSortedList<int, T>(zIndexComparer);
+            _sortedElements = new RepeatableSortedList<int, T>(zIndexComparer);
         }
 
         /// <summary>Initializes a new instance of <see cref="ZIndexCollection{T}"/> class with elements copied from <paramref name="collection"/>.</summary>
@@ -65,7 +67,7 @@ namespace PopUpUI.Containers
         /// <param name="element">Element to add.</param>
         public virtual void Add(T element)
         {
-            sortedElements.Add(TopIndex + 1, element);
+            _sortedElements.Add(TopIndex + 1, element);
         }
 
         /// <summary>Adds an element to collection with specified <paramref name="zIndex"/>.</summary>
@@ -73,7 +75,7 @@ namespace PopUpUI.Containers
         /// <param name="zIndex">The ZIndex of the element inside collection.</param>
         public virtual void Add(T element, int zIndex)
         {
-            sortedElements.Add(zIndex, element);
+            _sortedElements.Add(zIndex, element);
         }
 
         /// <summary>Adds a range of elements to collection with a ZIndex greater than all elements starting from first element of the range.</summary>
@@ -102,10 +104,10 @@ namespace PopUpUI.Containers
         /// This method also returns <see langword="false"/> if element was not found in the collection.</returns>
         public virtual bool Remove(T element)
         {
-            int index = sortedElements.IndexOfValue(element);
+            int index = _sortedElements.IndexOfValue(element);
             if (index >= 0)
             {
-                sortedElements.RemoveAt(index);
+                _sortedElements.RemoveAt(index);
             }
 
             return index >= 0;
@@ -114,13 +116,13 @@ namespace PopUpUI.Containers
         /// <summary>Clears all of the elements from collection.</summary>
         public virtual void Clear()
         {
-            sortedElements.Clear();
+            _sortedElements.Clear();
         }
 
         /// <summary>Sets the capacity to the actual number of elements in collection, if that number is less than a threshold value.</summary>
         public void TrimExcess()
         {
-            sortedElements.TrimExcess();
+            _sortedElements.TrimExcess();
         }
 
         /// <summary>Determines if <paramref name="element"/> is presented inside collection.</summary>
@@ -128,7 +130,7 @@ namespace PopUpUI.Containers
         /// <returns><see langword="true"/> if <paramref name="element"/> is found in the collection; otherwise <see langword="false"/>.</returns>
         public bool Contains(T element)
         {
-            return sortedElements.ContainsValue(element);
+            return _sortedElements.ContainsValue(element);
         }
 
         /// <summary>Copies the elements of the collection to given array, starting from given index.</summary>
@@ -144,9 +146,9 @@ namespace PopUpUI.Containers
 
             if (array.Length - arrayIndex < Count) throw new ArgumentException();
 
-            for (int i = 0; i < sortedElements.Values.Count; i++)
+            for (int i = 0; i < _sortedElements.Values.Count; i++)
             {
-                array[arrayIndex + i] = sortedElements.Values[i];
+                array[arrayIndex + i] = _sortedElements.Values[i];
             }
         }
 
@@ -156,7 +158,7 @@ namespace PopUpUI.Containers
         /// <exception cref="ArgumentException"></exception>
         public int GetZIndex(T element)
         {
-            return sortedElements.GetKeyAtIndex(sortedElements.IndexOfValue(element));
+            return _sortedElements.GetKeyAtIndex(_sortedElements.IndexOfValue(element));
         }
 
         /// <summary>Sets the ZIndex of the <paramref name="element"/>.</summary>
@@ -165,11 +167,11 @@ namespace PopUpUI.Containers
         /// <exception cref="ArgumentException"></exception>
         public void SetZIndex(T element, int zIndex)
         {
-            int indexInsideCollection = sortedElements.IndexOfValue(element);
+            int indexInsideCollection = _sortedElements.IndexOfValue(element);
             if (indexInsideCollection < 0) throw new ArgumentException($"{nameof(T)} is not presented inside collection", nameof(element));
 
-            sortedElements.RemoveAt(indexInsideCollection);
-            sortedElements.Add(zIndex, element);
+            _sortedElements.RemoveAt(indexInsideCollection);
+            _sortedElements.Add(zIndex, element);
         }
 
         /// <summary>Sets <paramref name="element"/>'s Z-Index to appear at top of collection.</summary>
@@ -191,21 +193,21 @@ namespace PopUpUI.Containers
         /// <param name="secondElement">Second element to swap.</param>
         public void Swap(T firstElement, T secondElement)
         {
-            int firstElementIndex = sortedElements.IndexOfValue(firstElement);
-            int secondElementIndex = sortedElements.IndexOfValue(secondElement);
+            int firstElementIndex = _sortedElements.IndexOfValue(firstElement);
+            int secondElementIndex = _sortedElements.IndexOfValue(secondElement);
 
-            sortedElements.SetValueAtIndex(firstElementIndex, secondElement);
-            sortedElements.SetValueAtIndex(secondElementIndex, firstElement);
+            _sortedElements.SetValueAtIndex(firstElementIndex, secondElement);
+            _sortedElements.SetValueAtIndex(secondElementIndex, firstElement);
         }
 
         public IEnumerator<T> GetEnumerator()
         {
-            return sortedElements.Values.GetEnumerator();
+            return _sortedElements.Values.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return sortedElements.Values.GetEnumerator();
+            return _sortedElements.Values.GetEnumerator();
         }
     }
 }

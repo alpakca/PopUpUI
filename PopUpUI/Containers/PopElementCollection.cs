@@ -14,11 +14,11 @@ namespace PopUpUI.Containers
 
         public PopElement? FindByName(string name)
         {
-            for (int i = 0; i < sortedElements.Values.Count; i++)
+            for (int i = 0; i < SortedElements.Values.Count; i++)
             {
-                if (sortedElements.Values[i].Name == name)
+                if (SortedElements.Values[i].Name == name)
                 {
-                    return sortedElements.Values[i];
+                    return SortedElements.Values[i];
                 }
             }
 
@@ -29,8 +29,8 @@ namespace PopUpUI.Containers
         {
             for (int i = Count - 1; i >= 0; i--)
             {
-                if (sortedElements.Values[i].Visibility != Visibility.Hidden &&
-                    sortedElements.Values[i] is T instance && match(instance))
+                if (SortedElements.Values[i].Visibility != Visibility.Hidden &&
+                    SortedElements.Values[i] is T instance && match(instance))
                 {
                     yield return instance;
                 }
@@ -41,8 +41,8 @@ namespace PopUpUI.Containers
         {
             for (int i = Count - 1; i >= 0; i--)
             {
-                if (sortedElements.Values[i].Visibility != Visibility.Hidden &&
-                    sortedElements.Values[i] is T instance)
+                if (SortedElements.Values[i].Visibility != Visibility.Hidden &&
+                    SortedElements.Values[i] is T instance)
                 {
                     yield return instance;
                 }
@@ -53,8 +53,8 @@ namespace PopUpUI.Containers
         {
             for (int i = Count - 1; i >= 0; i--)
             {
-                if (sortedElements.Values[i].Visibility != Visibility.Hidden && 
-                    sortedElements.Values[i] is T instance && match(instance))
+                if (SortedElements.Values[i].Visibility != Visibility.Hidden && 
+                    SortedElements.Values[i] is T instance && match(instance))
                 {
                     return instance;
                 }

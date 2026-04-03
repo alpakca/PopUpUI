@@ -4,9 +4,9 @@ using System;
 
 namespace PopUpUI.Elements
 {
-    internal class CheckBox : PopElement, ISelectable
+    public class CheckBox : PopElement, ISelectable
     {
-        protected bool isChecked;
+        private bool isChecked;
 
         public bool IsChecked => isChecked;
         public SelectablePacket SelectablePacket { get; set; }
@@ -33,7 +33,7 @@ namespace PopUpUI.Elements
 
         public bool CanBeSelected(Point point)
         {
-            return _boundaries.Contains(point);
+            return base.InsideBoundaries(point);
         }
     }
 }

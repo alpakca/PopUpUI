@@ -6,11 +6,11 @@ namespace PopUpUI.Elements
 {
     public class HorizontalSlider : PopElement, IHoldable, ISelectable
     {
-        protected int xOffset;
-        protected bool isHeld;
-
+        private int xOffset;
+        private bool isHeld;
         private int heldOffsetInWidth;
-        protected Point lastMousePosition;
+
+        protected int ScrollOffset => xOffset;
 
         public bool IsHeld => isHeld;
         public HoldablePacket HoldPacket { get; set; }
@@ -19,6 +19,7 @@ namespace PopUpUI.Elements
         /// <summary>Gets the range of the slider. This range is different from Boundaries.Width, 
         /// as Boundaries.Width refers to width of sliding object.</summary>
         public int Range { get; }
+        public float ScrollPercentage => (float)xOffset / (Range - Boundaries.Width) * 100;
 
         public HorizontalSlider(int range)
         {
@@ -27,22 +28,21 @@ namespace PopUpUI.Elements
 
         public void Slide(int amount)
         {
-            xOffset = Math.Clamp(xOffset + amount, 0, Range - _boundaries.Width);
+            xOffset = Math.Clamp(xOffset + amount, 0, Range - Boundaries.Width);
 
             OnSliding();
         }
 
         public void SlideTo(int offset)
         {
-            xOffset = Math.Clamp(offset, 0, Range - _boundaries.Width);
+            xOffset = Math.Clamp(offset, 0, Range - Boundaries.Width);
 
             OnSliding();
         }
 
         public virtual void OnHolding(PopUpWindowEventArgs e)
         {
-            SlideTo(e.MousePoint.X - _boundaries.X - heldOffsetInWidth);
-            lastMousePosition = e.MousePoint;
+            SlideTo(e.MousePoint.X - Boundaries.X - heldOffsetInWidth);
 
             HoldPacket?.RaiseHeld(this, e);
         }
@@ -51,11 +51,10 @@ namespace PopUpUI.Elements
         {
             if (startedHolding)
             {
-                lastMousePosition = e.MousePoint;
-                heldOffsetInWidth = e.MousePoint.X - _boundaries.X - xOffset;
+                heldOffsetInWidth = e.MousePoint.X - Boundaries.X - xOffset;
             }
 
-            this.isHeld = startedHolding;
+            isHeld = startedHolding;
             HoldPacket?.RaiseHoldStateChange(this, e, startedHolding);
         }
 
@@ -72,14 +71,14 @@ namespace PopUpUI.Elements
             }
 
             // move slider to left
-            if (e.MousePoint.X - _boundaries.X < xOffset)
+            if (e.MousePoint.X - Boundaries.X < xOffset)
             {
-                Slide((e.MousePoint.X - _boundaries.X - xOffset) / 2 - _boundaries.Width);
+                Slide((e.MousePoint.X - Boundaries.X - xOffset) / 2 - Boundaries.Width);
             }
             // move slider to right
             else
             {
-                Slide((e.MousePoint.X - xOffset + _boundaries.Width) / 2);
+                Slide((e.MousePoint.X - xOffset + Boundaries.Width) / 2);
             }
         }
 
@@ -90,8 +89,8 @@ namespace PopUpUI.Elements
 
         protected bool IsSliderSelected(Point mousePosition)
         {
-            return _boundaries.X + xOffset <= mousePosition.X && mousePosition.X < _boundaries.X + _boundaries.Width + xOffset &&
-                   _boundaries.Y <= mousePosition.Y && mousePosition.Y < _boundaries.Y + _boundaries.Height;
+            return Boundaries.X + xOffset <= mousePosition.X && mousePosition.X < Boundaries.X + Boundaries.Width + xOffset &&
+                   Boundaries.Y <= mousePosition.Y && mousePosition.Y < Boundaries.Y + Boundaries.Height;
         }
 
         public bool CanBeHeld(Point mousePosition)
@@ -102,8 +101,8 @@ namespace PopUpUI.Elements
         // lets select slider from its range, causing slider to advance to the mouse position direction
         public bool CanBeSelected(Point mousePosition)
         {
-            return _boundaries.X <= mousePosition.X && mousePosition.X < _boundaries.X + Range &&
-                   _boundaries.Y <= mousePosition.Y && mousePosition.Y < _boundaries.Y + _boundaries.Height;
+            return Boundaries.X <= mousePosition.X && mousePosition.X < Boundaries.X + Range &&
+                   Boundaries.Y <= mousePosition.Y && mousePosition.Y < Boundaries.Y + Boundaries.Height;
         }
     }
 }

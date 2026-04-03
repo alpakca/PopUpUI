@@ -4,10 +4,12 @@ using System;
 
 namespace PopUpUI.Elements
 {
-    internal class Clickable : PopElement, IHoldable, ISelectable
+    public class Clickable : PopElement, IHoldable, ISelectable
     {
-        protected bool isHeld;
-        protected bool wasSelected;
+        private bool isHeld;
+        private bool wasSelected;
+
+        protected bool WasSelected => wasSelected;
 
         public bool IsHeld => isHeld;
         public HoldablePacket HoldPacket { get; set; }
@@ -50,12 +52,12 @@ namespace PopUpUI.Elements
 
         public bool CanBeHeld(Point point)
         {
-            return _boundaries.Contains(point);
+            return Boundaries.Contains(point);
         }
 
         public bool CanBeSelected(Point point)
         {
-            return _boundaries.Contains(point);
+            return Boundaries.Contains(point);
         }
     }
 }

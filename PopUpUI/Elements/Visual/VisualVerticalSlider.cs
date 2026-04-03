@@ -55,7 +55,7 @@ namespace PopUpUI.Elements.Visual
 
         protected override void OnSliding()
         {
-            drawInfo.Location = _boundaries.Location + new Point(0, yOffset);
+            drawInfo.Location = Boundaries.Location + new Point(0, ScrollOffset);
 
             base.OnSliding();
         }

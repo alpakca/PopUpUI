@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace PopUpUI.Elements.Visual
 {
-    internal class VisualCheckBox : CheckBox
+    public class VisualCheckBox : CheckBox
     {
         private Animation2D _checkedAnimation;
         private Animation2D _uncheckedAnimation;

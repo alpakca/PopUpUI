@@ -4,10 +4,10 @@ using System;
 
 namespace PopUpUI.Elements
 {
-    internal class Movable : PopElement, IHoldable
+    public class Movable : PopElement, IHoldable
     {
-        protected bool isHeld;
-        protected Point lastMousePosition;
+        private bool isHeld;
+        private Point lastMousePosition;
 
         public bool IsHeld => isHeld;
         public MovementDirection MovementDirection { get; }
@@ -33,7 +33,7 @@ namespace PopUpUI.Elements
                 lastMousePosition = e.MousePoint;
             }
 
-            this.isHeld = startedHolding;
+            isHeld = startedHolding;
             HoldPacket?.RaiseHoldStateChange(this, e, startedHolding);
         }
 
@@ -43,7 +43,7 @@ namespace PopUpUI.Elements
 
         public bool CanBeHeld(Point point)
         {
-            return _boundaries.Contains(point);
+            return base.InsideBoundaries(point);
         }
 
         private void UpdatePosition(Point mousePosition)
@@ -61,7 +61,7 @@ namespace PopUpUI.Elements
             };
 
             lastMousePosition = mousePosition;
-            _boundaries.Location = newLocation;
+            Boundaries = new Rectangle(newLocation, Boundaries.Size);
 
             if (newLocation != Point.Zero)
             {

@@ -12,9 +12,9 @@ namespace PopUpUI.Text.Rich
         private int lineSpacing = -1;
         private float wordSpacing = -1;
 
-        protected string _regexPattern = "";
-        protected readonly List<IRendererHash> _hashes;
-        protected readonly TextHash defaultTextHash;
+        private string _regexPattern = "";
+        private readonly List<IRendererHash> _hashes;
+        private readonly TextHash defaultTextHash;
 
         public int LineSpacing
         {
@@ -56,6 +56,12 @@ namespace PopUpUI.Text.Rich
         {
             _hashes = new List<IRendererHash>();
             defaultTextHash = new TextHash("", defaultColor, defaultFont);
+        }
+
+        public RichProcesser(RichProcesser processer)
+        {
+            _hashes = new List<IRendererHash>(processer._hashes);
+            defaultTextHash = new TextHash("", processer.defaultTextHash.Color, processer.defaultTextHash.Font);
         }
 
         public void AttachHash(IRendererHash hash)

@@ -27,7 +27,7 @@ namespace PopUpUI.Text.Rich
             drawOptions = options ?? BatchDrawOptions.Default;
         }
 
-        public RichTextProcesser(RichTextProcesser processer) : base(processer.defaultTextHash.Color, processer.defaultTextHash.Font)
+        public RichTextProcesser(RichTextProcesser processer) : base(processer)
         {
             ArgumentNullException.ThrowIfNull(processer);
 
@@ -41,8 +41,6 @@ namespace PopUpUI.Text.Rich
             this.WordSpacing = processer.WordSpacing;
             this.LineSpacing = processer.LineSpacing;
             this.drawOptions = processer.drawOptions;
-
-            AttachHashes(processer._hashes);
         }
 
         public override ITextProcesserResult GetParseResult()

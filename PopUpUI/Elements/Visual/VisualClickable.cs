@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace PopUpUI.Elements.Visual
 {
-    internal class VisualClickable : Clickable
+    public class VisualClickable : Clickable
     {
         private Animation2D defaultAnimation;
         private readonly AnimationDrawInfo drawInfo;

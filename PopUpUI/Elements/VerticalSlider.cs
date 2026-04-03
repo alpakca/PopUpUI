@@ -6,17 +6,18 @@ namespace PopUpUI.Elements
 {
     public class VerticalSlider : PopElement, IHoldable, ISelectable
     {
-        protected int yOffset;
-        protected bool isHeld;
+        private int yOffset;
+        private bool isHeld;
+        private int heldOffsetInHeight;
 
-        protected int heldOffsetInHeight;
-        protected Point lastMousePosition;
+        protected int ScrollOffset => yOffset;
 
         public bool IsHeld => isHeld;
         public HoldablePacket HoldPacket { get; set; }
         public SelectablePacket SelectablePacket { get; set; }
 
         public int Range { get; }
+        public float ScrollPercentage => (float)yOffset / (Range - Boundaries.Height) * 100;
 
         public VerticalSlider(int range)
         {
@@ -25,22 +26,21 @@ namespace PopUpUI.Elements
 
         public void Slide(int amount)
         {
-            yOffset = Math.Clamp(yOffset + amount, 0, Range - _boundaries.Height);
+            yOffset = Math.Clamp(yOffset + amount, 0, Range - Boundaries.Height);
 
             OnSliding();
         }
 
         public void SlideTo(int offset)
         {
-            yOffset = Math.Clamp(offset, 0, Range - _boundaries.Height);
+            yOffset = Math.Clamp(offset, 0, Range - Boundaries.Height);
 
             OnSliding();
         }
 
         public virtual void OnHolding(PopUpWindowEventArgs e)
         {
-            SlideTo(e.MousePoint.Y - _boundaries.Y - heldOffsetInHeight);
-            lastMousePosition = e.MousePoint;
+            SlideTo(e.MousePoint.Y - Boundaries.Y - heldOffsetInHeight);
 
             HoldPacket?.RaiseHeld(this, e);
         }
@@ -49,8 +49,7 @@ namespace PopUpUI.Elements
         {
             if (startedHolding)
             {
-                lastMousePosition = e.MousePoint;
-                heldOffsetInHeight = e.MousePoint.Y - _boundaries.Y - yOffset;
+                heldOffsetInHeight = e.MousePoint.Y - Boundaries.Y - yOffset;
             }
 
             this.isHeld = startedHolding;
@@ -70,14 +69,14 @@ namespace PopUpUI.Elements
             }
 
             // move slider to up
-            if (e.MousePoint.Y - _boundaries.Y < yOffset)
+            if (e.MousePoint.Y - Boundaries.Y < yOffset)
             {
-                Slide((e.MousePoint.Y - _boundaries.Y - yOffset) / 2 - _boundaries.Height);
+                Slide((e.MousePoint.Y - Boundaries.Y - yOffset) / 2 - Boundaries.Height);
             }
             // move slider to down
             else
             {
-                Slide((e.MousePoint.Y - yOffset + _boundaries.Height) / 2);
+                Slide((e.MousePoint.Y - yOffset + Boundaries.Height) / 2);
             }
         }
 
@@ -88,8 +87,8 @@ namespace PopUpUI.Elements
 
         private bool IsSliderSelected(Point mousePosition)
         {
-            return _boundaries.X <= mousePosition.X && mousePosition.X < _boundaries.X + _boundaries.Width &&
-                   _boundaries.Y + yOffset <= mousePosition.Y && mousePosition.Y < _boundaries.Y + _boundaries.Height + yOffset;
+            return Boundaries.X <= mousePosition.X && mousePosition.X < Boundaries.X + Boundaries.Width &&
+                   Boundaries.Y + yOffset <= mousePosition.Y && mousePosition.Y < Boundaries.Y + Boundaries.Height + yOffset;
         }
 
         public bool CanBeHeld(Point mousePosition)
@@ -100,8 +99,8 @@ namespace PopUpUI.Elements
         // lets select slider from its range, causing slider to advance to the mouse position direction
         public bool CanBeSelected(Point mousePosition)
         {
-            return _boundaries.X <= mousePosition.X && mousePosition.X < _boundaries.X + _boundaries.Width &&
-                   _boundaries.Y <= mousePosition.Y && mousePosition.Y < _boundaries.Y + Range;
+            return Boundaries.X <= mousePosition.X && mousePosition.X < Boundaries.X + Boundaries.Width &&
+                   Boundaries.Y <= mousePosition.Y && mousePosition.Y < Boundaries.Y + Range;
         }
     }
 }

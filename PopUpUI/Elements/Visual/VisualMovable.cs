@@ -1,15 +1,14 @@
 ﻿using Microsoft.Xna.Framework;
-using PopUpUI.Elements;
 using PopUpUI.Surface;
 using System.Collections.Generic;
 
 namespace PopUpUI.Elements.Visual
 {
-    internal class VisualMovable : Movable
+    public class VisualMovable : Movable
     {
         private readonly AnimationDrawInfo drawInfo;
 
-        public override float Opacity 
+        public override float Opacity
         {
             set
             {
@@ -45,7 +44,7 @@ namespace PopUpUI.Elements.Visual
 
         protected override void OnPositionChange()
         {
-            drawInfo.Location = _boundaries.Location;
+            drawInfo.Location = Boundaries.Location;
         }
     }
 }
