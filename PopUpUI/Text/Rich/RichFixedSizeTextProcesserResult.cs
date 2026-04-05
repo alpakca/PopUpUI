@@ -18,6 +18,7 @@ namespace PopUpUI.Text.Rich
         public ICaretLayout Caret => _caret ??= new CaretLayout(this);
 
         public Vector2 TextSize => new Vector2(_data.HorizontalTextLength, _data.LineSpacing * _lines.Count);
+        public ProcesserData Data => _data;
 
         internal RichFixedSizeTextProcesserResult(List<(ITextPiece[] Words, float TotalWordsWidth)> lines, ProcesserData data)
         {

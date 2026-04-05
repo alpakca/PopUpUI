@@ -20,6 +20,7 @@ namespace PopUpUI.Text.Rich
         public ICaretLayout Caret => _caret ??= new CaretLayout(this);
 
         public Vector2 TextSize => _textSize == default ? _textSize = GetTextSize() : _textSize;
+        public ProcesserData Data => _data;
 
         internal RichTextProcesserResult(List<(ITextPiece[] Parts, float LineWidth)> lines, ProcesserData data)
         {

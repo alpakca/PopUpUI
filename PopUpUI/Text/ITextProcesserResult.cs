@@ -6,6 +6,7 @@ namespace PopUpUI.Text
     /// <summary>Represents a parse result of <see cref="ITextProcesser"/>.</summary>
     public interface ITextProcesserResult
     {
+        public ProcesserData Data { get; }
         /// <summary>Gets an <see cref="ILineLayout"/> object that contains information and methods about lines of parsed text.</summary>
         public ILineLayout Lines { get; }
         /// <summary>Gets an <see cref="ICaretLayout"/> object that contains information and methods about caret positions of parsed text.</summary>

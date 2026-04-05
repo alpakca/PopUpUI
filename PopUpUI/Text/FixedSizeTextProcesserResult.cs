@@ -18,6 +18,7 @@ namespace PopUpUI.Text
         public ICaretLayout Caret => _caret ??= new CaretLayout(this);
 
         public Vector2 TextSize => new Vector2(_data.HorizontalTextLength, _data.LineSpacing * _lines.Count);
+        public ProcesserData Data => _data;
 
         internal FixedSizeTextProcesserResult(List<(StringTextPiece[] Words, float LineWidth)> lines, ProcesserData data)
         {
