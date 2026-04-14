@@ -1,15 +1,11 @@
-﻿using PopUpUI.Toolkit;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 #nullable enable
 
 namespace PopUpUI.Text.Rich
 {
+    /// <summary>Represents a builder that can manipulate and build text for <see cref="RichProcesser"/>s.</summary>
     public class RichTextBuilder
     {
         private static readonly BuilderNode newLineNode = new BuilderNode(Environment.NewLine, null);
@@ -18,14 +14,22 @@ namespace PopUpUI.Text.Rich
         private int _totalCharLength;
         private readonly LinkedList<BuilderNode> _chunks;
 
+        /// <summary>Gets the number of characters builder contains, including symbols. 
+        /// It is also the length of the string builder would create.</summary>
         public int TotalCharLength => _totalCharLength;
+        /// <summary>Gets the number of visible characters builder contains.</summary>
         public int VisibleLength => _visibleLength;
 
+        /// <summary>Initialzies a new instance of <see cref="RichTextBuilder"/> class.</summary>
         public RichTextBuilder()
         {
             _chunks = new LinkedList<BuilderNode>();
         }
 
+        /// <summary>Gets the visible character at given index.</summary>
+        /// <param name="index">The index of character to get.</param>
+        /// <returns>The character at given index position of visible characters.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public char this[int index]
         {
             get
@@ -50,7 +54,11 @@ namespace PopUpUI.Text.Rich
             }
         }
 
-        public IRendererHash? GetHashAtIndex(int index)
+        /// <summary>Gets the hash that is associated with visible character at given index.</summary>
+        /// <param name="index">The index of visible character to get its associated hash.</param>
+        /// <returns>The associated hash of the visible character at given index if have any; otherwise <see langword="null"/>.</returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        public IProcesserHash? GetHashAtIndex(int index)
         {
             if (index < 0 || index >= _visibleLength)
             {
@@ -62,6 +70,9 @@ namespace PopUpUI.Text.Rich
             return indexNode!.Value.Hash;
         }
 
+        /// <summary>Appends a new text without any hash.</summary>
+        /// <param name="text">The text to append.</param>
+        /// <returns>A reference to this builder after appending.</returns>
         public RichTextBuilder Append(string text)
         {
             InternalAppend(text, null);
@@ -69,13 +80,19 @@ namespace PopUpUI.Text.Rich
             return this;
         }
 
-        public RichTextBuilder Append(string text, IRendererHash? hash)
+        /// <summary>Appends a new text with given hash.</summary>
+        /// <param name="text">The text to append.</param>
+        /// <param name="hash">The hash to associate with given text.</param>
+        /// <returns>A reference to this builder after appending.</returns>
+        public RichTextBuilder Append(string text, IProcesserHash? hash)
         {
             InternalAppend(text, hash);
 
             return this;
         }
 
+        /// <summary>Appends a new line to builder.</summary>
+        /// <returns>A reference to this builder after appending.</returns>
         public RichTextBuilder AppendLine()
         {
             AppendNewLineNode();
@@ -83,6 +100,9 @@ namespace PopUpUI.Text.Rich
             return this;
         }
 
+        /// <summary>Appends a new text and a new line without any hash.</summary>
+        /// <param name="text">The text to append.</param>
+        /// <returns>A reference to this builder after appending.</returns>
         public RichTextBuilder AppendLine(string text)
         {
             InternalAppend(text, null);
@@ -91,7 +111,11 @@ namespace PopUpUI.Text.Rich
             return this;
         }
 
-        public RichTextBuilder AppendLine(string text, IRendererHash? hash)
+        /// <summary>Appends a new text and a new line with given hash.</summary>
+        /// <param name="text">The text to append.</param>
+        /// <param name="hash">The hash to associate with given text.</param>
+        /// <returns>A reference to this builder after appending.</returns>
+        public RichTextBuilder AppendLine(string text, IProcesserHash? hash)
         {
             InternalAppend(text, hash);
             AppendNewLineNode();
@@ -99,7 +123,7 @@ namespace PopUpUI.Text.Rich
             return this;
         }
 
-        private void LengthUpdateNodeAdded(string text, IRendererHash? hash)
+        private void LengthUpdateNodeAdded(string text, IProcesserHash? hash)
         {
             ArgumentNullException.ThrowIfNull(text, nameof(text));
 
@@ -129,7 +153,7 @@ namespace PopUpUI.Text.Rich
             }
         }
 
-        private void InternalAppend(string text, IRendererHash? hash)
+        private void InternalAppend(string text, IProcesserHash? hash)
         {
             LengthUpdateNodeAdded(text, hash);
             _chunks.AddLast(new BuilderNode(text, hash));
@@ -142,13 +166,13 @@ namespace PopUpUI.Text.Rich
             _chunks.AddLast(newLineNode);
         }
 
-        private void InternalAddBefore(string text, IRendererHash? hash, LinkedListNode<BuilderNode> node)
+        private void InternalAddBefore(string text, IProcesserHash? hash, LinkedListNode<BuilderNode> node)
         {
             LengthUpdateNodeAdded(text, hash);
             _chunks.AddBefore(node, new BuilderNode(text, hash));
         }
 
-        private void InternalAddAfter(string text, IRendererHash? hash, LinkedListNode<BuilderNode> node)
+        private void InternalAddAfter(string text, IProcesserHash? hash, LinkedListNode<BuilderNode> node)
         {
             LengthUpdateNodeAdded(text, hash);
             _chunks.AddAfter(node, new BuilderNode(text, hash));
@@ -183,12 +207,21 @@ namespace PopUpUI.Text.Rich
             return (_chunks.Last, consumedChars);
         }
 
+        /// <summary>Inserts text without any hash at given <paramref name="index"/>.</summary>
+        /// <param name="index">The index to insert given text.</param>
+        /// <param name="text">The text to insert.</param>
+        /// <returns>A reference to this builder after inserting.</returns>
         public RichTextBuilder Insert(int index, string text)
         {
             return Insert(index, text, null!);
         }
 
-        public RichTextBuilder Insert(int index, string text, IRendererHash hash)
+        /// <summary>Inserts text with given hash at given <paramref name="index"/>.</summary>
+        /// <param name="index">The index to insert given text.</param>
+        /// <param name="text">The text to insert.</param>
+        /// <param name="hash">The hash to associate with given text.</param>
+        /// <returns>A reference to this builder after inserting.</returns>
+        public RichTextBuilder Insert(int index, string text, IProcesserHash? hash)
         {
             (LinkedListNode<BuilderNode>? indexNode, int consumedCharCount) = GetNodeContainsIndex(index);
 
@@ -220,13 +253,17 @@ namespace PopUpUI.Text.Rich
             return this;
         }
 
+        /// <summary>Removes number of visible characters of <paramref name="count"/> starting from <paramref name="startIndex"/>.</summary>
+        /// <param name="startIndex">The index to start removing.</param>
+        /// <param name="count">The number of visible characters to be removed.</param>
+        /// <returns>A reference to this builder after removing.</returns>
         public RichTextBuilder Remove(int startIndex, int count)
         {
             ArgumentOutOfRangeException.ThrowIfLessThan(startIndex, 0);
             ArgumentOutOfRangeException.ThrowIfLessThan(count, 0);
             ArgumentOutOfRangeException.ThrowIfLessThan(startIndex - count, 0);
 
-            (LinkedListNode<BuilderNode>? indexNode, int consumedCharCount) = GetNodeContainsIndex(startIndex);
+            (LinkedListNode<BuilderNode>? indexNode, _) = GetNodeContainsIndex(startIndex);
             indexNode ??= indexNode!.Previous;
 
             _visibleLength -= count;
@@ -260,6 +297,8 @@ namespace PopUpUI.Text.Rich
             return this;
         }
 
+        /// <summary>Clears the content text builder contains.</summary>
+        /// <returns>A reference to this builder after cleaning builder's content.</returns>
         public RichTextBuilder Clear()
         {
             _totalCharLength = 0;
@@ -269,6 +308,11 @@ namespace PopUpUI.Text.Rich
             return this;
         }
 
+        /// <summary>Creates a new <see cref="RichTextBuilder"/> with given <paramref name="length"/> of 
+        /// number of visible characters starting at <paramref name="startIndex"/>. </summary>
+        /// <param name="startIndex">The index to start sub-building.</param>
+        /// <param name="length">The number of visible characters to be sub-builded.</param>
+        /// <returns>The created sub-builder.</returns>
         public RichTextBuilder Subbuilder(int startIndex, int length)
         {
             ArgumentOutOfRangeException.ThrowIfLessThan(startIndex, 0);
@@ -300,6 +344,8 @@ namespace PopUpUI.Text.Rich
             return builder;
         }
 
+        /// <summary>Transforms contents of this builder to a string.</summary>
+        /// <returns>The created string.</returns>
         public override string ToString()
         {
             Span<char> chars = stackalloc char[_totalCharLength];
@@ -332,10 +378,11 @@ namespace PopUpUI.Text.Rich
             return new string(chars);
         }
 
-        /// <summary>Gets the string representing the </summary>
-        /// <param name="startIndex"></param>
-        /// <param name="length">The length of visible characters.</param>
-        /// <returns></returns>
+        /// <summary>Transforms contents of this builder to a string starting 
+        /// at <paramref name="startIndex"/> and for <paramref name="length"/> of visible characters..</summary>
+        /// <param name="startIndex">Start index of substring.</param>
+        /// <param name="length">The length of visible characters of substring.</param>
+        /// <returns>The created string.</returns>
         public string ToString(int startIndex, int length)
         {
             ArgumentOutOfRangeException.ThrowIfLessThan(startIndex, 0);
@@ -388,12 +435,12 @@ namespace PopUpUI.Text.Rich
         private class BuilderNode
         {
             public string Text;
-            public IRendererHash? Hash;
+            public IProcesserHash? Hash;
 
             public int Length => Hash != null ? Hash.VisibleCharLength(Text) : Text.Length;
             public bool WrapsText => Hash != null ? Hash.WrapsText : false;
 
-            public BuilderNode(string text, IRendererHash? hash)
+            public BuilderNode(string text, IProcesserHash? hash)
             {
                 Text = text;
                 Hash = hash;

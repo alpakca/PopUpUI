@@ -1,44 +1,31 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using PopUpUI.Surface;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-
-#pragma warning disable 8632
 
 namespace PopUpUI.Text.Rich
 {
+    /// <summary>Represents a processer that can process text of with <see cref="IProcesserHash"/>es.</summary>
     public class RichTextProcesser : RichProcesser
     {
-        private readonly BatchDrawOptions drawOptions;
-
         /// <summary>Gets or sets the orientation of the text. Default value is <see cref="TextOrientation.Left"/>.</summary>
         public TextOrientation Orientation { get; set; } = TextOrientation.Left;
 
-        public RichTextProcesser(SpriteFont defaultFont) : this(defaultFont, null)
-        {
-        }
-
-        public RichTextProcesser(SpriteFont defaultFont, BatchDrawOptions? options) : base(Color.White, defaultFont)
+        /// <summary>Initializes a new instance of <see cref="RichTextProcesser"/> class given defualt font.</summary>
+        /// <param name="defaultFont">The font to be used for unhashed text.</param>
+        public RichTextProcesser(SpriteFont defaultFont) : base(Color.White, defaultFont)
         {
             ArgumentNullException.ThrowIfNull(defaultFont);
-
-            drawOptions = options ?? BatchDrawOptions.Default;
         }
 
+        /// <summary>Initializes a new instance of <see cref="RichTextProcesser"/> with 
+        /// copying processer options from given <paramref name="processer"/>.</summary>
+        /// <param name="processer">Processer to copy options from.</param>
         public RichTextProcesser(RichTextProcesser processer) : base(processer)
         {
             ArgumentNullException.ThrowIfNull(processer);
 
-            this.Text = processer.Text;
-            this.FirstRowOffset = processer.FirstRowOffset;
-            this.HorizontalTextLength = processer.HorizontalTextLength;
             this.Orientation = processer.Orientation;
-            this.Alignment = processer.Alignment;
-            this.WordSpacing = processer.WordSpacing;
-            this.LineSpacing = processer.LineSpacing;
-            this.drawOptions = processer.drawOptions;
         }
 
         public override ITextProcesserResult GetParseResult()
@@ -50,8 +37,7 @@ namespace PopUpUI.Text.Rich
                 Orientation = this.Orientation,
                 Alignment = this.Alignment,
                 WordSpacing = this.WordSpacing,
-                LineSpacing = this.LineSpacing,
-                DrawOptions = this.drawOptions,
+                LineSpacing = this.LineSpacing
             });
         }
 
@@ -63,7 +49,7 @@ namespace PopUpUI.Text.Rich
             List<ITextPiece> currentLine = new List<ITextPiece>();
 
             List<string> currentPieceParts = new List<string>();
-            List<IRendererHash> currentPieceHashes = new List<IRendererHash>();
+            List<IProcesserHash> currentPieceHashes = new List<IProcesserHash>();
 
             for (var node = hashedNodes.First; node != null; node = node.Next)
             {
@@ -97,7 +83,7 @@ namespace PopUpUI.Text.Rich
 
             return hashedLines;
 
-            void SplitToSpaces(string text, IRendererHash hash)
+            void SplitToSpaces(string text, IProcesserHash hash)
             {
                 int start = 0;
                 int end = 0;

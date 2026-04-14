@@ -4,16 +4,24 @@ using PopUpUI.Toolkit;
 
 namespace PopUpUI.Text.Rich
 {
-    public class IconHash : IRendererHash
+    /// <summary>Represents a hash that is an icon.</summary>
+    public class IconHash : IProcesserHash
     {
         public bool WrapsText => false;
         public string Symbol { get; }
 
+        /// <summary>Gets or sets the spacing after icon.</summary>
         public int RightPadding { get; set; }
+        /// <summary>Gets or sets an offset to be applied to icon in render.</summary>
         public Point Offset { get; set; }
+        /// <summary>Gets or sets the size of icon to be rendered.</summary>
         public Point Size { get; set; }
+        /// <summary>Gets or sets the icon texture of the hash.</summary>
         public Texture2D Icon { get; set; }
 
+        /// <summary>Initializes a new instance of <see cref="IconHash"/> class with given symbol and icon.</summary>
+        /// <param name="symbol">The symbol representing the icon in text.</param>
+        /// <param name="icon">The texture of the icon.</param>
         public IconHash(string symbol, Texture2D icon)
         {
             Symbol = symbol;

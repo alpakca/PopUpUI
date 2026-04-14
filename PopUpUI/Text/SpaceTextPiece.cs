@@ -2,6 +2,7 @@
 
 namespace PopUpUI.Text
 {
+    /// <summary>Represents a text of a space or spaces.</summary>
     public class SpaceTextPiece : ITextPiece
     {
         private readonly int _count;
@@ -9,6 +10,9 @@ namespace PopUpUI.Text
 
         public int VisibleCharLength => _count;
 
+        /// <summary>Initializes a new instance of <see cref="SpaceTextPiece"/> class for a number of spaces and the width of each space.</summary>
+        /// <param name="count">Number of spaces this piece contains.</param>
+        /// <param name="wordSpacing">Width of each space.</param>
         public SpaceTextPiece(int count, float wordSpacing)
         {
             _count = count;

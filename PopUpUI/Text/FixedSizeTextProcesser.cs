@@ -1,53 +1,36 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using PopUpUI.Surface;
-using System;
+﻿using System;
 using System.Collections.Generic;
-
-#pragma warning disable 8632
 
 namespace PopUpUI.Text
 {
+    /// <summary>Represents a basic processer which processes text with equal space between words.</summary>
     public class FixedSizeTextProcesser : BasicProcesser
     {
-        private readonly BatchDrawOptions drawOptions;
-
-        public FixedSizeTextProcesser(int horizontalTextLength, SpriteFont font) : this(horizontalTextLength, font, null)
+        /// <summary>Initializes a new instance of <see cref="FixedSizeTextProcesser"/> with given horizontal text length.</summary>
+        /// <param name="horizontalTextLength">The maximum length of each line of to be processed text.</param>
+        public FixedSizeTextProcesser(int horizontalTextLength)
         {
-        }
-
-        public FixedSizeTextProcesser(int horizontalTextLength, SpriteFont font, BatchDrawOptions? options) : base(font)
-        {
-            ArgumentNullException.ThrowIfNull(font, nameof(font));
-
             HorizontalTextLength = horizontalTextLength;
-            drawOptions = options ?? BatchDrawOptions.Default;
         }
 
-        public FixedSizeTextProcesser(FixedSizeTextProcesser processer) : base(processer.Font)
+        /// <summary>Initializes a new instance of <see cref="FixedSizeTextProcesser"/> with 
+        /// copying processer options from given <paramref name="processer"/>.</summary>
+        /// <param name="processer">Processer to copy options from.</param>
+        public FixedSizeTextProcesser(FixedSizeTextProcesser processer) : base(processer)
         {
-            this.Text = processer.Text;
-            this.FirstRowOffset = processer.FirstRowOffset;
-            this.HorizontalTextLength = processer.HorizontalTextLength;
-            this.Alignment = processer.Alignment;
-            this.TextColor = processer.TextColor;
-            this.WordSpacing = processer.WordSpacing;
-            this.LineSpacing = processer.LineSpacing;
-            this.drawOptions = processer.drawOptions;
         }
 
         public override ITextProcesserResult GetParseResult()
         {
             return new FixedSizeTextProcesserResult(GetAlignedWords(), new ProcesserData
             {
-                FirstRowOffset = this.FirstRowOffset,
+                LineSpacing = this.LineSpacing,
+                WordSpacing = this.WordSpacing,
                 HorizontalTextLength = this.HorizontalTextLength,
+                FirstRowOffset = this.FirstRowOffset,
                 Alignment = this.Alignment,
                 TextColor = this.TextColor,
-                WordSpacing = this.WordSpacing,
-                LineSpacing = this.LineSpacing,
-                Font = this.Font,
-                DrawOptions = this.drawOptions
+                Font = this.Font
             });
         }
 

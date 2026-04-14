@@ -1,41 +1,31 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using PopUpUI.Surface;
 using System;
 using System.Collections.Generic;
 
-#pragma warning disable 8632
-
 namespace PopUpUI.Text.Rich
 {
+    /// <summary>Represents a processer that can process text of with <see cref="IProcesserHash"/>es
+    /// and processes text with equal space between words. </summary>
     public class RichFixedSizeTextProcesser : RichProcesser
     {
-        private readonly BatchDrawOptions drawOptions;
-
-        public RichFixedSizeTextProcesser(int horizontalTextLength, SpriteFont defaultFont) : this(horizontalTextLength, defaultFont, null)
-        {
-        }
-
-        public RichFixedSizeTextProcesser(int horizontalTextLength, SpriteFont defaultFont, BatchDrawOptions options)
+        /// <summary>Initializes a new instance of <see cref="RichFixedSizeTextProcesser"/> with given horizontal text length and default font.</summary>
+        /// <param name="horizontalTextLength">The maximum length of each line of to be processed text.</param>
+        /// <param name="defaultFont">The font to be used for unhashed text.</param>
+        public RichFixedSizeTextProcesser(int horizontalTextLength, SpriteFont defaultFont)
             : base(Color.White, defaultFont)
         {
             ArgumentNullException.ThrowIfNull(defaultFont);
 
             HorizontalTextLength = horizontalTextLength;
-            drawOptions = options ?? BatchDrawOptions.Default;
         }
 
+        /// <summary>Initializes a new instance of <see cref="RichFixedSizeTextProcesser"/> with 
+        /// copying processer options from given <paramref name="processer"/>.</summary>
+        /// <param name="processer">Processer to copy options from.</param>
         public RichFixedSizeTextProcesser(RichFixedSizeTextProcesser processer) : base(processer)
         {
             ArgumentNullException.ThrowIfNull(processer);
-
-            Text = processer.Text;
-            FirstRowOffset = processer.FirstRowOffset;
-            HorizontalTextLength = processer.HorizontalTextLength;
-            Alignment = processer.Alignment;
-            WordSpacing = processer.WordSpacing;
-            LineSpacing = processer.LineSpacing;
-            drawOptions = processer.drawOptions;
         }
 
         public override ITextProcesserResult GetParseResult()
@@ -46,8 +36,7 @@ namespace PopUpUI.Text.Rich
                 HorizontalTextLength = HorizontalTextLength,
                 Alignment = Alignment,
                 WordSpacing = WordSpacing,
-                LineSpacing = LineSpacing,
-                DrawOptions = drawOptions
+                LineSpacing = LineSpacing
             });
         }
 
@@ -59,7 +48,7 @@ namespace PopUpUI.Text.Rich
             List<ITextPiece> currentLine = new List<ITextPiece>();
 
             List<string> currentPieceParts = new List<string>();
-            List<IRendererHash> currentPieceHashes = new List<IRendererHash>();
+            List<IProcesserHash> currentPieceHashes = new List<IProcesserHash>();
 
             for (var node = hashedNodes.First; node != null; node = node.Next)
             {
@@ -93,7 +82,7 @@ namespace PopUpUI.Text.Rich
 
             return hashedWordLines;
 
-            void AppendToCurrentLine(string text, IRendererHash hash)
+            void AppendToCurrentLine(string text, IProcesserHash hash)
             {
                 int start = 0;
                 int end = 0;

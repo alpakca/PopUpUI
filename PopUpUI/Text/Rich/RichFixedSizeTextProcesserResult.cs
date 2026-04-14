@@ -1,11 +1,13 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using PopUpUI.Surface;
 using PopUpUI.Toolkit;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace PopUpUI.Text.Rich
 {
+    /// <summary>Represents a procession result of <see cref="RichFixedSizeTextProcesser"/>.</summary>
     public class RichFixedSizeTextProcesserResult : ITextProcesserResult
     {
         private readonly ProcesserData _data;
@@ -26,9 +28,9 @@ namespace PopUpUI.Text.Rich
             _lines = lines;
         }
 
-        public void Render(RenderTarget2D target, Vector2 offset, float opacity)
+        public void Render(RenderTarget2D target, BatchDrawOptions drawOptions, Vector2 offset, float opacity)
         {
-            DrawHelper.SetBeginBatch(target, _data.DrawOptions);
+            DrawHelper.SetBeginBatch(target, drawOptions);
 
             offset += ProcesserHelpers.GetAlignmentOffset(_data.Alignment, new Point(target.Width, target.Height), TextSize);
 
@@ -165,20 +167,14 @@ namespace PopUpUI.Text.Rich
                 return ProcesserHelpers.ClampCaret(caretPosition, _result);
             }
 
-            public TextPosition Clamp(TextPosition caretPosition, int lineIndexOffset, int indexInsideLineOffset)
-            {
-                return Clamp(new TextPosition(caretPosition.LineIndex + lineIndexOffset,
-                                               caretPosition.IndexInsideLine + indexInsideLineOffset));
-            }
-
-            public int GetTextCaretPosition(TextPosition caretPosition)
+            public int GetLineFreePosition(TextPosition caretPosition)
             {
                 return ProcesserHelpers.GetTextCaretPosition(caretPosition, _result.Lines);
             }
 
-            public TextPosition GetCaretPosition(int textCaretPosition)
+            public TextPosition GetCaretPosition(int lineFreeCaretPosition)
             {
-                return ProcesserHelpers.GetCaretPositionFromText(textCaretPosition, _result);
+                return ProcesserHelpers.GetCaretPositionFromText(lineFreeCaretPosition, _result);
             }
 
             public Vector2 ScreenCaretPosition(TextPosition caretPosition, Point? targetSize)

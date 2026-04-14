@@ -7,10 +7,11 @@ using System.Text.RegularExpressions;
 
 namespace PopUpUI.Text.Rich
 {
+    /// <summary>Represents a rich processer, that may contain <see cref="IProcesserHash"/>es.</summary>
     public abstract class RichProcesser : ITextProcesser
     {
         private string _regexPattern = "";
-        private readonly List<IRendererHash> _hashes;
+        private readonly List<IProcesserHash> _hashes;
         private readonly TextHash defaultTextHash;
 
         public int LineSpacing { get; set; }
@@ -40,7 +41,7 @@ namespace PopUpUI.Text.Rich
 
         public RichProcesser(Color defaultColor, SpriteFont defaultFont)
         {
-            _hashes = new List<IRendererHash>();
+            _hashes = new List<IProcesserHash>();
             defaultTextHash = new TextHash("", defaultColor, defaultFont);
 
             LineSpacing = defaultFont.LineSpacing;
@@ -49,16 +50,26 @@ namespace PopUpUI.Text.Rich
 
         public RichProcesser(RichProcesser processer) : this(processer.defaultTextHash.Color, processer.defaultTextHash.Font)
         {
+            LineSpacing = processer.LineSpacing;
+            WordSpacing = processer.WordSpacing;
+            HorizontalTextLength = processer.HorizontalTextLength;
+            FirstRowOffset = processer.FirstRowOffset;
+            Text = processer.Text;
+            Alignment = processer.Alignment;
         }
 
-        public void AttachHash(IRendererHash hash)
+        /// <summary>Attaches a new <see cref="IProcesserHash"/> to be used while parsing.</summary>
+        /// <param name="hash">The hash to be used in parsing text.</param>
+        public void AttachHash(IProcesserHash hash)
         {
             _hashes.Add(hash);
 
             CreateRegexPattern();
         }
 
-        public void AttachHashes(IEnumerable<IRendererHash> hashes)
+        /// <summary>Attaches a group of <see cref="IProcesserHash"/>es to be used while parsing.</summary>
+        /// <param name="hashes">Hashes to be used in parsing text.</param>
+        public void AttachHashes(IEnumerable<IProcesserHash> hashes)
         {
             _hashes.AddRange(hashes);
 
@@ -70,7 +81,7 @@ namespace PopUpUI.Text.Rich
             StringBuilder regexBuilder = new StringBuilder();
             for (int i = 0; i < _hashes.Count; i++)
             {
-                IRendererHash item = _hashes[i];
+                IProcesserHash item = _hashes[i];
                 if (item.WrapsText)
                 {
                     // example for symbol %
@@ -90,7 +101,7 @@ namespace PopUpUI.Text.Rich
             _regexPattern = regexBuilder.ToString();
         }
 
-        private IRendererHash MatchedHash(Match match)
+        private IProcesserHash MatchedHash(Match match)
         {
             foreach (Group group in match.Groups)
             {
@@ -125,7 +136,7 @@ namespace PopUpUI.Text.Rich
                     int index = match.Index;
                     int length = match.Length;
 
-                    IRendererHash matchedHash = MatchedHash(match);
+                    IProcesserHash matchedHash = MatchedHash(match);
                     if (matchedHash.WrapsText)
                     {
                         index += matchedHash.Symbol.Length;

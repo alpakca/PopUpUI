@@ -4,6 +4,7 @@ using PopUpUI.Toolkit;
 
 namespace PopUpUI.Text
 {
+    /// <summary>Represents a regular string piece with a font associated with it.</summary>
     public class StringTextPiece : ITextPiece
     {
         private readonly string text;
@@ -11,6 +12,10 @@ namespace PopUpUI.Text
 
         public int VisibleCharLength => text.Length;
 
+        /// <summary>Initializes a new instance of <see cref="StringTextPiece"/> class 
+        /// with given <paramref name="text"/> and <paramref name="font"/>.</summary>
+        /// <param name="text">The text of the piece.</param>
+        /// <param name="font">The font that is associated with given <paramref name="text"/>.</param>
         public StringTextPiece(string text, SpriteFont font)
         {
             this.text = text;

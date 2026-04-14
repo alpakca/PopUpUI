@@ -3,15 +3,19 @@ using Microsoft.Xna.Framework;
 
 namespace PopUpUI.Text.Rich
 {
+    /// <summary>Represents a piece of text that contains multiple hashes.</summary>
     public class MultiHashedTextPiece : ITextPiece
     {
         private readonly int _length;
         private readonly string[] _hashedParts;
-        private readonly IRendererHash[] _hashes;
+        private readonly IProcesserHash[] _hashes;
 
         public int VisibleCharLength => _length;
 
-        public MultiHashedTextPiece(string[] hashedParts, IRendererHash[] hashes)
+        /// <summary>Initializes a new instance of <see cref="MultiHashedTextPiece"/> class with given hash strings and their hashes.</summary>
+        /// <param name="hashedParts">Array of strings that have different associated hashes.</param>
+        /// <param name="hashes">Array of hashes that are corresponding to <paramref name="hashedParts"/>.</param>
+        public MultiHashedTextPiece(string[] hashedParts, IProcesserHash[] hashes)
         {
             _hashedParts = hashedParts;
             _hashes = hashes;
