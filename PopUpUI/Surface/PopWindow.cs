@@ -74,7 +74,7 @@ namespace PopUpUI.Surface
             GC.SuppressFinalize(this);
         }
 
-        internal virtual void Update()
+        protected internal virtual void Update()
         {
             foreach (var element in Elements)
             {
@@ -87,7 +87,7 @@ namespace PopUpUI.Surface
             }
         }
 
-        internal virtual void RenderUpdate()
+        protected internal virtual void RenderUpdate()
         {
             foreach (var element in Elements)
             {
@@ -121,7 +121,7 @@ namespace PopUpUI.Surface
             return destination.Bottom > 0 || destination.Right > 0 || destination.Top < _boundaries.Height || destination.Left < _boundaries.Width;
         }
 
-        internal virtual void OnMousePositionChange(PopUpWindowEventArgs e)
+        protected internal virtual void OnMousePositionChange(PopUpWindowEventArgs e)
         {
             HandleHoverableElementEvents(e);
             HandleHoldableElementEvents(e);
@@ -220,7 +220,7 @@ namespace PopUpUI.Surface
             }
         }
 
-        internal virtual void OnMouseButtonStateChange(PopUpWindowEventArgs e)
+        protected internal virtual void OnMouseButtonStateChange(PopUpWindowEventArgs e)
         {
             ISelectable? selectedElement = Elements.FindWithType<ISelectable>(element => element.CanBeSelected(e.MousePoint) &&
                                                                                         element.SelectablePacket.ButtonsToSelect.HasAnyFlagFrom(e.NewlyPressedButtons));
@@ -234,35 +234,35 @@ namespace PopUpUI.Surface
             }
         }
 
-        internal virtual void OnMouseWheelChange(PopUpWindowEventArgs e)
+        protected internal virtual void OnMouseWheelChange(PopUpWindowEventArgs e)
         {
             IMouseWheelReceiver? mouseWheelReceiver = Elements.FindWithType<IMouseWheelReceiver>(element => element.CanReceiveWheelChangeInput(e.MousePoint));
 
             mouseWheelReceiver?.OnMouseWheelChangeReceive(e);
         }
 
-        internal virtual void OnKeyDown(PopUpWindowEventArgs e, Keys key)
+        protected internal virtual void OnKeyDown(PopUpWindowEventArgs e, Keys key)
         {
             IKeyReceiver? keyReceiver = Elements.FindWithType<IKeyReceiver>(element => element.ReceivesKeyInput);
 
             keyReceiver?.OnKeyDown(e, key);
         }
 
-        internal virtual void OnKeyUp(PopUpWindowEventArgs e, Keys key)
+        protected internal virtual void OnKeyUp(PopUpWindowEventArgs e, Keys key)
         {
             IKeyReceiver? keyReceiver = Elements.FindWithType<IKeyReceiver>(element => element.ReceivesKeyInput);
 
             keyReceiver?.OnKeyUp(e, key);
         }
 
-        internal virtual void OnTextInput(PopUpWindowEventArgs e, char ch)
+        protected internal virtual void OnTextInput(PopUpWindowEventArgs e, char ch)
         {
             ITextReceiver? textReceiver = Elements.FindWithType<ITextReceiver>(element => element.ReceivesTextInput);
 
             textReceiver?.OnTextInputReceive(e, ch);
         }
 
-        internal virtual void OnFileDrop(PopUpWindowEventArgs e, FileDropEventArgs fileArgs)
+        protected internal virtual void OnFileDrop(PopUpWindowEventArgs e, FileDropEventArgs fileArgs)
         {
             IFileReceiver? fileReceiver = Elements.FindWithType<IFileReceiver>(element => element.CanReceiveFileDrop(e.MousePoint));
 

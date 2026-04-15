@@ -28,7 +28,7 @@ namespace PopUpUI.Surface
             return mousePoint - ScrolledOffset;
         }
 
-        internal override void RenderUpdate()
+        protected internal override void RenderUpdate()
         {
             foreach (var element in Elements)
             {
@@ -60,7 +60,7 @@ namespace PopUpUI.Surface
             DrawHelper.EndBatch();
         }
 
-        internal override void OnMouseWheelChange(PopUpWindowEventArgs e)
+        protected internal override void OnMouseWheelChange(PopUpWindowEventArgs e)
         {
             IMouseWheelReceiver? mouseWheelReceiver = Elements.FindWithType<IMouseWheelReceiver>(element => element.CanReceiveWheelChangeInput(e.MousePoint));
 

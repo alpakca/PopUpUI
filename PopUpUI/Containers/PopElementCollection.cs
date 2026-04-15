@@ -12,9 +12,13 @@ namespace PopUpUI.Containers
         {
         }
 
+        /// <summary>Searches for an element in collection with given <paramref name="name"/> starting from top element.</summary>
+        /// <param name="name">The name of the <see cref="PopElement"/>.</param>
+        /// <returns>The first <see cref="PopElement"/> that's name is same as <paramref name="name"/>, 
+        /// or <see langword="null"/> if no elements found with <paramref name="name"/>.</returns>
         public PopElement? FindByName(string name)
         {
-            for (int i = 0; i < SortedElements.Values.Count; i++)
+            for (int i = Count - 1; i >= 0; i--)
             {
                 if (SortedElements.Values[i].Name == name)
                 {
