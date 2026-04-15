@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace PopUpUI.Toolkit
 {
-    /// <summary>Contains properties and methods to help changing features of the main window.</summary>
+    /// <summary>Contains properties and methods to modify the project window.</summary>
     public static class WindowOptions
     {
         private static bool isInitialized = false;

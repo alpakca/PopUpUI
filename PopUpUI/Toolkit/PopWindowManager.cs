@@ -1,11 +1,13 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using PopUpUI.Containers;
 using PopUpUI.Input;
 using PopUpUI.Surface;
 using System.Collections.Generic;
 
 namespace PopUpUI.Toolkit
 {
+    /// <summary>Controls the active <see cref="PopWindow"/>s of the project.</summary>
     public static class PopWindowManager
     {
         private static bool isInitialized = false;
@@ -15,7 +17,8 @@ namespace PopUpUI.Toolkit
         /// <summary>Gets or sets the opacity to use when drawing all the windows to screen. Default value is 1.</summary>
         public static float GlobalOpacity { get; set; } = 1;
 
-        public static List<PopWindow> ActiveWindows { get; } = new List<PopWindow>();
+        /// <summary>Gets the list of <see cref="PopWindow"/>s that are updated and drawn.</summary>
+        public static ZIndexCollection<PopWindow> ActiveWindows { get; } = new ZIndexCollection<PopWindow>();
 
         internal static void Initialize()
         {

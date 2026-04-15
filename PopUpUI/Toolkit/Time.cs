@@ -20,7 +20,7 @@ namespace PopUpUI.Toolkit
             set => game.TargetElapsedTime = TimeSpan.FromMilliseconds(1000f / value);
         }
         /// <summary>Gets the count of frame per second.</summary>
-        public static int FPS => (int)(1000f / (1000 * deltaTime));
+        public static int FPS => (int)(1000f / deltaTime);
         /// <summary>Gets or sets if project will use fixed frame per second. Default value is true.</summary>
         public static bool UseFixedTimeStep
         {
