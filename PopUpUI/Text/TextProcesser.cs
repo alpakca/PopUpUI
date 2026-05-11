@@ -92,15 +92,17 @@ namespace PopUpUI.Text
             return splitLines;
         }
 
-        private List<(ITextPiece[] Parts, float LineWidth)> SplitHorizontalLength()
+        private List<SplitLine> SplitHorizontalLength()
         {
             List<ITextPiece[]> splitSpaceLines = SplitToSpaces();
-            List<(ITextPiece[] Parts, float LineWidth)> splitLines = new List<(ITextPiece[] Parts, float LineWidth)>();
+            List<SplitLine> splitLines = new List<SplitLine>();
 
             float lineWidth = FirstRowOffset;
-            foreach (var lineParts in splitSpaceLines)
+            for (int j = 0; j < splitSpaceLines.Count; j++)
             {
                 int lastStart = 0;
+                ITextPiece[] lineParts = splitSpaceLines[j];
+
                 for (int i = 0; i < lineParts.Length; i++)
                 {
                     float partWidth = lineParts[i].TextWidth();
@@ -111,14 +113,14 @@ namespace PopUpUI.Text
                     }
                     else
                     {
-                        splitLines.Add((lineParts.AsSpan()[lastStart..i].ToArray(), lineWidth));
+                        splitLines.Add(new SplitLine(lineParts.AsSpan()[lastStart..i].ToArray(), lineWidth, false));
 
                         lastStart = i;
                         lineWidth = partWidth;
                     }
                 }
 
-                splitLines.Add((lineParts.AsSpan()[lastStart..].ToArray(), lineWidth));
+                splitLines.Add(new SplitLine(lineParts.AsSpan()[lastStart..].ToArray(), lineWidth, j != splitSpaceLines.Count - 1));
 
                 lineWidth = 0;
             }

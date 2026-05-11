@@ -15,6 +15,12 @@ namespace PopUpUI.Text
         /// It includes the newline characters for each line, except last line.</summary>
         public int VisibleCharCount { get; }
 
+        /// <summary>Gets a value indicating if line at given index was split because of a new line character.</summary>
+        /// <param name="lineIndex">The index of line to check split status.</param>
+        /// <returns><see langword="true"/> if line was split with a new line character; otherwise, 
+        /// if it was split due to <see cref="ITextProcesser.HorizontalTextLength"/>, <see langword="false"/>.</returns>
+        public bool SplitWithNewLineChar(int lineIndex);
+
         /// <summary>Gets the number of visible characters in a line.</summary>
         /// <param name="lineIndex">The line to get the number of visible characters.</param>
         /// <returns>Returns the number of visible characters. It does not include newline character at the end.</returns>

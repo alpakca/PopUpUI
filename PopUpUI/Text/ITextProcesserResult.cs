@@ -16,7 +16,13 @@ namespace PopUpUI.Text
 
         /// <summary>Gets the size of the parsed text.</summary>
         public Vector2 TextSize { get; }
-        /// <summary>Renders the parsed text using given arguments.</summary>
+        /// <summary>Renders the parsed text using given arguments to an already set <see cref="RenderTarget2D"/>.</summary>
+        /// <param name="targetSize">The size of the target text will be rendered to.</param>
+        /// <param name="drawOptions">The <see cref="BatchDrawOptions"/> to use while drawing.</param>
+        /// <param name="offset">The offset that will be applied to text.</param>
+        /// <param name="opacity">The opacity of the text.</param>
+        public void Render(BatchDrawOptions drawOptions, Vector2 offset, Point? targetSize, float opacity);
+        /// <summary>Renders the parsed text using given arguments to <paramref name="target"/>.</summary>
         /// <param name="target">The target surface text will be rendered to.</param>
         /// <param name="drawOptions">The <see cref="BatchDrawOptions"/> to use while drawing.</param>
         /// <param name="offset">The offset that will be applied to text.</param>

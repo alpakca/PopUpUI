@@ -22,7 +22,7 @@ namespace PopUpUI.Text
 
         public override ITextProcesserResult GetParseResult()
         {
-            return new FixedSizeTextProcesserResult(GetAlignedWords(), new ProcesserData
+            return new TextProcesserResult(GetAlignedWords(), new ProcesserData
             {
                 LineSpacing = this.LineSpacing,
                 WordSpacing = this.WordSpacing,
@@ -34,15 +34,17 @@ namespace PopUpUI.Text
             });
         }
 
-        private List<(StringTextPiece[] LineWords, float LineWidth)> GetAlignedWords()
+        private List<SplitLine> GetAlignedWords()
         {
-            List<(StringTextPiece[] LineWords, float LineWidth)> lines = new List<(StringTextPiece[] LineWords, float LineWidth)>();
+            List<SplitLine> lines = new List<SplitLine>();
 
             float minimumSpaceWidth = WordSpacing;
             float lineWidth = FirstRowOffset;
-            foreach (string existingLine in Text.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+
+            string[] existingLines = Text.Split('\n');
+            for (int j = 0; j < existingLines.Length; j++)
             {
-                Span<string> words = existingLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                Span<string> words = existingLines[j].Split(' ');
 
                 int lastStart = 0;
                 for (int i = 0; i < words.Length; i++)
@@ -55,14 +57,16 @@ namespace PopUpUI.Text
                     }
                     else
                     {
-                        lines.Add((ProcesserHelpers.ToStringPiece(words[lastStart..i], Font), lineWidth));
-                        lastStart = i;
+                        lines.Add(new SplitLine(ProcesserHelpers.ToSpacedPieces(words[lastStart..i], Font, HorizontalTextLength, lineWidth), 
+                                                HorizontalTextLength, true)); // count the last space as '\n' char
 
+                        lastStart = i;
                         lineWidth = wordWidth;
                     }
                 }
 
-                lines.Add((ProcesserHelpers.ToStringPiece(words[lastStart..], Font), lineWidth));
+                lines.Add(new SplitLine(ProcesserHelpers.ToSpacedPieces(words[lastStart..], Font, HorizontalTextLength, lineWidth), 
+                                        HorizontalTextLength, j != existingLines.Length - 1));
 
                 lineWidth = 0;
             }

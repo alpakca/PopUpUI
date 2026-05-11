@@ -30,7 +30,7 @@ namespace PopUpUI.Text.Rich
 
         public override ITextProcesserResult GetParseResult()
         {
-            return new RichTextProcesserResult(SplitHorizontalLength(), new ProcesserData
+            return new TextProcesserResult(SplitHorizontalLength(), new ProcesserData
             {
                 FirstRowOffset = this.FirstRowOffset,
                 HorizontalTextLength = this.HorizontalTextLength,
@@ -65,14 +65,14 @@ namespace PopUpUI.Text.Rich
                 int lastNewLineCharIndex = 0;
                 foreach (var newLineCharIndex in newLineIndeces)
                 {
-                    SplitToSpaces(node.Value.Text[(lastNewLineCharIndex + 1)..newLineCharIndex], node.Value.RendererHash);
+                    SplitToSpaces(node.Value.Text[lastNewLineCharIndex..newLineCharIndex], node.Value.RendererHash);
 
                     hashedLines.Add(currentLine.ToArray());
                     currentLine.Clear();
-                    lastNewLineCharIndex = newLineCharIndex;
+                    lastNewLineCharIndex = newLineCharIndex + 1;
                 }
 
-                SplitToSpaces(node.Value.Text[(lastNewLineCharIndex + 1)..], node.Value.RendererHash);
+                SplitToSpaces(node.Value.Text[lastNewLineCharIndex..], node.Value.RendererHash);
             }
 
             AddCurrentPieceToLine();
@@ -85,9 +85,16 @@ namespace PopUpUI.Text.Rich
 
             void SplitToSpaces(string text, IProcesserHash hash)
             {
+                if (text.Length == 0)
+                {
+                    currentPieceParts.Add("");
+                    currentPieceHashes.Add(hash);
+                    return;
+                }
+
                 int start = 0;
                 int end = 0;
-                bool trackingSpace = text[0] == ' '; // texts from SplitToHashes are guaranteed to have length > 0
+                bool trackingSpace = text[0] == ' ';
 
                 for (int i = 0; i < text.Length; i++)
                 {
@@ -127,7 +134,8 @@ namespace PopUpUI.Text.Rich
 
             void AddCurrentPieceToLine()
             {
-                if (currentPieceParts.Count == 0) return;
+                if (currentPieceParts.Count == 0) 
+                    return;
 
                 if (currentPieceParts.Count == 1)
                     currentLine.Add(new SingleHashedTextPiece(currentPieceParts[0], currentPieceHashes[0]));
@@ -140,15 +148,17 @@ namespace PopUpUI.Text.Rich
             }
         }
 
-        private List<(ITextPiece[] Parts, float LineWidth)> SplitHorizontalLength()
+        private List<SplitLine> SplitHorizontalLength()
         {
             List<ITextPiece[]> splitLineParts = SplitNewLineAndSpaces();
-            List<(ITextPiece[] Parts, float LineWidth)> splitLines = new List<(ITextPiece[] Parts, float LineWidth)>();
+            List<SplitLine> splitLines = new List<SplitLine>();
 
             float lineWidth = FirstRowOffset;
-            foreach (var lineParts in splitLineParts)
+            for (int j = 0; j < splitLineParts.Count; j++)
             {
                 int lastStart = 0;
+                ITextPiece[] lineParts = splitLineParts[j];
+
                 for (int i = 0; i < lineParts.Length; i++)
                 {
                     float partWidth = lineParts[i].TextWidth();
@@ -159,14 +169,14 @@ namespace PopUpUI.Text.Rich
                     }
                     else
                     {
-                        splitLines.Add((lineParts.AsSpan()[lastStart..i].ToArray(), lineWidth));
+                        splitLines.Add(new SplitLine(lineParts.AsSpan()[lastStart..i].ToArray(), lineWidth, false));
 
                         lastStart = i;
                         lineWidth = partWidth;
                     }
                 }
 
-                splitLines.Add((lineParts.AsSpan()[lastStart..].ToArray(), lineWidth));
+                splitLines.Add(new SplitLine(lineParts.AsSpan()[lastStart..].ToArray(), lineWidth, j != splitLineParts.Count - 1));
 
                 lineWidth = 0;
             }
