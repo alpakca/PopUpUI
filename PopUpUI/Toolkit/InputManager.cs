@@ -2,7 +2,6 @@
 using Microsoft.Xna.Framework.Input;
 using PopUpUI.Elements;
 using PopUpUI.Input;
-using System.Diagnostics;
 
 namespace PopUpUI.Toolkit
 {
@@ -22,8 +21,9 @@ namespace PopUpUI.Toolkit
         private static KeyboardState newKeyboardState = Keyboard.GetState();
         private static MouseState newMouseState = Mouse.GetState();
         private static float pointChangeCooldown;
+        private static MouseButtons oldPressedButtons;
 
-        /// <summary>Raised when any button of the mouse have been pressed.</summary>
+        /// <summary>Raised when any mouse button's state has changed.</summary>
         public static event InputManagerHandler MouseButtonStateChange;
         /// <summary>Raised when the position of the mouse has changed.</summary>
         public static event InputManagerHandler MousePositionChange;
@@ -100,9 +100,10 @@ namespace PopUpUI.Toolkit
                                                                  GetNewlyPressedButtons(),
                                                                  newMouseState.Position,
                                                                  newMouseState.ScrollWheelValue - oldMouseState.ScrollWheelValue);
-            
-            if (args.NewlyPressedButtons != MouseButtons.None)
+
+            if (args.PressedButtons != oldPressedButtons)
             {
+                oldPressedButtons = args.PressedButtons;
                 MouseButtonStateChange(args);
             }
 
