@@ -9,7 +9,7 @@ namespace PopUpUI.Input
         /// <summary>Raised when mouse wheel value has changed.</summary>
         public event PopUpElementHandler? MouseWheelChanged;
 
-        public virtual void RaiseMouseWheelChanged(PopElement sender, PopUpWindowEventArgs e)
+        public virtual void RaiseMouseWheelChanged(PopElement sender, PopWindowMouseEventArgs e)
         {
             MouseWheelChanged?.Invoke(sender, e);
         }

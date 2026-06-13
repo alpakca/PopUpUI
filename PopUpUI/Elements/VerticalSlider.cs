@@ -16,13 +16,16 @@ namespace PopUpUI.Elements
         public HoldablePacket HoldPacket { get; set; }
         public SelectablePacket SelectablePacket { get; set; }
 
-        public int Range { get; }
-        public float ScrollPercentage => (float)yOffset / (Range - Boundaries.Height) * 100;
-
-        public VerticalSlider(int range)
-        {
-            Range = range;
+        public int Range 
+        { 
+            get; 
+            set
+            {
+                field = value;
+                Slide(0);
+            }
         }
+        public float ScrollPercentage => (float)yOffset / (Range - Boundaries.Height) * 100;
 
         public void Slide(int amount)
         {
@@ -38,18 +41,18 @@ namespace PopUpUI.Elements
             OnSliding();
         }
 
-        public virtual void OnHolding(PopUpWindowEventArgs e)
+        public virtual void OnHolding(Input.PopWindowMouseEventArgs e)
         {
-            SlideTo(e.MousePoint.Y - Boundaries.Y - heldOffsetInHeight);
+            SlideTo(e.MousePosition.Y - Boundaries.Y - heldOffsetInHeight);
 
             HoldPacket?.RaiseHeld(this, e);
         }
 
-        public virtual void OnHoldStateChange(PopUpWindowEventArgs e, bool startedHolding)
+        public virtual void OnHoldStateChange(Input.PopWindowMouseEventArgs e, bool startedHolding)
         {
             if (startedHolding)
             {
-                heldOffsetInHeight = e.MousePoint.Y - Boundaries.Y - yOffset;
+                heldOffsetInHeight = e.MousePosition.Y - Boundaries.Y - yOffset;
             }
 
             this.isHeld = startedHolding;
@@ -60,27 +63,27 @@ namespace PopUpUI.Elements
         {
         }
 
-        public void OnSelect(PopUpWindowEventArgs e)
+        public void OnSelect(Input.PopWindowMouseEventArgs e)
         {
-            if (IsSliderSelected(e.MousePoint))
+            if (IsSliderSelected(e.MousePosition))
             {
                 SelectablePacket?.RaiseSelected(this, e);
                 return;
             }
 
             // move slider to up
-            if (e.MousePoint.Y - Boundaries.Y < yOffset)
+            if (e.MousePosition.Y - Boundaries.Y < yOffset)
             {
-                Slide((e.MousePoint.Y - Boundaries.Y - yOffset) / 2 - Boundaries.Height);
+                Slide((e.MousePosition.Y - Boundaries.Y - yOffset) / 2 - Boundaries.Height);
             }
             // move slider to down
             else
             {
-                Slide((e.MousePoint.Y - yOffset + Boundaries.Height) / 2);
+                Slide((e.MousePosition.Y - yOffset + Boundaries.Height) / 2);
             }
         }
 
-        public void OnSelectingOutside(PopUpWindowEventArgs e)
+        public void OnSelectingOutside(Input.PopWindowMouseEventArgs e)
         {
             SelectablePacket?.RaiseOutsideSelected(this, e);
         }

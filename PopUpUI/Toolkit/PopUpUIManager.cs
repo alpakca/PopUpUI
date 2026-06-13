@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using PopUpUI.Toolkit;
 using System;
 
 #nullable enable
@@ -30,7 +31,7 @@ namespace PopUpUI.Toolkit
             ArgumentNullException.ThrowIfNull(deviceManager, nameof(deviceManager));
 
             Time.Initialize(game);
-            InputManager.Initialize(game);
+            InputManager.Initialize(game.Window);
             DrawHelper.Initialize(game);
             WindowOptions.Initialize(game, deviceManager);
             ContentAssistant.Initialize(game);

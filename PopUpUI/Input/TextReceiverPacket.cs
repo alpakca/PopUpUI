@@ -9,7 +9,7 @@ namespace PopUpUI.Input
         /// <summary>Raised when element got a text input.</summary>
         public event PopUpElementHandler<char>? TextReceived;
 
-        public virtual void RaiseTextReceived(PopElement sender, PopUpWindowEventArgs e, char ch)
+        public virtual void RaiseTextReceived(PopElement sender, PopWindowMouseEventArgs e, char ch)
         {
             TextReceived?.Invoke(sender, e, ch);
         }

@@ -55,7 +55,7 @@ namespace PopUpUI.Elements.Visual
             base.OnClick();
         }
 
-        public override void OnHoldStateChange(PopUpWindowEventArgs e, bool startedHolding)
+        public override void OnHoldStateChange(Input.PopWindowMouseEventArgs e, bool startedHolding)
         {
             drawInfo.Animation = startedHolding ? HoldAnimation ?? defaultAnimation : defaultAnimation;
 

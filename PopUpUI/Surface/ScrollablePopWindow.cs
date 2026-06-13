@@ -60,20 +60,33 @@ namespace PopUpUI.Surface
             DrawHelper.EndBatch();
         }
 
-        protected internal override void OnMouseWheelChange(PopUpWindowEventArgs e)
+        protected internal override void OnMouseVerticalScrollChange(PopWindowMouseEventArgs e, int change)
         {
-            IMouseWheelReceiver? mouseWheelReceiver = Elements.FindWithType<IMouseWheelReceiver>(element => element.CanReceiveWheelChangeInput(e.MousePoint));
+            IMouseWheelReceiver? mouseWheelReceiver = Elements.FindWithType<IMouseWheelReceiver>(element => element.CanReceiveWheelChangeInput(e.MousePosition));
 
             if (mouseWheelReceiver != null)
             {
-                mouseWheelReceiver.OnMouseWheelChangeReceive(e);
+                mouseWheelReceiver.OnMouseVerticalScrollChangeReceive(e, change);
+            }
+            else if (EnableScrolling && ScrollsVertically)
+            {
+                ScrolledOffset += new Point(0, (int)(change / 6 * ScrollSpeed));
+                ScrolledOffset = new Point(ScrolledOffset.X, Math.Min(ScrolledOffset.Y, 0));
+            }
+        }
+
+        protected internal override void OnMouseHorizontalScrollChange(PopWindowMouseEventArgs e, int change)
+        {
+            IMouseWheelReceiver? mouseWheelReceiver = Elements.FindWithType<IMouseWheelReceiver>(element => element.CanReceiveWheelChangeInput(e.MousePosition));
+
+            if (mouseWheelReceiver != null)
+            {
+                mouseWheelReceiver.OnMouseVerticalScrollChangeReceive(e, change);
             }
             else if (EnableScrolling)
             {
-                ScrolledOffset += ScrollsVertically ? new Point(0, (int)(e.MouseWheelChange / 6 * ScrollSpeed))
-                                                    : new Point((int)(e.MouseWheelChange / 6 * ScrollSpeed), 0);
-
-                ScrolledOffset = new Point(Math.Min(ScrolledOffset.X, 0), Math.Min(ScrolledOffset.Y, 0));
+                ScrolledOffset += new Point((int)(change / 6 * ScrollSpeed), 0);
+                ScrolledOffset = new Point(Math.Min(ScrolledOffset.X, 0), ScrolledOffset.Y);
             }
         }
     }

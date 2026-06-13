@@ -20,7 +20,7 @@ namespace PopUpUI.Input
         /// <param name="isHeld">The value of holding which determined by if prefered mouse button is down.</param>
         public void HoldStatusUpdate(PopUpWindowEventArgs e, bool isHeld);*/
 
-        public void OnHolding(PopUpWindowEventArgs e);
-        public void OnHoldStateChange(PopUpWindowEventArgs e, bool startedHolding);
+        public void OnHolding(PopWindowMouseEventArgs e);
+        public void OnHoldStateChange(PopWindowMouseEventArgs e, bool startedHolding);
     }
 }

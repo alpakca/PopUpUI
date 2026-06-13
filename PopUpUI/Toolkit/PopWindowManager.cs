@@ -1,9 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using PopUpUI.Containers;
-using PopUpUI.Input;
 using PopUpUI.Surface;
-using System.Collections.Generic;
 
 namespace PopUpUI.Toolkit
 {
@@ -28,7 +26,8 @@ namespace PopUpUI.Toolkit
             InputManager.KeyUp += InputManager_KeyUp;
             InputManager.MouseButtonStateChange += InputManager_MouseButtonStateChange;
             InputManager.MousePositionChange += InputManager_MousePositionChange;
-            InputManager.MouseWheelChange += InputManager_MouseWheelChange;
+            InputManager.MouseVerticalScrollChange += InputManager_MouseVerticalScrollChange;
+            InputManager.MouseHorizontalScrollChange += InputManager_MouseHorizontalScrollChange;
             InputManager.TextInput += InputManager_TextInput;
             InputManager.FileDrop += InputManager_FileDrop;
 
@@ -55,12 +54,12 @@ namespace PopUpUI.Toolkit
             }
         }
 
-        private static PopUpWindowEventArgs ScaledWindowArgs(PopWindow window, PopUpWindowEventArgs e)
+        private static Input.PopWindowMouseEventArgs ScaledWindowArgs(PopWindow window, Input.PopWindowMouseEventArgs e)
         {
-            return e with { MousePoint = (window.TransformMousePoint(e.MousePoint).TimesFloat(1 / GlobalScale) - window.Boundaries.Location).TimesFloat(1 / window.Scale) };
+            return e.WithMousePosition((window.TransformMousePoint(e.MousePosition).TimesFloat(1 / GlobalScale) - window.Boundaries.Location).TimesFloat(1 / window.Scale));
         }
 
-        private static void InputManager_KeyDown(PopUpWindowEventArgs e, Microsoft.Xna.Framework.Input.Keys arg)
+        private static void InputManager_KeyDown(Input.PopWindowMouseEventArgs e, Microsoft.Xna.Framework.Input.Keys arg)
         {
             foreach (var window in ActiveWindows)
             {
@@ -68,7 +67,7 @@ namespace PopUpUI.Toolkit
             }
         }
 
-        private static void InputManager_KeyUp(PopUpWindowEventArgs e, Microsoft.Xna.Framework.Input.Keys arg)
+        private static void InputManager_KeyUp(Input.PopWindowMouseEventArgs e, Microsoft.Xna.Framework.Input.Keys arg)
         {
             foreach (var window in ActiveWindows)
             {
@@ -76,7 +75,7 @@ namespace PopUpUI.Toolkit
             }
         }
 
-        private static void InputManager_MouseButtonStateChange(PopUpWindowEventArgs e)
+        private static void InputManager_MouseButtonStateChange(Input.PopWindowMouseEventArgs e)
         {
             foreach (var window in ActiveWindows)
             {
@@ -84,7 +83,7 @@ namespace PopUpUI.Toolkit
             }
         }
 
-        private static void InputManager_MousePositionChange(PopUpWindowEventArgs e)
+        private static void InputManager_MousePositionChange(Input.PopWindowMouseEventArgs e)
         {
             foreach (var window in ActiveWindows)
             {
@@ -92,15 +91,23 @@ namespace PopUpUI.Toolkit
             }
         }
 
-        private static void InputManager_MouseWheelChange(PopUpWindowEventArgs e)
+        private static void InputManager_MouseVerticalScrollChange(Input.PopWindowMouseEventArgs e, int change)
         {
             foreach (var window in ActiveWindows)
             {
-                window.OnMouseWheelChange(ScaledWindowArgs(window, e));
+                window.OnMouseVerticalScrollChange(ScaledWindowArgs(window, e), change);
             }
         }
 
-        private static void InputManager_TextInput(PopUpWindowEventArgs e, char arg)
+        private static void InputManager_MouseHorizontalScrollChange(Input.PopWindowMouseEventArgs e, int change)
+        {
+            foreach (var window in ActiveWindows)
+            {
+                window.OnMouseHorizontalScrollChange(ScaledWindowArgs(window, e), change);
+            }
+        }
+
+        private static void InputManager_TextInput(Input.PopWindowMouseEventArgs e, char arg)
         {
             foreach (var window in ActiveWindows)
             {
@@ -108,7 +115,7 @@ namespace PopUpUI.Toolkit
             }
         }
 
-        private static void InputManager_FileDrop(PopUpWindowEventArgs e, FileDropEventArgs arg)
+        private static void InputManager_FileDrop(Input.PopWindowMouseEventArgs e, FileDropEventArgs arg)
         {
             foreach (var window in ActiveWindows)
             {

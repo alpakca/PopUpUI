@@ -15,12 +15,12 @@ namespace PopUpUI.Input
         /// <summary>Raised when <see cref="CanBeSelected(Point)"/> is false, also outside selecting is enabled.</summary>
         public event PopUpElementHandler? OutsideSelected;
 
-        public virtual void RaiseSelected(PopElement sender, PopUpWindowEventArgs e)
+        public virtual void RaiseSelected(PopElement sender, PopWindowMouseEventArgs e)
         {
             Selected?.Invoke(sender, e);
         }
 
-        public virtual void RaiseOutsideSelected(PopElement sender, PopUpWindowEventArgs e)
+        public virtual void RaiseOutsideSelected(PopElement sender, PopWindowMouseEventArgs e)
         {
             OutsideSelected?.Invoke(sender, e);
         }

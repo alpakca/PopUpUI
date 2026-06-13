@@ -41,12 +41,12 @@ namespace PopUpUI.Elements.Visual
 
         public Animation2D HoldAnimation { get; set; }
 
-        public VisualVerticalSlider(int range) : base(range)
+        public VisualVerticalSlider()
         {
             drawInfo = new AnimationDrawInfo();
         }
 
-        public override void OnHoldStateChange(PopUpWindowEventArgs e, bool startedHolding)
+        public override void OnHoldStateChange(Input.PopWindowMouseEventArgs e, bool startedHolding)
         {
             drawInfo.Animation = startedHolding && HoldAnimation != null ? HoldAnimation : defaultAnimation;
 

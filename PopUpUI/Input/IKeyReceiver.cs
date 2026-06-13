@@ -10,9 +10,9 @@ namespace PopUpUI.Input
         public KeyReceiverPacket KeyReceiverPacket { get; }
 
         /// <summary>Called when element got a key input.</summary>
-        /// <param name="e">A <see cref="PopUpWindowEventArgs"/> object that contains event data.</param>
+        /// <param name="e">A <see cref="PopWindowMouseEventArgs"/> object that contains event data.</param>
         /// <param name="key">The key input.</param>
-        public void OnKeyDown(PopUpWindowEventArgs e, Keys key);
-        public void OnKeyUp(PopUpWindowEventArgs e, Keys key);
+        public void OnKeyDown(PopWindowMouseEventArgs e, Keys key);
+        public void OnKeyUp(PopWindowMouseEventArgs e, Keys key);
     }
 }

@@ -22,9 +22,9 @@ namespace PopUpUI.Elements
             Clicked?.Invoke(this);
         }
 
-        public virtual void OnHoldStateChange(PopUpWindowEventArgs e, bool startedHolding)
+        public virtual void OnHoldStateChange(Input.PopWindowMouseEventArgs e, bool startedHolding)
         {
-            if (!startedHolding && wasSelected && CanBeSelected(e.MousePoint))
+            if (!startedHolding && wasSelected && CanBeSelected(e.MousePosition))
             {
                 wasSelected = false;
                 OnClick();
@@ -34,18 +34,18 @@ namespace PopUpUI.Elements
             HoldPacket?.RaiseHoldStateChange(this, e, startedHolding);
         }
 
-        public virtual void OnHolding(PopUpWindowEventArgs e)
+        public virtual void OnHolding(Input.PopWindowMouseEventArgs e)
         {
             HoldPacket?.RaiseHeld(this, e);
         }
 
-        public virtual void OnSelect(PopUpWindowEventArgs e)
+        public virtual void OnSelect(Input.PopWindowMouseEventArgs e)
         {
             wasSelected = true;
             SelectablePacket?.RaiseSelected(this, e);
         }
 
-        public virtual void OnSelectingOutside(PopUpWindowEventArgs e)
+        public virtual void OnSelectingOutside(Input.PopWindowMouseEventArgs e)
         {
             SelectablePacket?.RaiseOutsideSelected(this, e);
         }

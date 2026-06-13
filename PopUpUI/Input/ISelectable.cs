@@ -12,10 +12,10 @@ namespace PopUpUI.Input
         /// <returns>Returns <see langword="true"/> if element can be selected, else <see langword="false"/>.</returns>
         public bool CanBeSelected(Point point);
         /// <summary>Called when element is selected.</summary>
-        /// <param name="e">A <see cref="PopUpWindowEventArgs"/> object that contains event data.</param>
-        public void OnSelect(PopUpWindowEventArgs e);
+        /// <param name="e">A <see cref="PopWindowMouseEventArgs"/> object that contains event data.</param>
+        public void OnSelect(PopWindowMouseEventArgs e);
         /// <summary>Called when <see cref="CanBeSelected(Point)"/> is false, also outside selecting is enabled.</summary>
-        /// <param name="e">A <see cref="PopUpWindowEventArgs"/> object that contains event data.</param>
-        public void OnSelectingOutside(PopUpWindowEventArgs e);
+        /// <param name="e">A <see cref="PopWindowMouseEventArgs"/> object that contains event data.</param>
+        public void OnSelectingOutside(PopWindowMouseEventArgs e);
     }
 }

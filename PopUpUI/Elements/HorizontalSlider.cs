@@ -18,13 +18,16 @@ namespace PopUpUI.Elements
 
         /// <summary>Gets the range of the slider. This range is different from Boundaries.Width, 
         /// as Boundaries.Width refers to width of sliding object.</summary>
-        public int Range { get; }
-        public float ScrollPercentage => (float)xOffset / (Range - Boundaries.Width) * 100;
-
-        public HorizontalSlider(int range)
+        public int Range 
         {
-            Range = range;
+            get; 
+            set
+            {
+                field = value;
+                Slide(0);
+            }
         }
+        public float ScrollPercentage => (float)xOffset / (Range - Boundaries.Width) * 100;
 
         public void Slide(int amount)
         {
@@ -40,18 +43,18 @@ namespace PopUpUI.Elements
             OnSliding();
         }
 
-        public virtual void OnHolding(PopUpWindowEventArgs e)
+        public virtual void OnHolding(Input.PopWindowMouseEventArgs e)
         {
-            SlideTo(e.MousePoint.X - Boundaries.X - heldOffsetInWidth);
+            SlideTo(e.MousePosition.X - Boundaries.X - heldOffsetInWidth);
 
             HoldPacket?.RaiseHeld(this, e);
         }
 
-        public virtual void OnHoldStateChange(PopUpWindowEventArgs e, bool startedHolding)
+        public virtual void OnHoldStateChange(Input.PopWindowMouseEventArgs e, bool startedHolding)
         {
             if (startedHolding)
             {
-                heldOffsetInWidth = e.MousePoint.X - Boundaries.X - xOffset;
+                heldOffsetInWidth = e.MousePosition.X - Boundaries.X - xOffset;
             }
 
             isHeld = startedHolding;
@@ -62,27 +65,27 @@ namespace PopUpUI.Elements
         {
         }
 
-        public virtual void OnSelect(PopUpWindowEventArgs e)
+        public virtual void OnSelect(Input.PopWindowMouseEventArgs e)
         {
-            if (IsSliderSelected(e.MousePoint))
+            if (IsSliderSelected(e.MousePosition))
             {
                 SelectablePacket?.RaiseSelected(this, e);
                 return;
             }
 
             // move slider to left
-            if (e.MousePoint.X - Boundaries.X < xOffset)
+            if (e.MousePosition.X - Boundaries.X < xOffset)
             {
-                Slide((e.MousePoint.X - Boundaries.X - xOffset) / 2 - Boundaries.Width);
+                Slide((e.MousePosition.X - Boundaries.X - xOffset) / 2 - Boundaries.Width);
             }
             // move slider to right
             else
             {
-                Slide((e.MousePoint.X - xOffset + Boundaries.Width) / 2);
+                Slide((e.MousePosition.X - xOffset + Boundaries.Width) / 2);
             }
         }
 
-        public virtual void OnSelectingOutside(PopUpWindowEventArgs e)
+        public virtual void OnSelectingOutside(Input.PopWindowMouseEventArgs e)
         {
             SelectablePacket?.RaiseOutsideSelected(this, e);
         }

@@ -18,7 +18,7 @@ namespace PopUpUI.Elements
             CheckChange?.Invoke(this);
         }
 
-        public void OnSelect(PopUpWindowEventArgs e)
+        public void OnSelect(Input.PopWindowMouseEventArgs e)
         {
             isChecked = !isChecked;
             OnCheckChange();
@@ -26,7 +26,7 @@ namespace PopUpUI.Elements
             SelectablePacket?.RaiseSelected(this, e);
         }
 
-        public void OnSelectingOutside(PopUpWindowEventArgs e)
+        public void OnSelectingOutside(Input.PopWindowMouseEventArgs e)
         {
             SelectablePacket?.RaiseOutsideSelected(this, e);
         }

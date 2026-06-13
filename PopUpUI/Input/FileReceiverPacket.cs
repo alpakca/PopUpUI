@@ -9,7 +9,7 @@ namespace PopUpUI.Input
     {
         public event PopUpElementHandler<FileDropEventArgs>? FileDropped;
 
-        public virtual void RaiseFileDropped(PopElement sender, PopUpWindowEventArgs e, FileDropEventArgs fileArgs)
+        public virtual void RaiseFileDropped(PopElement sender, PopWindowMouseEventArgs e, FileDropEventArgs fileArgs)
         {
             FileDropped?.Invoke(sender, e, fileArgs);
         }

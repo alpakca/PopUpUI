@@ -12,12 +12,12 @@ namespace PopUpUI.Input
         /// <summary>Raised when hold status of element has changed, started or ended. Bool gets if its new status is held.</summary>
         public event PopUpElementHandler<bool>? HoldStateChange;
 
-        public virtual void RaiseHeld(PopElement sender, PopUpWindowEventArgs e)
+        public virtual void RaiseHeld(PopElement sender, PopWindowMouseEventArgs e)
         {
             Held?.Invoke(sender, e);
         }
 
-        public virtual void RaiseHoldStateChange(PopElement sender, PopUpWindowEventArgs e, bool startedHolding)
+        public virtual void RaiseHoldStateChange(PopElement sender, PopWindowMouseEventArgs e, bool startedHolding)
         {
             HoldStateChange?.Invoke(sender, e, startedHolding);
         }

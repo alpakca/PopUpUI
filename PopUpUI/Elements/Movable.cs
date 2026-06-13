@@ -19,18 +19,18 @@ namespace PopUpUI.Elements
             MovementDirection = movementDirection;
         }
 
-        public virtual void OnHolding(PopUpWindowEventArgs e)
+        public virtual void OnHolding(Input.PopWindowMouseEventArgs e)
         {
-            UpdatePosition(e.MousePoint);
+            UpdatePosition(e.MousePosition);
 
             HoldPacket?.RaiseHeld(this, e);
         }
 
-        public virtual void OnHoldStateChange(PopUpWindowEventArgs e, bool startedHolding)
+        public virtual void OnHoldStateChange(Input.PopWindowMouseEventArgs e, bool startedHolding)
         {
             if (startedHolding)
             {
-                lastMousePosition = e.MousePoint;
+                lastMousePosition = e.MousePosition;
             }
 
             isHeld = startedHolding;

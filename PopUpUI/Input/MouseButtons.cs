@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PopUpUI.Elements
+namespace PopUpUI.Input
 {
     /// <summary>Presents the buttons of a mouse.</summary>
     [Flags]

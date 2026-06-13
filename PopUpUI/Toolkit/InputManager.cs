@@ -1,239 +1,231 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using PopUpUI.Elements;
 using PopUpUI.Input;
 
 namespace PopUpUI.Toolkit
 {
-    /// <summary>Handler for the <see cref="InputManager"/> events.</summary>
-    /// <param name="e">A <see cref="PopUpWindowEventArgs"/> object that contains event data.</param>
-    public delegate void InputManagerHandler(PopUpWindowEventArgs e);
-    /// <summary>Handler for the <see cref="InputManager"/> events with an extra argument.</summary>
-    /// <param name="e">A <see cref="PopUpWindowEventArgs"/> object that contains event data.</param>
-    /// <param name="arg">An extra argument for the handler beside <see cref="PopUpWindowEventArgs"/>.</param>
-    public delegate void InputManagerHandler<TExtraArgs>(PopUpWindowEventArgs e, TExtraArgs arg);
+    public delegate void InputManagerHandler(PopWindowMouseEventArgs e);
+    public delegate void InputManagerHandler<TArgs>(PopWindowMouseEventArgs e, TArgs args);
 
-    /// <summary>Represents a manager for input events.</summary>
     public static class InputManager
     {
-        private static KeyboardState oldKeyboardState;
-        private static MouseState oldMouseState;
-        private static KeyboardState newKeyboardState = Keyboard.GetState();
-        private static MouseState newMouseState = Mouse.GetState();
-        private static float pointChangeCooldown;
-        private static MouseButtons oldPressedButtons;
+        private static KeyboardState previousKeyboard;
+        private static MouseState previousMouse;
+        private static MouseButtons previousCurrentButtons;
 
-        /// <summary>Raised when any mouse button's state has changed.</summary>
+        private static KeyboardState newKeyboard;
+        private static MouseState newMouse;
+        private static MouseButtons newCurrentButtons;
+
+        private static PopWindowMouseEventArgs lastArgs;
+
         public static event InputManagerHandler MouseButtonStateChange;
-        /// <summary>Raised when the position of the mouse has changed.</summary>
         public static event InputManagerHandler MousePositionChange;
-        /// <summary>Raised when the mouse's wheel's value has changed.</summary>
-        public static event InputManagerHandler MouseWheelChange;
-        /// <summary>Raised when a key is down on keyboard.</summary>
+        public static event InputManagerHandler<int> MouseVerticalScrollChange;
+        public static event InputManagerHandler<int> MouseHorizontalScrollChange;
         public static event InputManagerHandler<Keys> KeyDown;
-        /// <summary>Raised when a key is up on keyboard.</summary>
         public static event InputManagerHandler<Keys> KeyUp;
-        /// <summary>Raised when there is a text entry has been made.</summary>
         public static event InputManagerHandler<char> TextInput;
-        /// <summary>Raised when a file has been dropped on main window.</summary>
         public static event InputManagerHandler<FileDropEventArgs> FileDrop;
 
-        /// <summary>Indicates if the Num Lock is on.</summary>
-        public static bool NumLock => newKeyboardState.NumLock;
-        /// <summary>Indicates if the Caps Lock is on.</summary>
-        public static bool CapsLock => newKeyboardState.CapsLock;
-        /// <summary>Gets the position of the mouse.</summary>
-        public static Point MousePosition => newMouseState.Position;
+        public static bool IsCapsLockOn => newKeyboard.CapsLock;
+        public static bool IsNumLockOn => newKeyboard.NumLock;
 
-        /// <summary>Gets or sets the max time <see cref="MousePositionChange"/> event 
-        /// will be raised in case <see cref="MousePosition"/> didn't change, in milliseconds. Default is 32.</summary>
-        public static float MaxCooldownPointChange { get; set; } = 32;
-
-        internal static void Initialize(Game game)
-        {         
-            game.Window.TextInput += (_, e) =>
-            {
-                TextInput(new PopUpWindowEventArgs(GetPressedButtons(ref newMouseState),
-                                                   GetNewlyPressedButtons(),
-                                                   MousePosition,
-                                                   newMouseState.ScrollWheelValue - oldMouseState.ScrollWheelValue),
-                          e.Character);
-            };
-
-            game.Window.KeyDown += (_, e) =>
-            {
-                KeyDown(new PopUpWindowEventArgs(GetPressedButtons(ref newMouseState),
-                                                 GetNewlyPressedButtons(),
-                                                 MousePosition,
-                                                 newMouseState.ScrollWheelValue - oldMouseState.ScrollWheelValue), 
-                        e.Key);
-            };
-
-            game.Window.KeyUp += (_, e) =>
-            {
-                KeyUp(new PopUpWindowEventArgs(GetPressedButtons(ref newMouseState),
-                                               GetNewlyPressedButtons(),
-                                               MousePosition,
-                                               newMouseState.ScrollWheelValue - oldMouseState.ScrollWheelValue),
-                      e.Key);
-            };
-
-            game.Window.FileDrop += (_, e) =>
-            {
-                FileDrop(new PopUpWindowEventArgs(GetPressedButtons(ref newMouseState),
-                                                  GetNewlyPressedButtons(),
-                                                  MousePosition,
-                                                  newMouseState.ScrollWheelValue - oldMouseState.ScrollWheelValue),
-                         e);  
-            };
+        internal static void Initialize(GameWindow window)
+        {
+            window.KeyDown += (_, e) => KeyDown?.Invoke(lastArgs, e.Key);
+            window.KeyUp += (_, e) => KeyUp?.Invoke(lastArgs, e.Key);
+            window.TextInput += (_, e) => TextInput?.Invoke(lastArgs, e.Character);
+            window.FileDrop += (_, e) => FileDrop?.Invoke(lastArgs, e);
         }
-        
+
         internal static void Update()
         {
-            oldKeyboardState = newKeyboardState;
-            oldMouseState = newMouseState;
+            previousKeyboard = newKeyboard;
+            previousMouse = newMouse;
 
-            newKeyboardState = Keyboard.GetState();
-            newMouseState = Mouse.GetState();
+            newKeyboard = Keyboard.GetState();
+            newMouse = Mouse.GetState();
 
-            PopUpWindowEventArgs args = new PopUpWindowEventArgs(GetPressedButtons(ref newMouseState),
-                                                                 GetNewlyPressedButtons(),
-                                                                 newMouseState.Position,
-                                                                 newMouseState.ScrollWheelValue - oldMouseState.ScrollWheelValue);
+            previousCurrentButtons = newCurrentButtons;
+            newCurrentButtons = GetCurrentButtons();
 
-            if (args.PressedButtons != oldPressedButtons)
+            lastArgs = new PopWindowMouseEventArgs(GetFirstTimeButtons(), newCurrentButtons, GetReleasedButtons(), newMouse.Position);
+
+            if (newCurrentButtons != previousCurrentButtons)
             {
-                oldPressedButtons = args.PressedButtons;
-                MouseButtonStateChange(args);
+                MouseButtonStateChange?.Invoke(lastArgs);
             }
 
-            pointChangeCooldown -= Time.DeltaTime;
-            if (pointChangeCooldown < 0 || oldMouseState.Position != newMouseState.Position)
+            if (newMouse.Position != previousMouse.Position)
             {
-                pointChangeCooldown = MaxCooldownPointChange;
-                MousePositionChange(args);
+                MousePositionChange?.Invoke(lastArgs);
             }
 
-            if (oldMouseState.ScrollWheelValue != newMouseState.ScrollWheelValue)
+            if (newMouse.ScrollWheelValue != previousMouse.ScrollWheelValue)
             {
-                MouseWheelChange(args);
+                MouseVerticalScrollChange?.Invoke(lastArgs, newMouse.ScrollWheelValue - previousMouse.ScrollWheelValue);
+            }
+
+            if (newMouse.HorizontalScrollWheelValue != previousMouse.HorizontalScrollWheelValue)
+            {
+                MouseHorizontalScrollChange?.Invoke(lastArgs, newMouse.HorizontalScrollWheelValue - previousMouse.HorizontalScrollWheelValue);
             }
         }
 
-        /// <summary>Checks if <paramref name="key"/> is down in newest frame.</summary>
-        /// <param name="key">The key to check.</param>
-        /// <returns><see langword="true"/> if <paramref name="key"/> is down in newest frame; otherwise <see langword="false"/>.</returns>
-        public static bool IsDown(Keys key)
+        private static MouseButtons GetFirstTimeButtons()
         {
-            return newKeyboardState.IsKeyDown(key);
+            MouseButtons buttons = MouseButtons.None;
+
+            if (newMouse.LeftButton == ButtonState.Pressed && previousMouse.LeftButton != ButtonState.Pressed) buttons |= MouseButtons.Left;
+            if (newMouse.RightButton == ButtonState.Pressed && previousMouse.RightButton != ButtonState.Pressed) buttons |= MouseButtons.Right;
+            if (newMouse.MiddleButton == ButtonState.Pressed && previousMouse.MiddleButton != ButtonState.Pressed) buttons |= MouseButtons.Middle;
+            if (newMouse.XButton1 == ButtonState.Pressed && previousMouse.XButton1 != ButtonState.Pressed) buttons |= MouseButtons.XButton1;
+            if (newMouse.XButton2 == ButtonState.Pressed && previousMouse.XButton2 != ButtonState.Pressed) buttons |= MouseButtons.XButton2;
+
+            return buttons;
         }
 
-        /// <summary>Checks if <paramref name="key"/> is up in newest frame.</summary>
-        /// <param name="key">The key to check.</param>
-        /// <returns><see langword="true"/> if <paramref name="key"/> is up in newest frame; otherwise <see langword="false"/>.</returns>
-        public static bool IsUp(Keys key)
+        private static MouseButtons GetCurrentButtons()
         {
-            return !IsDown(key);
+            MouseButtons buttons = MouseButtons.None;
+
+            if (newMouse.LeftButton == ButtonState.Pressed) buttons |= MouseButtons.Left;
+            if (newMouse.RightButton == ButtonState.Pressed) buttons |= MouseButtons.Right;
+            if (newMouse.MiddleButton == ButtonState.Pressed) buttons |= MouseButtons.Middle;
+            if (newMouse.XButton1 == ButtonState.Pressed) buttons |= MouseButtons.XButton1;
+            if (newMouse.XButton2 == ButtonState.Pressed) buttons |= MouseButtons.XButton2;
+
+            return buttons;
         }
 
-        /// <summary>Checks if <paramref name="key"/> is being held.</summary>
-        /// <param name="key">The key to check.</param>
-        /// <returns><see langword="true"/> if <paramref name="key"/> is being held; otherwise <see langword="false"/>.</returns>
-        public static bool IsHeld(Keys key)
+        private static MouseButtons GetReleasedButtons()
         {
-            return newKeyboardState.IsKeyDown(key) && oldKeyboardState.IsKeyDown(key);
+            return (newCurrentButtons ^ previousCurrentButtons) & previousCurrentButtons;
         }
 
-        /// <summary>Checks if <paramref name="key"/> is just pressed with newest frame.</summary>
-        /// <param name="key">The key to check.</param>
-        /// <returns><see langword="true"/> if <paramref name="key"/> is just pressed with newest frame; otherwise <see langword="false"/>.</returns>
-        public static bool IsJustPressed(Keys key)
+        public static bool JustPressed(Keys key)
         {
-            return newKeyboardState.IsKeyDown(key) && !oldKeyboardState.IsKeyDown(key);
+            return newKeyboard.IsKeyDown(key) && !previousKeyboard.IsKeyDown(key);
         }
 
-        /// <summary>Checks if <paramref name="key"/> is released with newest frame.</summary>
-        /// <param name="key">The key to check.</param>
-        /// <returns><see langword="true"/> if <paramref name="key"/> is released with newest frame; otherwise <see langword="false"/>.</returns>
-        public static bool IsReleased(Keys key)
+        public static bool CurrentlyPressed(Keys key)
         {
-            return !newKeyboardState.IsKeyDown(key) && oldKeyboardState.IsKeyDown(key);
+            return newKeyboard.IsKeyDown(key) && previousKeyboard.IsKeyDown(key);
         }
 
-        /// <summary>Checks whether given key combination can be used through down keys.</summary>
-        /// <param name="keys">The combination to check.</param>
-        /// <returns><see langword="true"/> if combination can be used; otherwise <see langword="false"/>.</returns>
-        public static bool CanUseCombination(params Keys[] keys)
+        public static bool PressLeaved(Keys key)
         {
-            foreach (var key in keys) if (!IsDown(key)) return false;
+            return !newKeyboard.IsKeyDown(key) && previousKeyboard.IsKeyDown(key);
+        }
+
+        public static bool AllPressed(params Keys[] keys)
+        {
+            for (int i = 0; i < keys.Length; i++)
+            {
+                if (!newKeyboard.IsKeyDown(keys[i]))
+                {
+                    return false;
+                }
+            }
 
             return true;
         }
 
-        /// <summary>Checks if <paramref name="button"/> is down in newest frame.</summary>
-        /// <param name="button">The mouse button to check.</param>
-        /// <returns><see langword="true"/> if <paramref name="button"/> is down in newest frame; otherwise <see langword="false"/>.</returns>
-        public static bool IsDown(MouseButtons button)
+        public static bool AnyJustPressed(MouseButtons button)
         {
-            return GetPressedButtons(ref newMouseState).HasFlag(button);
+            if (button.HasFlag(MouseButtons.Left) && newMouse.LeftButton == ButtonState.Pressed && previousMouse.LeftButton != ButtonState.Pressed)
+                return true;
+            else if (button.HasFlag(MouseButtons.Right) && newMouse.RightButton == ButtonState.Pressed && previousMouse.RightButton != ButtonState.Pressed)
+                return true;
+            else if (button.HasFlag(MouseButtons.Middle) && newMouse.MiddleButton == ButtonState.Pressed && previousMouse.MiddleButton != ButtonState.Pressed)
+                return true;
+            else if (button.HasFlag(MouseButtons.XButton1) && newMouse.XButton1 == ButtonState.Pressed && previousMouse.XButton1 != ButtonState.Pressed)
+                return true;
+            else if (button.HasFlag(MouseButtons.XButton2) && newMouse.XButton2 == ButtonState.Pressed && previousMouse.XButton2 != ButtonState.Pressed)
+                return true;
+
+            return false;
         }
 
-        /// <summary>Checks if <paramref name="button"/> is up in newest frame.</summary>
-        /// <param name="button">The mouse button to check.</param>
-        /// <returns><see langword="true"/> if <paramref name="button"/> is up in newest frame; otherwise <see langword="false"/>.</returns>
-        public static bool IsUp(MouseButtons button)
+        public static bool AllJustPressed(MouseButtons button)
         {
-            return !IsDown(button);
+            if (button.HasFlag(MouseButtons.Left) && !(newMouse.LeftButton == ButtonState.Pressed && previousMouse.LeftButton != ButtonState.Pressed))
+                return false;
+            else if (button.HasFlag(MouseButtons.Right) && !(newMouse.RightButton == ButtonState.Pressed && previousMouse.RightButton != ButtonState.Pressed))
+                return false;
+            else if (button.HasFlag(MouseButtons.Middle) && !(newMouse.MiddleButton == ButtonState.Pressed && previousMouse.MiddleButton != ButtonState.Pressed))
+                return false;
+            else if (button.HasFlag(MouseButtons.XButton1) && !(newMouse.XButton1 == ButtonState.Pressed && previousMouse.XButton1 != ButtonState.Pressed))
+                return false;
+            else if (button.HasFlag(MouseButtons.XButton2) && !(newMouse.XButton2 == ButtonState.Pressed && previousMouse.XButton2 != ButtonState.Pressed))
+                return false;
+
+            return true;
         }
 
-        /// <summary>Checks if <paramref name="button"/> is being held.</summary>
-        /// <param name="button">The mouse button to check.</param>
-        /// <returns><see langword="true"/> if <paramref name="button"/> is being held; otherwise <see langword="false"/>.</returns>
-        public static bool IsHeld(MouseButtons button)
+        public static bool AnyCurrentlyPressed(MouseButtons button)
         {
-            return GetPressedButtons(ref newMouseState).HasFlag(button) && GetPressedButtons(ref oldMouseState).HasFlag(button);
+            if (button.HasFlag(MouseButtons.Left) && newMouse.LeftButton == ButtonState.Pressed && previousMouse.LeftButton == ButtonState.Pressed)
+                return true;
+            else if (button.HasFlag(MouseButtons.Right) && newMouse.RightButton == ButtonState.Pressed && previousMouse.RightButton == ButtonState.Pressed)
+                return true;
+            else if (button.HasFlag(MouseButtons.Middle) && newMouse.MiddleButton == ButtonState.Pressed && previousMouse.MiddleButton == ButtonState.Pressed)
+                return true;
+            else if (button.HasFlag(MouseButtons.XButton1) && newMouse.XButton1 == ButtonState.Pressed && previousMouse.XButton1 == ButtonState.Pressed)
+                return true;
+            else if (button.HasFlag(MouseButtons.XButton2) && newMouse.XButton2 == ButtonState.Pressed && previousMouse.XButton2 == ButtonState.Pressed)
+                return true;
+
+            return false;
         }
 
-        /// <summary>Checks if <paramref name="button"/> is just pressed with newest frame.</summary>
-        /// <param name="button">The mouse button to check.</param>
-        /// <returns><see langword="true"/> if <paramref name="button"/> is just pressed with newest frame; otherwise <see langword="false"/>.</returns>
-        public static bool IsJustPressed(MouseButtons button)
+        public static bool AllCurrentlyPressed(MouseButtons button)
         {
-            return GetPressedButtons(ref newMouseState).HasFlag(button) && !GetPressedButtons(ref oldMouseState).HasFlag(button);
+            if (button.HasFlag(MouseButtons.Left) && !(newMouse.LeftButton == ButtonState.Pressed && previousMouse.LeftButton == ButtonState.Pressed))
+                return false;
+            else if (button.HasFlag(MouseButtons.Right) && !(newMouse.RightButton == ButtonState.Pressed && previousMouse.RightButton == ButtonState.Pressed))
+                return false;
+            else if (button.HasFlag(MouseButtons.Middle) && !(newMouse.MiddleButton == ButtonState.Pressed && previousMouse.MiddleButton == ButtonState.Pressed))
+                return false;
+            else if (button.HasFlag(MouseButtons.XButton1) && !(newMouse.XButton1 == ButtonState.Pressed && previousMouse.XButton1 == ButtonState.Pressed))
+                return false;
+            else if (button.HasFlag(MouseButtons.XButton2) && !(newMouse.XButton2 == ButtonState.Pressed && previousMouse.XButton2 == ButtonState.Pressed))
+                return false;
+
+            return true;
         }
 
-        /// <summary>Checks if <paramref name="button"/> is released with newest frame.</summary>
-        /// <param name="button">The mouse button to check.</param>
-        /// <returns><see langword="true"/> if <paramref name="button"/> is released with newest frame; otherwise <see langword="false"/>.</returns>
-        public static bool IsReleased(MouseButtons button)
+        public static bool AnyPressLeaved(MouseButtons button)
         {
-            return !GetPressedButtons(ref newMouseState).HasFlag(button) && GetPressedButtons(ref oldMouseState).HasFlag(button);
+            if (button.HasFlag(MouseButtons.Left) && newMouse.LeftButton != ButtonState.Pressed && previousMouse.LeftButton == ButtonState.Pressed)
+                return true;
+            else if (button.HasFlag(MouseButtons.Right) && newMouse.RightButton != ButtonState.Pressed && previousMouse.RightButton == ButtonState.Pressed)
+                return true;
+            else if (button.HasFlag(MouseButtons.Middle) && newMouse.MiddleButton != ButtonState.Pressed && previousMouse.MiddleButton == ButtonState.Pressed)
+                return true;
+            else if (button.HasFlag(MouseButtons.XButton1) && newMouse.XButton1 != ButtonState.Pressed && previousMouse.XButton1 == ButtonState.Pressed)
+                return true;
+            else if (button.HasFlag(MouseButtons.XButton2) && newMouse.XButton2 != ButtonState.Pressed && previousMouse.XButton2 == ButtonState.Pressed)
+                return true;
+
+            return false;
         }
 
-        private static MouseButtons GetNewlyPressedButtons()
+        public static bool AllPressLeaved(MouseButtons button)
         {
-            MouseButtons newlyPressedButtons = MouseButtons.None;
+            if (button.HasFlag(MouseButtons.Left) && !(newMouse.LeftButton != ButtonState.Pressed && previousMouse.LeftButton == ButtonState.Pressed))
+                return false;
+            else if (button.HasFlag(MouseButtons.Right) && !(newMouse.RightButton != ButtonState.Pressed && previousMouse.RightButton == ButtonState.Pressed))
+                return false;
+            else if (button.HasFlag(MouseButtons.Middle) && !(newMouse.MiddleButton != ButtonState.Pressed && previousMouse.MiddleButton == ButtonState.Pressed))
+                return false;
+            else if (button.HasFlag(MouseButtons.XButton1) && !(newMouse.XButton1 != ButtonState.Pressed && previousMouse.XButton1 == ButtonState.Pressed))
+                return false;
+            else if (button.HasFlag(MouseButtons.XButton2) && !(newMouse.XButton2 != ButtonState.Pressed && previousMouse.XButton2 == ButtonState.Pressed))
+                return false;
 
-            if (IsJustPressed(MouseButtons.Left)) newlyPressedButtons |= MouseButtons.Left;
-            if (IsJustPressed(MouseButtons.Right)) newlyPressedButtons |= MouseButtons.Right;
-            if (IsJustPressed(MouseButtons.Middle)) newlyPressedButtons |= MouseButtons.Middle;
-            if (IsJustPressed(MouseButtons.XButton1)) newlyPressedButtons |= MouseButtons.XButton1;
-            if (IsJustPressed(MouseButtons.XButton2)) newlyPressedButtons |= MouseButtons.XButton2;
-
-            return newlyPressedButtons ^ MouseButtons.None;
-        }
-
-        private static MouseButtons GetPressedButtons(ref readonly MouseState state)
-        {
-            MouseButtons pressedButtons = MouseButtons.None;
-
-            if (state.LeftButton == ButtonState.Pressed) pressedButtons |= MouseButtons.Left;
-            if (state.RightButton == ButtonState.Pressed) pressedButtons |= MouseButtons.Right;
-            if (state.MiddleButton == ButtonState.Pressed) pressedButtons |= MouseButtons.Middle;
-            if (state.XButton1 == ButtonState.Pressed) pressedButtons |= MouseButtons.XButton1;
-            if (state.XButton2 == ButtonState.Pressed) pressedButtons |= MouseButtons.XButton2;
-
-            return pressedButtons ^ MouseButtons.None;
+            return true;
         }
     }
 }

@@ -8,8 +8,8 @@
         public TextReceiverPacket TextReceiverPacket { get; }
 
         /// <summary>Called when element got a text input.</summary>
-        /// <param name="e">A <see cref="PopUpWindowEventArgs"/> object that contains event data.</param>
+        /// <param name="e">A <see cref="PopWindowMouseEventArgs"/> object that contains event data.</param>
         /// <param name="ch">The text input.</param>
-        public void OnTextInputReceive(PopUpWindowEventArgs e, char ch);
+        public void OnTextInputReceive(PopWindowMouseEventArgs e, char ch);
     }
 }

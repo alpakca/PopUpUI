@@ -121,13 +121,13 @@ namespace PopUpUI.Surface
             return destination.Bottom > 0 || destination.Right > 0 || destination.Top < _boundaries.Height || destination.Left < _boundaries.Width;
         }
 
-        protected internal virtual void OnMousePositionChange(PopUpWindowEventArgs e)
+        protected internal virtual void OnMousePositionChange(Input.PopWindowMouseEventArgs e)
         {
             HandleHoverableElementEvents(e);
             HandleHoldableElementEvents(e);
         }
 
-        private void HandleHoverableElementEvents(PopUpWindowEventArgs e)
+        private void HandleHoverableElementEvents(Input.PopWindowMouseEventArgs e)
         {
             bool endAllHovers = false;
             foreach (var element in Elements.WhereWithType<IHoverable>())
@@ -138,7 +138,7 @@ namespace PopUpUI.Surface
                     continue;
                 }
 
-                if (element.CanBeHovered(e.MousePoint))
+                if (element.CanBeHovered(e.MousePosition))
                 {
                     if (!element.IsHovered) element.OnHoverStateChange(e, true);
 
@@ -153,7 +153,7 @@ namespace PopUpUI.Surface
             }
         }
 
-        private void HandleHoldableElementEvents(PopUpWindowEventArgs e)
+        private void HandleHoldableElementEvents(Input.PopWindowMouseEventArgs e)
         {
             if (!EnableMultiHold)
             {
@@ -214,57 +214,64 @@ namespace PopUpUI.Surface
                 }
             }
 
-            static bool HoldableShouldBeHeld(IHoldable element, PopUpWindowEventArgs e)
+            static bool HoldableShouldBeHeld(IHoldable element, Input.PopWindowMouseEventArgs e)
             {
-                return (element.CanBeHeld(e.MousePoint) || element.IsHeld) && element.HoldPacket.ButtonsToHold.HasAnyFlagFrom(e.PressedButtons);
+                return (element.CanBeHeld(e.MousePosition) || element.IsHeld) && e.CurrentButtons.OverlapsWith(element.HoldPacket.ButtonsToHold);
             }
         }
 
-        protected internal virtual void OnMouseButtonStateChange(PopUpWindowEventArgs e)
+        protected internal virtual void OnMouseButtonStateChange(Input.PopWindowMouseEventArgs e)
         {
-            ISelectable? selectedElement = Elements.FindWithType<ISelectable>(element => element.CanBeSelected(e.MousePoint) &&
-                                                                                        element.SelectablePacket.ButtonsToSelect.HasAnyFlagFrom(e.NewlyPressedButtons));
+            ISelectable? selectedElement = Elements.FindWithType<ISelectable>(element => element.CanBeSelected(e.MousePosition) &&
+                                                                                         e.FirstTimeButtons.OverlapsWith(element.SelectablePacket.ButtonsToSelect));
 
             selectedElement?.OnSelect(e);
 
             IEnumerable<ISelectable> outsideSelectables = Elements.WhereWithType<ISelectable>(element => element.SelectablePacket.EnabledOutsideSelecting);
             foreach (var element in outsideSelectables)
             {
-                if (!element.CanBeSelected(e.MousePoint)) element.OnSelectingOutside(e);
+                if (!element.CanBeSelected(e.MousePosition)) element.OnSelectingOutside(e);
             }
         }
 
-        protected internal virtual void OnMouseWheelChange(PopUpWindowEventArgs e)
+        protected internal virtual void OnMouseVerticalScrollChange(Input.PopWindowMouseEventArgs e, int change)
         {
-            IMouseWheelReceiver? mouseWheelReceiver = Elements.FindWithType<IMouseWheelReceiver>(element => element.CanReceiveWheelChangeInput(e.MousePoint));
+            IMouseWheelReceiver? mouseWheelReceiver = Elements.FindWithType<IMouseWheelReceiver>(element => element.CanReceiveWheelChangeInput(e.MousePosition));
 
-            mouseWheelReceiver?.OnMouseWheelChangeReceive(e);
+            mouseWheelReceiver?.OnMouseVerticalScrollChangeReceive(e, change);
         }
 
-        protected internal virtual void OnKeyDown(PopUpWindowEventArgs e, Keys key)
+        protected internal virtual void OnMouseHorizontalScrollChange(Input.PopWindowMouseEventArgs e, int change)
+        {
+            IMouseWheelReceiver? mouseWheelReceiver = Elements.FindWithType<IMouseWheelReceiver>(element => element.CanReceiveWheelChangeInput(e.MousePosition));
+
+            mouseWheelReceiver?.OnMouseHorizontalScrollChangeReceive(e, change);
+        }
+
+        protected internal virtual void OnKeyDown(Input.PopWindowMouseEventArgs e, Keys key)
         {
             IKeyReceiver? keyReceiver = Elements.FindWithType<IKeyReceiver>(element => element.ReceivesKeyInput);
 
             keyReceiver?.OnKeyDown(e, key);
         }
 
-        protected internal virtual void OnKeyUp(PopUpWindowEventArgs e, Keys key)
+        protected internal virtual void OnKeyUp(Input.PopWindowMouseEventArgs e, Keys key)
         {
             IKeyReceiver? keyReceiver = Elements.FindWithType<IKeyReceiver>(element => element.ReceivesKeyInput);
 
             keyReceiver?.OnKeyUp(e, key);
         }
 
-        protected internal virtual void OnTextInput(PopUpWindowEventArgs e, char ch)
+        protected internal virtual void OnTextInput(Input.PopWindowMouseEventArgs e, char ch)
         {
             ITextReceiver? textReceiver = Elements.FindWithType<ITextReceiver>(element => element.ReceivesTextInput);
 
             textReceiver?.OnTextInputReceive(e, ch);
         }
 
-        protected internal virtual void OnFileDrop(PopUpWindowEventArgs e, FileDropEventArgs fileArgs)
+        protected internal virtual void OnFileDrop(Input.PopWindowMouseEventArgs e, FileDropEventArgs fileArgs)
         {
-            IFileReceiver? fileReceiver = Elements.FindWithType<IFileReceiver>(element => element.CanReceiveFileDrop(e.MousePoint));
+            IFileReceiver? fileReceiver = Elements.FindWithType<IFileReceiver>(element => element.CanReceiveFileDrop(e.MousePosition));
 
             fileReceiver?.OnFileDrop(e, fileArgs);
         }
