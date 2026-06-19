@@ -20,8 +20,7 @@ namespace PopUpUI.Elements
 
         public void OnSelect(Input.PopWindowMouseEventArgs e)
         {
-            isChecked = !isChecked;
-            OnCheckChange();
+            SwitchStatus();
 
             SelectablePacket?.RaiseSelected(this, e);
         }
@@ -34,6 +33,12 @@ namespace PopUpUI.Elements
         public bool CanBeSelected(Point point)
         {
             return base.InsideBoundaries(point);
+        }
+
+        public void SwitchStatus()
+        {
+            isChecked = !isChecked;
+            OnCheckChange();
         }
     }
 }
