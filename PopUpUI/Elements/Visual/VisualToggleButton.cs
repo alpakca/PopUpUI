@@ -4,20 +4,11 @@ using System.Collections.Generic;
 
 namespace PopUpUI.Elements.Visual
 {
-    public class VisualCheckBox : CheckBox
+    public class VisualToggleButton : ToggleButton
     {
         private Animation2D _checkedAnimation;
         private Animation2D _uncheckedAnimation;
         private readonly AnimationDrawInfo drawInfo;
-
-        public override float Opacity 
-        { 
-            set
-            {
-                drawInfo.Opacity = value;
-                base.Opacity = value;
-            }
-        }
 
         public override Rectangle Boundaries 
         {
@@ -25,6 +16,15 @@ namespace PopUpUI.Elements.Visual
             {
                 drawInfo.DestinationArea = value;
                 base.Boundaries = value;
+            }
+        }
+
+        public override float Opacity
+        {
+            set
+            {
+                drawInfo.Opacity = value;
+                base.Opacity = value;
             }
         }
 
@@ -54,16 +54,16 @@ namespace PopUpUI.Elements.Visual
             }
         }
 
-        public VisualCheckBox()
+        public VisualToggleButton()
         {
             drawInfo = new AnimationDrawInfo();
         }
 
-        protected override void OnCheckChange()
+        protected override void OnToggle()
         {
             drawInfo.Animation = IsChecked ? CheckedAnimation : UncheckedAnimation;
 
-            base.OnCheckChange();
+            base.OnToggle();
         }
 
         public override IEnumerable<UIDrawInfo> GetDrawInfos()

@@ -15,10 +15,18 @@ namespace PopUpUI.Elements
         public HoldablePacket HoldPacket { get; set; }
         public SelectablePacket SelectablePacket { get; set; }
 
-        public event Action<Clickable> Clicked;
+        public ICommander<Clickable>? Command { get; set; }
+        public event Action<Clickable>? Clicked;
+
+        public void Press()
+        {
+            wasSelected = false;
+            OnClick();
+        }
 
         protected virtual void OnClick()
         {
+            Command?.Execute(this);
             Clicked?.Invoke(this);
         }
 
@@ -26,8 +34,7 @@ namespace PopUpUI.Elements
         {
             if (!startedHolding && wasSelected && CanBeSelected(e.MousePosition))
             {
-                wasSelected = false;
-                OnClick();
+                Press();
             }
 
             this.isHeld = startedHolding;
