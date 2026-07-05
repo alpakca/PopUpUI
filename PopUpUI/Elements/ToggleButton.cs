@@ -9,8 +9,7 @@ namespace PopUpUI.Elements
         private bool isChecked;
 
         public bool IsChecked => isChecked;
-
-        public event Action<ToggleButton>? Toggled;
+        public ICommander<ToggleButton>? ToggleCommand { get; set; }
 
         public void Toggle()
         {
@@ -20,7 +19,7 @@ namespace PopUpUI.Elements
 
         protected virtual void OnToggle()
         {
-            Toggled?.Invoke(this);
+            ToggleCommand?.Execute(this);
         }
 
         protected override void OnClick()

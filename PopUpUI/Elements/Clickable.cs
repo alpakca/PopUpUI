@@ -14,9 +14,7 @@ namespace PopUpUI.Elements
         public bool IsHeld => isHeld;
         public HoldablePacket HoldPacket { get; set; }
         public SelectablePacket SelectablePacket { get; set; }
-
-        public ICommander<Clickable>? Command { get; set; }
-        public event Action<Clickable>? Clicked;
+        public ICommander<Clickable>? ClickCommand { get; set; }
 
         public void Press()
         {
@@ -26,8 +24,7 @@ namespace PopUpUI.Elements
 
         protected virtual void OnClick()
         {
-            Command?.Execute(this);
-            Clicked?.Invoke(this);
+            ClickCommand?.Execute(this);
         }
 
         public virtual void OnHoldStateChange(Input.PopWindowMouseEventArgs e, bool startedHolding)

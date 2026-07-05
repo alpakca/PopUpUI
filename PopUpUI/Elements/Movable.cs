@@ -13,6 +13,7 @@ namespace PopUpUI.Elements
         public MovementDirection MovementDirection { get; }
 
         public HoldablePacket HoldPacket { get; set; }
+        public ICommander<Movable>? PositionChangeCommand { get; set; }
 
         public Movable(MovementDirection movementDirection)
         {
@@ -39,6 +40,7 @@ namespace PopUpUI.Elements
 
         protected virtual void OnPositionChange()
         {
+            PositionChangeCommand?.Execute(this);
         }
 
         public bool CanBeHeld(Point point)

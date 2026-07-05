@@ -4,8 +4,8 @@ using System.Text;
 
 namespace PopUpUI.Elements
 {
-    public interface ICommander<in TElement>
+    public interface ICommander<in T>
     {
-        public void Execute(TElement element);
+        public void Execute(T element);
     }
 }

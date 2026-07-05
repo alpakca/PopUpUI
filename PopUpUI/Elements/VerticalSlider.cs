@@ -15,6 +15,7 @@ namespace PopUpUI.Elements
         public bool IsHeld => isHeld;
         public HoldablePacket HoldPacket { get; set; }
         public SelectablePacket SelectablePacket { get; set; }
+        public ICommander<VerticalSlider>? SlideCommand { get; set; }
 
         public int Range 
         { 
@@ -61,6 +62,7 @@ namespace PopUpUI.Elements
 
         protected virtual void OnSliding()
         {
+            SlideCommand?.Execute(this);
         }
 
         public void OnSelect(Input.PopWindowMouseEventArgs e)

@@ -15,6 +15,7 @@ namespace PopUpUI.Elements
         public bool IsHeld => isHeld;
         public HoldablePacket HoldPacket { get; set; }
         public SelectablePacket SelectablePacket { get; set; }
+        public ICommander<HorizontalSlider>? SlideCommand { get; set; }
 
         /// <summary>Gets the range of the slider. This range is different from Boundaries.Width, 
         /// as Boundaries.Width refers to width of sliding object.</summary>
@@ -63,6 +64,7 @@ namespace PopUpUI.Elements
 
         protected virtual void OnSliding()
         {
+            SlideCommand?.Execute(this);
         }
 
         public virtual void OnSelect(Input.PopWindowMouseEventArgs e)
