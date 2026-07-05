@@ -7,6 +7,7 @@ using PopUpUI.Input;
 using PopUpUI.Toolkit;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 #pragma warning disable 8632
 
@@ -232,6 +233,8 @@ namespace PopUpUI.Surface
             {
                 if (!element.CanBeSelected(e.MousePosition)) element.OnSelectingOutside(e);
             }
+
+            HandleHoldableElementEvents(e);
         }
 
         protected internal virtual void OnMouseVerticalScrollChange(Input.PopWindowMouseEventArgs e, int change)
