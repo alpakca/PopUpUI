@@ -47,24 +47,29 @@ namespace PopUpUI.Surface
 
         public event Action<Animation2D>? Finished;
 
-        public Animation2D(IEnumerable<Texture2D> frames) 
+        public Animation2D(IEnumerable<Texture2D> frames) : this(frames.ToArray())
+        {
+        }
+
+        public Animation2D(Texture2D[] frames)
         {
             ArgumentNullException.ThrowIfNull(frames);
 
-            if (!frames.Any())
+            if (frames.Length == 0)
                 throw new ArgumentException("Cannot initialize animation without any frames");
 
-            _frames = frames.ToArray();
+            _frames = frames;
 
-            foreach (var frame in frames)
+            for (int i = 0; i < frames.Length; i++)
             {
-                if (frame?.Width != this.Width || frame?.Height != this.Height)
+                if (frames[i]?.Width != this.Width || frames[i]?.Height != this.Height)
                     throw new ArgumentException("Animation frames must be in same size");
             }
         }
 
-        public Animation2D(Texture2D[] frames) : this((IEnumerable<Texture2D>)frames)
+        public static Animation2D FromTexture(Texture2D texture)
         {
+            return new Animation2D([texture]);
         }
 
         public void DisposeFrames()
