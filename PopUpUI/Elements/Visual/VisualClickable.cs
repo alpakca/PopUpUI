@@ -42,6 +42,7 @@ namespace PopUpUI.Elements.Visual
         }
 
         public Animation2D HoldAnimation { get; set; }
+        public Animation2D HoverAnimation { get; set; }
 
         public VisualClickable()
         {
@@ -50,21 +51,43 @@ namespace PopUpUI.Elements.Visual
 
         protected override void OnClick()
         {
-            drawInfo.Animation = defaultAnimation;
+            // IsHeld must be false to be able to click
+            drawInfo.Animation = GetDrawInfoAnimation(false, IsHovered);
 
             base.OnClick();
         }
 
-        public override void OnHoldStateChange(Input.PopWindowMouseEventArgs e, bool startedHolding)
+        public override void OnHoldStateChange(PopWindowMouseEventArgs e, bool startedHolding)
         {
-            drawInfo.Animation = startedHolding ? HoldAnimation ?? defaultAnimation : defaultAnimation;
+            drawInfo.Animation = GetDrawInfoAnimation(startedHolding, IsHovered);
 
             base.OnHoldStateChange(e, startedHolding);
+        }
+
+        public override void OnHoverStateChange(PopWindowMouseEventArgs e, bool startedHovering)
+        {
+            drawInfo.Animation = GetDrawInfoAnimation(IsHeld, startedHovering);
+
+            base.OnHoverStateChange(e, startedHovering);
         }
 
         public override IEnumerable<UIDrawInfo> GetDrawInfos()
         {
             return [drawInfo];
+        }
+
+        private Animation2D GetDrawInfoAnimation(bool isHeld, bool isHovered)
+        {
+            if (isHeld)
+            {
+                return HoldAnimation ?? (IsHeld ? HoverAnimation ?? defaultAnimation : defaultAnimation);
+            }
+            else if (isHovered)
+            {
+                return HoverAnimation ?? defaultAnimation;
+            }
+
+            return defaultAnimation;
         }
     }
 }
