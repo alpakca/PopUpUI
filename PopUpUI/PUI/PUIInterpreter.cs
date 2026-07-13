@@ -30,12 +30,22 @@ namespace PopUpUI.PUI
 
         public void AssignProperties<T>(IDescriptorAssigner<T> assigner, string name, T element)
         {
-            if (_loadedDescriptors[name].TypeName != assigner.TypeName)
+            if (!_loadedDescriptors.TryGetValue(name, out PUIDescriptor desc) || desc.TypeName != assigner.TypeName)
             {
                 throw new ArgumentException($"Types of given assigner and descriptor with name \"{name}\" does not match.");
             }
 
-            assigner.Assign(_loadedDescriptors[name], element);
+            assigner.Assign(desc, element);
+        }
+
+        public T CreateFromProperties<T>(IDescriptorInstantiator<T> instantiator, string name)
+        {
+            if (!_loadedDescriptors.TryGetValue(name, out PUIDescriptor desc) || desc.TypeName != instantiator.TypeName)
+            {
+                throw new ArgumentException($"Types of given instantiator and descriptor with name \"{name}\" does not match.");
+            }
+
+            return instantiator.Instantiate(desc);
         }
 
         public void AddVariableCreators(IEnumerable<IPUIVariableCreator> variableCreators)
@@ -43,7 +53,17 @@ namespace PopUpUI.PUI
             foreach (var creator in variableCreators) _variableCreators.Add(creator.TypeName, creator);
         }
 
+        public void AddVariableCreators(params ReadOnlySpan<IPUIVariableCreator> variableCreators)
+        {
+            foreach (var creator in variableCreators) _variableCreators.Add(creator.TypeName, creator);
+        }
+
         public void AddTupleParsers(IEnumerable<ITupleParser> tupleParsers)
+        {
+            foreach (var parser in tupleParsers) _tupleParsers.Add(parser.TypeName, parser);
+        }
+
+        public void AddTupleParsers(params ReadOnlySpan<ITupleParser> tupleParsers)
         {
             foreach (var parser in tupleParsers) _tupleParsers.Add(parser.TypeName, parser);
         }
@@ -134,30 +154,44 @@ namespace PopUpUI.PUI
 
         private object ReadValue()
         {
-            if (cursor.PeekNext(1).Type != TokenType.Addition)
+            if (cursor.PeekNext(1).Type == TokenType.Addition)
+            {
+                return ConcatValues();
+            }
+            else
             {
                 return ReadSingleValue();
             }
+        }
 
-            PUIToken left = cursor.Advance();
+        private string ConcatValues()
+        {
+            PUIToken left = AsConcatableStringToken(cursor.Advance());
             while (cursor.Current.Type == TokenType.Addition)
             {
                 cursor.Advance();
-                PUIToken right = cursor.Advance();
+                PUIToken right = AsConcatableStringToken(cursor.Advance());
 
-                if (right.Type == TokenType.String)
-                {
-                    left = new PUIToken(TokenType.String, left.Text + right.Text);
-                }
-                else if (right.Type == TokenType.Identifier && _loadedVariables[right.Text].Value is string str)
-                {
-                    left = new PUIToken(TokenType.String, left.Text + str);
-                }
-                else
-                    throw new InterpreterException($"Addition is only supported with string values", cursor.CurrentIndex);
+                left = new PUIToken(TokenType.String, left.Text + right.Text);
             }
 
             return left.Text;
+        }
+
+        private PUIToken AsConcatableStringToken(PUIToken token)
+        {
+            if (token.Type == TokenType.String)
+            {
+                return token;
+            }
+            else if (token.Type == TokenType.Identifier && _loadedVariables[token.Text].Value is string str)
+            {
+                return new PUIToken(TokenType.String, str);
+            }
+            else
+            {
+                throw new InterpreterException($"Addition is only supported with string values", cursor.CurrentIndex);
+            }
         }
 
         /// <summary>Reads the value that comes after an equality sign '=' or TokenType.Equals.</summary>

@@ -6,7 +6,7 @@ namespace PopUpUI.PUI
 {
     public abstract class PUIVariable
     {
-        public object Value { get; set; }
+        public abstract object Value { get; set; }
     }
 
     public abstract class PUIBraceVariable : PUIVariable, IBraceable
