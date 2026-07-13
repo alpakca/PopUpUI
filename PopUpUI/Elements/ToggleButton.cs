@@ -17,6 +17,14 @@ namespace PopUpUI.Elements
             OnToggle();
         }
 
+        public void SetCheckStatus(bool setToChecked)
+        {
+            if (setToChecked != isChecked)
+            {
+                Toggle();
+            }
+        }
+
         protected virtual void OnToggle()
         {
             ToggleCommand?.Execute(this);

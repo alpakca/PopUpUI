@@ -36,8 +36,12 @@ namespace PopUpUI.Elements.Visual
                 // special case for initial animating, which should also assign draw info
                 // so that it won't return null before any event occurs
                 drawInfo.Animation ??= value;
-
                 _checkedAnimation = value;
+
+                if (UncheckedAnimation != null)
+                {
+                    SetDrawInfoAnimation();
+                }
             }
         }
 
@@ -49,8 +53,12 @@ namespace PopUpUI.Elements.Visual
                 // special case for initial animating, which should also assign draw info
                 // so that it won't return null before any event occurs
                 drawInfo.Animation ??= value;
-
                 _uncheckedAnimation = value;
+
+                if (CheckedAnimation != null)
+                {
+                    SetDrawInfoAnimation();
+                }
             }
         }
 
@@ -61,9 +69,13 @@ namespace PopUpUI.Elements.Visual
 
         protected override void OnToggle()
         {
-            drawInfo.Animation = IsChecked ? CheckedAnimation : UncheckedAnimation;
-
+            SetDrawInfoAnimation();
             base.OnToggle();
+        }
+
+        private void SetDrawInfoAnimation()
+        {
+            drawInfo.Animation = IsChecked ? CheckedAnimation : UncheckedAnimation;
         }
 
         public override IEnumerable<UIDrawInfo> GetDrawInfos()
