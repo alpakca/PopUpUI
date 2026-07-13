@@ -232,7 +232,7 @@ namespace PopUpUI.PUI
 
                 if (next.Type == TokenType.LeftParen && _tupleParsers.TryGetValue(valueToken.Text, out ITupleParser parser))
                 {
-                    return parser.Parse(cursor);
+                    return parser.Parse(GetTupleComponents());
                 }
                 else if (_loadedVariables.TryGetValue(valueToken.Text, out PUIVariable variable))
                 {
@@ -241,6 +241,27 @@ namespace PopUpUI.PUI
             }
 
             throw new InterpreterException($"Cannot resolve symbol {valueToken.Text}", cursor.CurrentIndex);
+        }
+
+        private object[] GetTupleComponents()
+        {
+            cursor.Expect(TokenType.LeftParen);
+
+            List<object> values = new List<object>();
+            while (cursor.HasToken)
+            {
+                values.Add(ReadValue());
+
+                if (cursor.Current.Type == TokenType.RightParen)
+                {
+                    cursor.Advance();
+                    break;
+                }
+
+                cursor.Expect(TokenType.Comma);
+            }
+
+            return values.ToArray();
         }
 
         private void ThrowUnexpectedToken(TokenType type)

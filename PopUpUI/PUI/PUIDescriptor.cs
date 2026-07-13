@@ -39,5 +39,15 @@ namespace PopUpUI.PUI
             result = default;
             return false;
         }
+
+        public T GetPropertyOrDefault<T>(string name, T defaultValue)
+        {
+            if (properties.TryGetValue(name, out object oValue) && oValue is T value)
+            {
+                return value;
+            }
+
+            return defaultValue;
+        }
     }
 }
