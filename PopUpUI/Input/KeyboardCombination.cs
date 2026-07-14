@@ -2,11 +2,12 @@
 using PopUpUI.Toolkit;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace PopUpUI.Input
 {
-    public class KeyboardCombination : IComparable<KeyboardCombination>
+    public class KeyboardCombination : IEquatable<KeyboardCombination>
     {
         private readonly TimeSpan _originalFirstDelay;
         private readonly TimeSpan _originalConsecutiveDelay;
@@ -28,11 +29,6 @@ namespace PopUpUI.Input
 
             isInFirstDelay = true;
             remainingDelay = firstDelay;
-        }
-
-        public int CompareTo(KeyboardCombination other)
-        {
-            return -this.Keys.Length.CompareTo(other.Keys.Length);
         }
 
         public bool Update()
@@ -61,6 +57,16 @@ namespace PopUpUI.Input
         {
             isInFirstDelay = true;
             remainingDelay = _originalFirstDelay;
+        }
+
+        public bool Equals(KeyboardCombination other)
+        {
+            return Enumerable.SequenceEqual(this.Keys, other.Keys);
+        }
+
+        public override int GetHashCode()
+        {
+            return (int)Keys.Aggregate((k1, k2) => k1 ^ k2) ^ Keys.Length;
         }
 
         public static KeyboardCombination GetSingleUse(Keys[] keys)

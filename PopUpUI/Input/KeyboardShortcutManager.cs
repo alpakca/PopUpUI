@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Input;
+using PopUpUI.Containers;
 using PopUpUI.Elements;
 using PopUpUI.Toolkit;
 using System;
@@ -11,13 +12,13 @@ namespace PopUpUI.Input
     public class KeyboardShortcutManager : PopElement
     {
         private KeyboardCombination _lastTriggered;
-        private readonly SortedSet<KeyboardCombination> _combinations;
+        private readonly HashSet<KeyboardCombination> _combinations;
 
         public KeyboardCombination LastTriggered => _lastTriggered;
 
         public KeyboardShortcutManager()
         {
-            _combinations = new SortedSet<KeyboardCombination>();
+            _combinations = new HashSet<KeyboardCombination>();
         }
 
         public void AddCombinations(params ReadOnlySpan<KeyboardCombination> combinations)
