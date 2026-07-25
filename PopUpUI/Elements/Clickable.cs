@@ -9,6 +9,7 @@ namespace PopUpUI.Elements
         private bool isHeld;
         private bool isHovered;
         private bool wasSelected;
+        protected bool _enabled = true;
 
         protected bool WasSelected => wasSelected;
 
@@ -17,6 +18,16 @@ namespace PopUpUI.Elements
         public HoldablePacket HoldPacket { get; set; }
         public HoverablePacket HoverablePacket { get; set; }
         public SelectablePacket SelectablePacket { get; set; }
+
+        public bool Enabled
+        {
+            get => _enabled;
+            set
+            {
+                _enabled = value;
+                EnableStatusChanged();
+            }
+        }
         public ICommander<Clickable>? ClickCommand { get; set; }
 
         public void Press()
@@ -25,12 +36,16 @@ namespace PopUpUI.Elements
             OnClick();
         }
 
+        protected virtual void EnableStatusChanged()
+        {
+        }
+
         protected virtual void OnClick()
         {
             ClickCommand?.Execute(this);
         }
 
-        public virtual void OnHoldStateChange(Input.PopWindowMouseEventArgs e, bool startedHolding)
+        public virtual void OnHoldStateChange(PopWindowMouseEventArgs e, bool startedHolding)
         {
             if (!startedHolding && wasSelected && CanBeSelected(e.MousePosition))
             {
@@ -57,8 +72,11 @@ namespace PopUpUI.Elements
             HoverablePacket?.RaiseHovering(this, e);
         }
 
-        public virtual void OnSelect(Input.PopWindowMouseEventArgs e)
+        public virtual void OnSelect(PopWindowMouseEventArgs e)
         {
+            if (!Enabled)
+                return;
+
             wasSelected = true;
             SelectablePacket?.RaiseSelected(this, e);
         }

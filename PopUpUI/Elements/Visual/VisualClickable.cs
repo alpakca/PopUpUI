@@ -41,12 +41,21 @@ namespace PopUpUI.Elements.Visual
             }
         }
 
+        public Animation2D UnenabledAnimation { get; set; }
+
         public Animation2D HoldAnimation { get; set; }
         public Animation2D HoverAnimation { get; set; }
 
         public VisualClickable()
         {
             drawInfo = new AnimationDrawInfo();
+        }
+
+        protected override void EnableStatusChanged()
+        {
+            drawInfo.Animation = GetDrawInfoAnimation(IsHeld, IsHovered);
+
+            base.EnableStatusChanged();
         }
 
         protected override void OnClick()
@@ -78,6 +87,11 @@ namespace PopUpUI.Elements.Visual
 
         private Animation2D GetDrawInfoAnimation(bool isHeld, bool isHovered)
         {
+            if (!Enabled)
+            {
+                return UnenabledAnimation;
+            }
+
             if (isHeld)
             {
                 return HoldAnimation ?? (IsHeld ? HoverAnimation ?? defaultAnimation : defaultAnimation);
