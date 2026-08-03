@@ -62,6 +62,8 @@ namespace PopUpUI.Elements.Visual
             }
         }
 
+        public Animation2D UnenabledAnimation { get; set; }
+
         public VisualToggleButton()
         {
             drawInfo = new AnimationDrawInfo();
@@ -73,8 +75,20 @@ namespace PopUpUI.Elements.Visual
             base.OnToggle();
         }
 
+        protected override void EnableStatusChanged()
+        {
+            SetDrawInfoAnimation();
+            base.EnableStatusChanged();
+        }
+
         private void SetDrawInfoAnimation()
         {
+            if (!this.Enabled)
+            {
+                drawInfo.Animation = UnenabledAnimation;
+                return;
+            }
+
             drawInfo.Animation = IsChecked ? CheckedAnimation : UncheckedAnimation;
         }
 
