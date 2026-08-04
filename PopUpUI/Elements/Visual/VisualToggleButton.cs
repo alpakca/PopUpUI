@@ -75,6 +75,12 @@ namespace PopUpUI.Elements.Visual
             base.OnToggle();
         }
 
+        public override void SetStatusWithoutCommander(bool setToChecked)
+        {
+            base.SetStatusWithoutCommander(setToChecked);
+            SetDrawInfoAnimation();
+        }
+
         protected override void EnableStatusChanged()
         {
             SetDrawInfoAnimation();
