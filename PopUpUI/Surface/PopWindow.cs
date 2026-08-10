@@ -26,6 +26,8 @@ namespace PopUpUI.Surface
         public float Opacity { get; set; } = 1;
         /// <summary>Gets or sets the scale to use when drawing this window to screen. It doesn't effect bounds or texture of <see cref="WindowTexture"/>.</summary>
         public float Scale { get; set; } = 1;
+        /// <summary>When set to true, lets window to not take any further input/update/render calls. Default value is <see langword="false"/>.</summary>
+        public bool Frozen { get; set; } = false;
 
         public RenderTarget2D WindowTexture => _windowTexture;
 
@@ -50,15 +52,13 @@ namespace PopUpUI.Surface
             }
         }
 
-        public PopWindow(Point size) : this(size, null)
+        public PopWindow() : this(null)
         {
         }
 
-        public PopWindow(Point size, BatchDrawOptions? drawOptions)
+        public PopWindow(BatchDrawOptions? drawOptions)
         {
             DrawOptions = drawOptions ?? BatchDrawOptions.Default;
-
-            Boundaries = new Rectangle(new Point(), size);
             Elements = new PopElementCollection();
         }
 

@@ -36,20 +36,26 @@ namespace PopUpUI.Toolkit
 
         internal static void Update()
         {
-            foreach (var window in ActiveWindows) window.Update();
+            foreach (var window in ActiveWindows)
+            {
+                if (!window.Frozen) window.Update();
+            }
         }
 
         internal static void RenderUpdate()
         {
-            foreach (var window in ActiveWindows) window.RenderUpdate();
+            foreach (var window in ActiveWindows) 
+            {
+                if (!window.Frozen) window.RenderUpdate(); 
+            }
         }
 
         internal static void BufferDraw(SpriteBatch batch)
         {
             foreach (var window in ActiveWindows)
             {
-                batch.Draw(window.WindowTexture, 
-                           new Rectangle(window.Boundaries.Location.TimesFloat(GlobalScale), window.Boundaries.Size.TimesFloat(window.Scale * GlobalScale)), 
+                batch.Draw(window.WindowTexture,
+                           new Rectangle(window.Boundaries.Location.TimesFloat(GlobalScale), window.Boundaries.Size.TimesFloat(window.Scale * GlobalScale)),
                            Color.White * GlobalOpacity);
             }
         }
@@ -63,7 +69,7 @@ namespace PopUpUI.Toolkit
         {
             foreach (var window in ActiveWindows)
             {
-                window.OnKeyDown(ScaledWindowArgs(window, e), arg);
+                if (!window.Frozen) window.OnKeyDown(ScaledWindowArgs(window, e), arg);
             }
         }
 
@@ -71,7 +77,7 @@ namespace PopUpUI.Toolkit
         {
             foreach (var window in ActiveWindows)
             {
-                window.OnKeyUp(ScaledWindowArgs(window, e), arg);
+                if (!window.Frozen) window.OnKeyUp(ScaledWindowArgs(window, e), arg);
             }
         }
 
@@ -79,7 +85,7 @@ namespace PopUpUI.Toolkit
         {
             foreach (var window in ActiveWindows)
             {
-                window.OnMouseButtonStateChange(ScaledWindowArgs(window, e));
+                if (!window.Frozen) window.OnMouseButtonStateChange(ScaledWindowArgs(window, e));
             }
         }
 
@@ -87,7 +93,7 @@ namespace PopUpUI.Toolkit
         {
             foreach (var window in ActiveWindows)
             {
-                window.OnMousePositionChange(ScaledWindowArgs(window, e));
+                if (!window.Frozen) window.OnMousePositionChange(ScaledWindowArgs(window, e));
             }
         }
 
@@ -95,7 +101,7 @@ namespace PopUpUI.Toolkit
         {
             foreach (var window in ActiveWindows)
             {
-                window.OnMouseVerticalScrollChange(ScaledWindowArgs(window, e), change);
+                if (!window.Frozen) window.OnMouseVerticalScrollChange(ScaledWindowArgs(window, e), change);
             }
         }
 
@@ -103,7 +109,7 @@ namespace PopUpUI.Toolkit
         {
             foreach (var window in ActiveWindows)
             {
-                window.OnMouseHorizontalScrollChange(ScaledWindowArgs(window, e), change);
+                if (!window.Frozen) window.OnMouseHorizontalScrollChange(ScaledWindowArgs(window, e), change);
             }
         }
 
@@ -111,7 +117,7 @@ namespace PopUpUI.Toolkit
         {
             foreach (var window in ActiveWindows)
             {
-                window.OnTextInput(ScaledWindowArgs(window, e), arg);
+                if (!window.Frozen) window.OnTextInput(ScaledWindowArgs(window, e), arg);
             }
         }
 
@@ -119,7 +125,7 @@ namespace PopUpUI.Toolkit
         {
             foreach (var window in ActiveWindows)
             {
-                window.OnFileDrop(ScaledWindowArgs(window, e), arg);
+                if (!window.Frozen) window.OnFileDrop(ScaledWindowArgs(window, e), arg);
             }
         }
     }

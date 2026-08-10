@@ -15,11 +15,11 @@ namespace PopUpUI.Surface
         public float ScrollSpeed { get; set; } = 1f;
         public Point ScrolledOffset { get; set; }
 
-        public ScrollablePopWindow(Point size) : base(size)
+        public ScrollablePopWindow() : base()
         {
         }
 
-        public ScrollablePopWindow(Point size, BatchDrawOptions? drawOptions) : base(size, drawOptions)
+        public ScrollablePopWindow(BatchDrawOptions? drawOptions) : base(drawOptions)
         {
         }
 
