@@ -1,6 +1,7 @@
 ﻿using PopUpUI.Elements;
 using System;
 using System.Collections.Generic;
+using System.Xml.Linq;
 
 #nullable enable
 
@@ -33,8 +34,8 @@ namespace PopUpUI.Containers
         {
             for (int i = Count - 1; i >= 0; i--)
             {
-                if (SortedElements.Values[i].Visibility != Visibility.Hidden &&
-                    SortedElements.Values[i] is T instance && match(instance))
+                PopElement element = SortedElements.Values[i];
+                if (element.Visibility != Visibility.Hidden && element.Enabled && element is T instance && match(instance))
                 {
                     yield return instance;
                 }
@@ -45,8 +46,8 @@ namespace PopUpUI.Containers
         {
             for (int i = Count - 1; i >= 0; i--)
             {
-                if (SortedElements.Values[i].Visibility != Visibility.Hidden &&
-                    SortedElements.Values[i] is T instance)
+                PopElement element = SortedElements.Values[i];
+                if (element.Visibility != Visibility.Hidden && element.Enabled && element is T instance)
                 {
                     yield return instance;
                 }
@@ -57,8 +58,8 @@ namespace PopUpUI.Containers
         {
             for (int i = Count - 1; i >= 0; i--)
             {
-                if (SortedElements.Values[i].Visibility != Visibility.Hidden && 
-                    SortedElements.Values[i] is T instance && match(instance))
+                PopElement element = SortedElements.Values[i];
+                if (element.Visibility != Visibility.Hidden && element.Enabled && element is T instance && match(instance))
                 {
                     return instance;
                 }

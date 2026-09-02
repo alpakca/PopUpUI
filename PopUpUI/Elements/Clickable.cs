@@ -9,7 +9,6 @@ namespace PopUpUI.Elements
         private bool isHeld;
         private bool isHovered;
         private bool wasSelected;
-        protected bool _enabled = true;
 
         protected bool WasSelected => wasSelected;
 
@@ -19,12 +18,11 @@ namespace PopUpUI.Elements
         public HoverablePacket HoverablePacket { get; set; }
         public SelectablePacket SelectablePacket { get; set; }
 
-        public bool Enabled
+        public override bool Enabled
         {
-            get => _enabled;
             set
             {
-                _enabled = value;
+                base.Enabled = value;
                 EnableStatusChanged();
             }
         }

@@ -10,6 +10,7 @@ namespace PopUpUI.Elements
         public string Name { get; set; } = string.Empty;
         public Visibility Visibility { get; set; } = Visibility.Visible;
 
+        public virtual bool Enabled { get; set; } = true;
         public virtual float Opacity { get; set; } = 1f;
         public virtual Rectangle Boundaries { get; set; }
 
